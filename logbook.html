@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note My Coffee | Logbook</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="top-controls">
+    <button id="btn-new-recipe" class="mode-btn active">NEW RECIPE</button>
+    <div class="lang-switch">
+        <button class="lang-btn active" id="l-en">EN</button>
+        <button class="lang-btn" id="l-ko">KO</button>
+    </div>
+</div>
+
+<div class="console-box" id="logbook-container">
+    <h2 class="logbook-title">나의 레시피 기록</h2>
+    <div id="recipe-cards-grid">
+        <!-- Recipe cards will be loaded here by logbook.js -->
+    </div>
+</div>
+
+<script src="storage.js"></script>
+<script src="logbook.js" defer></script>
+
+</body>
+</html>

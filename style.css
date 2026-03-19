@@ -1,1 +1,422 @@
-/* Add styles here */
+:root {
+    --gold: #D4AF37;
+    --espresso-color: #5D4037;
+    --drip-color: #8D6E63;
+    --bg: #0A0A0A;
+    --panel: #161616;
+    --text: #EEE;
+    --red-fail: #dc3545; /* Bootstrap danger */
+    --green-success: #28a745; /* Bootstrap success */
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+}
+
+/* 모드 및 언어 컨트롤 */
+.top-controls {
+    width: 100%; max-width: 480px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px;
+    gap: 10px; /* Added gap */
+    flex-wrap: wrap; /* Allow wrapping */
+}
+
+.mode-switch {
+    display: flex; background: #222; border-radius: 12px; padding: 4px;
+}
+.mode-btn {
+    background: none; border: none; color: #777; padding: 8px 16px;
+    cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.3s;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+.mode-btn.active { background: var(--gold); color: #000; }
+
+.lang-btn { background: none; border: 1px solid #444; color: #777; border-radius: 5px; cursor: pointer; }
+.lang-btn.active { color: var(--gold); border-color: var(--gold); }
+
+/* 메인 패널 */
+.console-box {
+    width: 100%; max-width: 480px;
+    background: var(--panel); border-radius: 25px; padding: 30px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6); box-sizing: border-box;
+    position: relative; /* For logbook-title */
+}
+
+.env-tag {
+    text-align: center; font-size: 0.8rem; color: #666;
+    margin-bottom: 25px; border-bottom: 1px solid #222; padding-bottom: 15px;
+    display: flex; align-items: center; justify-content: center; /* Center content */
+    gap: 5px; /* Spacing for elements inside */
+}
+
+/* 슬라이더 그룹 */
+.control-group { margin-bottom: 30px; }
+.label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.label-text { font-size: 0.85rem; letter-spacing: 1px; color: #AAA; }
+.value-display { font-size: 1.8rem; color: var(--gold); font-weight: 600; }
+.unit { font-size: 0.9rem; color: #555; margin-left: 4px; }
+
+input[type=range] {
+    width: 100%; height: 6px; appearance: none; background: #333; border-radius: 10px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 30px; height: 30px; background: #FFF; 
+    border: 5px solid var(--gold); border-radius: 50%; cursor: pointer;
+}
+
+.save-btn {
+    width: 100%; padding: 20px; background: var(--gold); border: none;
+    border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+    color: var(--bg); /* Text color changed to match theme */
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+.save-btn:hover {
+    background-color: #f7d750; /* Lighter gold on hover */
+    transform: translateY(-2px);
+}
+.save-btn:active {
+    transform: translateY(0);
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none; /* Allows clicks through when hidden */
+}
+
+.modal.active {
+    opacity: 1;
+    pointer-events: auto; /* Enables clicks when active */
+}
+
+.modal-content {
+    background-color: var(--panel);
+    margin: auto;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 90%;
+    max-width: 450px;
+    transform: translateY(20px);
+    transition: transform 0.3s ease-in-out;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-content h3 {
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+}
+
+.modal-form-group {
+    margin-bottom: 20px;
+}
+
+.modal-form-group label {
+    display: block;
+    color: var(--text);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.modal-form-group input[type="text"],
+.modal-form-group input[type="url"],
+.modal-form-group textarea {
+    width: calc(100% - 20px); /* Account for padding */
+    padding: 10px;
+    border: 1px solid #444;
+    background-color: #222;
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    box-sizing: border-box; /* Include padding in width */
+}
+
+.modal-form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.modal-actions button {
+    flex-grow: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#modal-save-recipe {
+    background-color: var(--gold);
+    color: var(--bg);
+}
+
+#modal-save-recipe:hover {
+    background-color: #f7d750;
+}
+
+.cancel-btn {
+    background-color: #444;
+    color: var(--text);
+}
+
+.cancel-btn:hover {
+    background-color: #666;
+}
+
+/* Rating Input */
+.rating-input {
+    display: flex;
+    justify-content: center; /* Center stars */
+    unicode-bidi: bidi-override;
+    direction: rtl; /* For stars to appear right-to-left */
+    text-align: center;
+    padding: 5px 0;
+}
+.rating-input > input {
+    display: none;
+}
+.rating-input > label {
+    font-size: 2em; /* Size of stars */
+    color: #444; /* Default star color */
+    cursor: pointer;
+    padding: 0 2px;
+    transition: color 0.2s ease;
+}
+.rating-input > input:checked ~ label,
+.rating-input > input:checked ~ label ~ label {
+    color: var(--gold); /* Filled star color */
+}
+.rating-input > label:hover,
+.rating-input > label:hover ~ label {
+    color: #f7d750; /* Hover star color */
+}
+
+/* Success/Fail Toggle Switch */
+.success-fail-toggle {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    margin: 0 auto; /* Center the toggle */
+}
+
+.success-fail-toggle input[type="checkbox"] {
+    display: none;
+}
+
+.success-fail-toggle .toggle-label {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--red-fail); /* Default to fail (red) */
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.success-fail-toggle .toggle-label:after {
+    content: 'FAIL'; /* Text for Fail */
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    background: #fff;
+    border-radius: 13px;
+    transition: 0.3s;
+    text-align: center;
+    line-height: 26px;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--red-fail);
+}
+
+.success-fail-toggle input:checked + .toggle-label {
+    background: var(--green-success); /* Green for success */
+}
+
+.success-fail-toggle input:checked + .toggle-label:after {
+    content: 'SUCCESS'; /* Text for Success */
+    left: calc(100% - 26px - 5px); /* Position for success */
+    transform: translateY(-50%);
+    color: var(--green-success);
+}
+
+/* Logbook Specific Styles */
+.logbook-title {
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #222;
+}
+
+#recipe-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding-top: 20px;
+}
+
+.recipe-card {
+    background-color: #222;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 350px; /* Ensure cards have a minimum height */
+    position: relative;
+}
+
+.recipe-card-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    background-color: #333; /* Placeholder for missing image */
+    display: block;
+}
+
+.recipe-card-content {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.recipe-card-content h4 {
+    color: var(--gold);
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.recipe-card-content p {
+    font-size: 0.85rem;
+    color: #AAA;
+    margin-bottom: 5px;
+}
+
+.recipe-card-content .label {
+    font-weight: bold;
+    color: #BBB;
+    margin-right: 5px;
+}
+
+.recipe-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-top: 1px solid #333;
+    background-color: #1a1a1a;
+}
+
+.recipe-card-footer .status-indicator {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 8px;
+}
+
+.recipe-card-footer .status-success {
+    background-color: var(--green-success);
+    color: var(--bg);
+}
+
+.recipe-card-footer .status-fail {
+    background-color: var(--red-fail);
+    color: #FFF;
+}
+
+.recipe-card-footer .delete-btn {
+    background-color: #555;
+    color: var(--text);
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.3s;
+}
+
+.recipe-card-footer .delete-btn:hover {
+    background-color: var(--red-fail);
+    color: #FFF;
+}
+
+.recipe-card-rating {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1.5em;
+    color: var(--gold);
+}
+
+.no-recipes-message {
+    grid-column: 1 / -1; /* Span across all columns */
+    text-align: center;
+    color: #777;
+    padding: 40px 0;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 480px) {
+    .top-controls {
+        flex-direction: column;
+    }
+    .top-controls > *:not(.mode-switch) {
+        width: 100%;
+        margin-top: 10px;
+    }
+    .mode-switch {
+        width: 100%;
+        justify-content: space-around;
+    }
+    .mode-btn {
+        flex-grow: 1;
+    }
+    .lang-btn {
+        width: 48%; /* Adjust for 2 buttons */
+    }
+    .modal-content {
+        padding: 20px;
+    }
+    .modal-content h3 {
+        font-size: 1.2rem;
+    }
+}
