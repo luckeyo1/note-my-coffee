@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentMode = 'espresso';
     let currentLang = 'en';
     let successResult = false;
+    let uploadedImageData = ''; // Base64 image string
 
     // IMPORTANT: Replace 'YOUR_WEATHERAPI_KEY' with your actual WeatherAPI.com API key.
     const WEATHERAPI_KEY = '549486968354490e95c131115262003';
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             viewLogbook: "LOG BOOK",
             brandTagline: "Turn extraction into science",
             modalBeanName: "BEAN NAME", modalPurchaseUrl: "PURCHASE URL",
-            modalImageUrl: "IMAGE URL", modalTasteNotes: "TASTING NOTES",
+            modalImageUrl: "COVER PHOTO", modalTasteNotes: "TASTING NOTES",
             modalOverallRating: "RATING", modalSuccessFail: "RESULT",
             modalSave: "Save Recipe →", modalCancel: "Cancel",
             recipeSavedSuccess: "Recipe logged! Opening logbook...",
@@ -34,7 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
             savingNudge: "Unsaved recipes are lost forever",
             modalTitle: "Complete Your Recipe",
             modalSubtitle: "Adding bean info lets you recreate this cup perfectly",
-            trustText: "Pro Barista Edition · today <strong>{count}</strong> recipes logged",
+            trustRecipes: "recipes logged today",
+            selectPhoto: "📷 Choose Photo",
+            photoSelected: "✓ Photo Selected",
+            swStart: "START", swStop: "STOP", swRestart: "RESTART", swApply: "APPLY",
+            swStatusReady: "READY", swStatusRunning: "RUNNING", swStatusDone: "DONE",
+            swHintReady: "Press START to begin extraction",
+            swHintRunning: "Extracting… press STOP to record",
+            swHintUnder: "⚡ {sec}s — possible under-extraction",
+            swHintOver: "⚡ {sec}s — possible over-extraction",
+            swHintIdeal: "✓ {sec}s — within SCA range",
+            swApplied: "{sec}s applied to extraction time",
+            swBtnOpen: "⏱ OPEN STOPWATCH", swBtnClose: "⏱ CLOSE STOPWATCH"
         },
         ko: {
             dosing: "도징량", temp: "물 온도", time: "추출 시간", yield: "추출량",
@@ -45,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             viewLogbook: "로그북",
             brandTagline: "당신의 추출을 과학으로",
             modalBeanName: "원두 이름", modalPurchaseUrl: "구매처 URL",
-            modalImageUrl: "이미지 URL", modalTasteNotes: "테이스팅 노트",
+            modalImageUrl: "겉표지 사진", modalTasteNotes: "테이스팅 노트",
             modalOverallRating: "평점", modalSuccessFail: "결과",
             modalSave: "레시피 저장하기 →", modalCancel: "취소",
             recipeSavedSuccess: "레시피가 기록되었습니다! 로그북으로 이동합니다...",
@@ -63,7 +75,18 @@ document.addEventListener('DOMContentLoaded', () => {
             savingNudge: "지금 기록하지 않으면 이 레시피는 사라집니다",
             modalTitle: "레시피 완성하기",
             modalSubtitle: "원두 정보를 추가하면 나중에 재현할 수 있습니다",
-            trustText: "Pro Barista Edition · 오늘 <strong>{count}</strong>개의 레시피가 기록되었습니다",
+            trustRecipes: "개의 레시피가 오늘 기록됨",
+            selectPhoto: "📷 사진 선택하기",
+            photoSelected: "✓ 사진 선택됨",
+            swStart: "시작", swStop: "정지", swRestart: "재시작", swApply: "적용",
+            swStatusReady: "준비", swStatusRunning: "추출 중", swStatusDone: "완료",
+            swHintReady: "시작을 누르고 추출을 시작하세요",
+            swHintRunning: "추출 중... 정지를 누르면 기록됩니다",
+            swHintUnder: "⚡ {sec}초 — 과소추출 가능성",
+            swHintOver: "⚡ {sec}초 — 과다추출 가능성",
+            swHintIdeal: "✓ {sec}초 — SCA 권장 범위 내",
+            swApplied: "{sec}초가 추출 시간에 반영되었습니다",
+            swBtnOpen: "⏱ 스톱워치 열기", swBtnClose: "⏱ 스톱워치 닫기"
         }
     };
 
@@ -108,7 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         recipeModal: document.getElementById('recipe-modal'),
         modalBeanName: document.getElementById('modal-bean-name'),
         modalPurchaseUrl: document.getElementById('modal-purchase-url'),
-        modalImageUrl: document.getElementById('modal-image-url'),
+        modalImageFile: document.getElementById('modal-image-file'),
+        btnImageUpload: document.getElementById('btn-image-upload'),
+        fileNameDisplay: document.getElementById('file-name-display'),
         modalTasteNotes: document.getElementById('modal-taste-notes'),
         modalOverallRatingContainer: document.getElementById('modal-overall-rating-container'),
         modalSuccessFail: document.getElementById('modal-success-fail'),
@@ -130,11 +155,146 @@ document.addEventListener('DOMContentLoaded', () => {
         hintTemp: document.getElementById('hint-temp'),
         hintTime: document.getElementById('hint-time'),
         hintYield: document.getElementById('hint-yield'),
-        trustText: document.getElementById('trust-text'),
         btnFail: document.getElementById('btn-fail'),
         btnSuccess: document.getElementById('btn-success'),
+        // Stopwatch
+        btnStopwatch: document.getElementById('btn-stopwatch'),
+        lblStopwatch: document.getElementById('lbl-stopwatch'),
+        stopwatchPanel: document.getElementById('stopwatch-panel'),
+        swTime: document.getElementById('sw-time'),
+        swStatus: document.getElementById('sw-status'),
+        swRingProgress: document.getElementById('sw-ring-progress'),
+        swBtnStart: document.getElementById('sw-btn-start'),
+        swBtnReset: document.getElementById('sw-btn-reset'),
+        swBtnApply: document.getElementById('sw-btn-apply'),
+        swHint: document.getElementById('sw-hint'),
+        lblSwStart: document.getElementById('lbl-sw-start'),
+        lblSwReset: document.getElementById('lbl-sw-reset'),
+        lblSwApply: document.getElementById('lbl-sw-apply'),
     };
 
+    // ===== Stopwatch State =====
+    const sw = {
+        running: false,
+        elapsed: 0,
+        startTime: null,
+        rafId: null,
+        done: false,
+    };
+
+    const RING_CIRC = 326.7;
+    const swGetMax = () => currentMode === 'espresso' ? 60 : 300;
+
+    const swFormatTime = (ms) => {
+        const total = ms / 1000;
+        const min = Math.floor(total / 60);
+        const sec = Math.floor(total % 60);
+        const tenth = Math.floor((ms % 1000) / 100);
+        if (min > 0) return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${tenth}`;
+        return `${String(sec).padStart(2,'0')}.${tenth}`;
+    };
+
+    const swUpdateRing = (elapsed) => {
+        const max = swGetMax() * 1000;
+        const pct = Math.min(elapsed / max, 1);
+        const offset = RING_CIRC * (1 - pct);
+        el.swRingProgress.style.strokeDashoffset = offset;
+
+        if (elapsed > max) {
+            el.swRingProgress.style.stroke = 'var(--danger)';
+        } else if (!sw.running && elapsed > 0) {
+            el.swRingProgress.style.stroke = 'var(--success)';
+        } else {
+            el.swRingProgress.style.stroke = 'var(--accent)';
+        }
+    };
+
+    const swTick = () => {
+        if (!sw.running) return;
+        sw.elapsed = Date.now() - sw.startTime;
+        el.swTime.textContent = swFormatTime(sw.elapsed);
+        swUpdateRing(sw.elapsed);
+        sw.rafId = requestAnimationFrame(swTick);
+    };
+
+    const swStart = () => {
+        sw.running = true;
+        sw.done = false;
+        sw.startTime = Date.now() - sw.elapsed;
+        el.swTime.classList.add('running');
+        el.swTime.classList.remove('done');
+        el.swStatus.textContent = i18n[currentLang].swStatusRunning;
+        el.lblSwStart.textContent = i18n[currentLang].swStop;
+        el.swBtnStart.classList.add('stop-mode');
+        el.swBtnReset.disabled = false;
+        el.swBtnApply.disabled = true;
+        el.swHint.textContent = i18n[currentLang].swHintRunning;
+        sw.rafId = requestAnimationFrame(swTick);
+    };
+
+    const swStop = () => {
+        sw.running = false;
+        sw.done = true;
+        cancelAnimationFrame(sw.rafId);
+        el.swTime.classList.remove('running');
+        el.swTime.classList.add('done');
+        el.swStatus.textContent = i18n[currentLang].swStatusDone;
+        el.lblSwStart.textContent = i18n[currentLang].swRestart;
+        el.swBtnStart.classList.remove('stop-mode');
+        el.swBtnApply.disabled = false;
+        swUpdateRing(sw.elapsed);
+
+        const secs = sw.elapsed / 1000;
+        const proLow = currentMode === 'espresso' ? 25 : 120;
+        const proHigh = currentMode === 'espresso' ? 35 : 240;
+        
+        let hintKey = 'swHintIdeal';
+        if (secs < proLow) hintKey = 'swHintUnder';
+        else if (secs > proHigh) hintKey = 'swHintOver';
+        
+        el.swHint.textContent = i18n[currentLang][hintKey].replace('{sec}', secs.toFixed(1));
+    };
+
+    const swReset = () => {
+        cancelAnimationFrame(sw.rafId);
+        sw.running = false;
+        sw.done = false;
+        sw.elapsed = 0;
+        sw.startTime = null;
+        el.swTime.textContent = '00.0';
+        el.swTime.classList.remove('running','done');
+        el.swStatus.textContent = i18n[currentLang].swStatusReady;
+        el.lblSwStart.textContent = i18n[currentLang].swStart;
+        el.swBtnStart.classList.remove('stop-mode');
+        el.swBtnReset.disabled = true;
+        el.swBtnApply.disabled = true;
+        el.swRingProgress.style.strokeDashoffset = RING_CIRC;
+        el.swHint.textContent = i18n[currentLang].swHintReady;
+    };
+
+    const swApply = () => {
+        if (sw.elapsed === 0) return;
+        const secs = sw.elapsed / 1000;
+        const max = swGetMax();
+        const clamped = Math.min(Math.max(secs, 0), max);
+        const step = currentMode === 'espresso' ? 0.5 : 1;
+        const snapped = Math.round(clamped / step) * step;
+
+        el.rTime.value = snapped;
+        updateVal('time', snapped);
+
+        el.swBtnApply.textContent = '✓';
+        el.swHint.textContent = i18n[currentLang].swApplied.replace('{sec}', snapped);
+
+        setTimeout(() => {
+            el.lblSwApply.textContent = i18n[currentLang].swApply;
+            el.stopwatchPanel.classList.remove('open');
+            el.btnStopwatch.classList.remove('active');
+            el.lblStopwatch.textContent = i18n[currentLang].swBtnOpen;
+        }, 1500);
+    };
+
+    // ===== Marketing & Logic =====
     const qualityRanges = {
         espresso: {
             dosing:  { low: 14, idealLow: 17, idealHigh: 22, high: 26 },
@@ -199,20 +359,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateLogbookBadge = () => {
         const recipes = (typeof CoffeeNotesStorage !== 'undefined') ? CoffeeNotesStorage.getRecipes() : [];
         const count = recipes.length;
-        
-        if (el.logbookCount) {
-            el.logbookCount.textContent = count;
-            el.logbookCount.style.display = count > 0 ? 'flex' : 'none';
-        }
+        el.logbookCount.textContent = count;
+        el.logbookCount.style.display = count > 0 ? 'flex' : 'none';
 
         const today = new Date().toDateString();
         const todayCount = recipes.filter(r => new Date(r.date).toDateString() === today).length;
-        
-        if (el.trustText) {
-            // Fix: Only update the number part if possible, or use a simpler string
-            const template = i18n[currentLang].trustText;
-            el.trustText.innerHTML = template.replace('{count}', todayCount);
-        }
+        el.dailyCount.textContent = todayCount;
     };
 
     const setMode = (mode) => {
@@ -236,6 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateVal('yield', el.rYield.value);
         updateBrewRatio();
         updateProHints();
+        if (el.stopwatchPanel.classList.contains('open')) swReset();
     };
 
     const updateVal = (id, val) => {
@@ -266,11 +419,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateProHints = () => {
         const lang = i18n[currentLang];
-        if (el.hintDosing) el.hintDosing.textContent = lang.proHintDosing;
-        if (el.hintTemp) el.hintTemp.textContent = lang.proHintTemp;
-        if (el.hintTime) el.hintTime.textContent = lang.proHintTime;
-        if (el.hintYield) el.hintYield.textContent = lang.proHintYield;
-        if (el.ratioLabel) el.ratioLabel.textContent = lang.ratioLabel;
+        el.hintDosing.textContent = lang.proHintDosing;
+        el.hintTemp.textContent = lang.proHintTemp;
+        el.hintTime.textContent = lang.proHintTime;
+        el.hintYield.textContent = lang.proHintYield;
+        el.ratioLabel.textContent = lang.ratioLabel;
     };
 
     const setLang = (lang) => {
@@ -279,14 +432,14 @@ document.addEventListener('DOMContentLoaded', () => {
         el.btnLangKo.classList.toggle('active', lang === 'ko');
 
         const t = i18n[lang];
-        if (el.lblDosing) el.lblDosing.textContent = t.dosing;
-        if (el.lblTemp) el.lblTemp.textContent = t.temp;
-        if (el.lblTime) el.lblTime.textContent = t.time;
-        if (el.lblYield) el.lblYield.textContent = t.yield;
-        if (el.lblSave) el.lblSave.textContent = t.save;
-        if (el.saveNudge) el.saveNudge.textContent = t.savingNudge;
-        if (el.brandTagline) el.brandTagline.textContent = t.brandTagline;
-        if (el.progressLabelText) el.progressLabelText.textContent = t.progressLabel;
+        el.lblDosing.textContent = t.dosing;
+        el.lblTemp.textContent = t.temp;
+        el.lblTime.textContent = t.time;
+        el.lblYield.textContent = t.yield;
+        el.lblSave.textContent = t.save;
+        el.saveNudge.textContent = t.savingNudge;
+        el.brandTagline.textContent = t.brandTagline;
+        el.progressLabelText.textContent = t.progressLabel;
 
         if (el.lblModalBeanName) el.lblModalBeanName.textContent = t.modalBeanName;
         if (el.lblModalPurchaseUrl) el.lblModalPurchaseUrl.textContent = t.modalPurchaseUrl;
@@ -297,37 +450,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.lblModalSave) el.lblModalSave.textContent = t.modalSave;
         if (el.modalTitle) el.modalTitle.textContent = t.modalTitle;
         if (el.modalSubtitle) el.modalSubtitle.textContent = t.modalSubtitle;
+        if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
+        
+        el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
+        el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
+        el.lblSwReset.textContent = "RESET";
+        el.lblSwApply.textContent = t.swApply;
+        el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
 
         updateProHints();
         updateProgress();
         updateBrewRatio();
-        updateLogbookBadge();
     };
 
     const fetchWeather = () => {
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
-        
-        // Helper to set fallback data
-        const setFallbackWeather = (reason) => {
-            if (infoSpan) {
-                infoSpan.innerHTML = `📍 SEOUL · ☀️ 18°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${reason})</small>`;
-            }
-            el.envHint.textContent = currentLang === 'ko' ? '기본 위치 정보로 표시 중입니다' : 'Showing default location data';
+        const setFallback = (msg) => {
+            if (infoSpan) infoSpan.innerHTML = `📍 SEOUL · ☀️ 18°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`;
         };
 
         if (!WEATHERAPI_KEY || WEATHERAPI_KEY === 'YOUR_WEATHERAPI_KEY') {
-            setFallbackWeather(currentLang === 'ko' ? 'API 키 필요' : 'API Key Required');
-            return;
+            setFallback("API 키 필요"); return;
         }
-
         if ('geolocation' in navigator) {
-            if (infoSpan) infoSpan.textContent = i18n[currentLang].weather;
-            
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const { latitude: lat, longitude: lon } = position.coords;
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude: lat, longitude: lon } = pos.coords;
                 const langCode = currentLang === 'ko' ? 'ko' : 'en';
                 const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}&aqi=no&lang=${langCode}`;
-                
                 try {
                     const res = await fetch(url);
                     const data = await res.json();
@@ -335,46 +484,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     const temp = Math.round(data.current.temp_c);
                     const humidity = data.current.humidity;
                     const iconUrl = data.current.condition.icon;
-                    const desc = data.current.condition.text;
-
-                    if (infoSpan) {
-                        infoSpan.innerHTML = `📍 ${city} · <img src="${iconUrl}" alt="${desc}" style="vertical-align:middle;height:16px;width:16px;"> ${temp}°C · 💧 ${humidity}%`;
-                    }
-
-                    // Weather tips based on humidity
-                    if (humidity > 65) {
-                        el.envHint.textContent = currentLang === 'ko'
-                            ? `습도 ${humidity}% — 분쇄도를 약간 굵게 조정하세요`
-                            : `Humidity ${humidity}% — try slightly coarser grind`;
-                    } else if (humidity < 40) {
-                        el.envHint.textContent = currentLang === 'ko'
-                            ? `습도 ${humidity}% — 추출 강도 +0.5g 권장`
-                            : `Humidity ${humidity}% — consider +0.5g dosing`;
-                    } else {
-                        el.envHint.textContent = currentLang === 'ko'
-                            ? '오늘 날씨 기준 추출 조건 최적입니다'
-                            : 'Ideal extraction conditions today';
-                    }
-                } catch (e) {
-                    console.error('Weather fetch error:', e);
-                    setFallbackWeather(i18n[currentLang].weatherError);
-                }
-            }, (err) => {
-                console.warn('Geolocation error:', err.message);
-                let reason = i18n[currentLang].locationDenied;
-                if (err.code === 1) reason = currentLang === 'ko' ? '위치 권한/정책 차단됨' : 'Location Policy Blocked';
-                setFallbackWeather(reason);
-            }, { timeout: 5000 });
-        } else {
-            setFallbackWeather(i18n[currentLang].locationDenied);
+                    if (infoSpan) infoSpan.innerHTML = `📍 ${city} · <img src="${iconUrl}" style="vertical-align:middle;height:16px;"> ${temp}°C · 💧 ${humidity}%`;
+                    
+                    if (humidity > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${humidity}% — try slightly coarser grind`;
+                    else if (humidity < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 추출 강도 +0.5g 권장` : `Humidity ${humidity}% — consider +0.5g dosing`;
+                    else el.envHint.textContent = currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
+                } catch (e) { setFallback("에러 발생"); }
+            }, (err) => setFallback(err.code === 1 ? "권한 차단됨" : "위치 오류"));
         }
     };
+
+    // --- Image Upload Logic ---
+    el.modalImageFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            el.fileNameDisplay.innerText = file.name;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                uploadedImageData = ev.target.result;
+                el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     const openModal = () => {
         el.recipeModal.classList.add('active');
         el.modalBeanName.value = '';
         el.modalPurchaseUrl.value = '';
-        el.modalImageUrl.value = '';
+        el.modalImageFile.value = '';
+        uploadedImageData = '';
+        el.fileNameDisplay.innerText = '';
+        el.btnImageUpload.innerText = i18n[currentLang].selectPhoto;
         el.modalTasteNotes.value = '';
         el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true;
         successResult = false;
@@ -394,6 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return sel ? parseInt(sel.value) : 3;
     };
 
+    // --- Events ---
     el.btnEspresso.addEventListener('click', () => setMode('espresso'));
     el.btnDrip.addEventListener('click', () => setMode('drip'));
     el.btnLangEn.addEventListener('click', () => setLang('en'));
@@ -405,30 +547,32 @@ document.addEventListener('DOMContentLoaded', () => {
     el.rTime.addEventListener('input', (e) => updateVal('time', e.target.value));
     el.rYield.addEventListener('input', (e) => updateVal('yield', e.target.value));
 
+    el.btnStopwatch.addEventListener('click', () => {
+        const isOpen = el.stopwatchPanel.classList.toggle('open');
+        el.btnStopwatch.classList.toggle('active', isOpen);
+        el.lblStopwatch.textContent = isOpen ? i18n[currentLang].swBtnClose : i18n[currentLang].swBtnOpen;
+        if (isOpen && !sw.running && !sw.done) swReset();
+    });
+    el.swBtnStart.addEventListener('click', () => { if (sw.running) swStop(); else swStart(); });
+    el.swBtnReset.addEventListener('click', swReset);
+    el.swBtnApply.addEventListener('click', swApply);
+
     el.btnSave.addEventListener('click', openModal);
     el.modalCancel.addEventListener('click', () => closeModal());
-    
+    el.recipeModal.querySelector('.modal-backdrop')?.addEventListener('click', () => closeModal());
+
     el.btnFail.addEventListener('click', () => {
-        successResult = false;
-        el.modalSuccessFail.checked = false;
-        el.btnFail.classList.add('active');
-        el.btnSuccess.classList.remove('active');
+        successResult = false; el.modalSuccessFail.checked = false;
+        el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active');
     });
     el.btnSuccess.addEventListener('click', () => {
-        successResult = true;
-        el.modalSuccessFail.checked = true;
-        el.btnFail.classList.remove('active');
-        el.btnSuccess.classList.add('active');
+        successResult = true; el.modalSuccessFail.checked = true;
+        el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active');
     });
 
     el.modalSaveRecipe.addEventListener('click', () => {
         const beanName = el.modalBeanName.value.trim();
-        if (!beanName) {
-            el.modalBeanName.style.borderColor = '#C0392B';
-            el.modalBeanName.focus();
-            setTimeout(() => el.modalBeanName.style.borderColor = '', 2000);
-            return;
-        }
+        if (!beanName) { el.modalBeanName.focus(); return; }
 
         const recipe = {
             id: Date.now().toString(),
@@ -440,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
             yield: parseFloat(el.rYield.value),
             beanName,
             purchaseUrl: el.modalPurchaseUrl.value.trim(),
-            imageUrl: el.modalImageUrl.value.trim(),
+            imageUrl: uploadedImageData,
             tasteNotes: el.modalTasteNotes.value.trim(),
             overallRating: getSelectedRating(),
             success: successResult,
@@ -450,13 +594,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof CoffeeNotesStorage !== 'undefined' && CoffeeNotesStorage.saveRecipe(recipe)) {
             alert(i18n[currentLang].recipeSavedSuccess);
             window.location.href = 'logbook.html';
-        } else {
-            alert(i18n[currentLang].recipeSavedFail);
         }
     });
 
     setLang(currentLang);
     setMode(currentMode);
     fetchWeather();
+    updateLogbookBadge();
     updateProgress();
 });

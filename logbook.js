@@ -89,10 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
         recipes.forEach(recipe => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
+            
+            // Photo display logic: Only show if imageUrl exists
+            const photoHtml = recipe.imageUrl 
+                ? `<img src="${recipe.imageUrl}" alt="${recipe.beanName || 'Coffee'}" class="recipe-card-image">`
+                : '';
+
             card.innerHTML = `
-                <img src="${recipe.imageUrl}" 
-                     alt="${recipe.beanName || 'Coffee Bean'}" class="recipe-card-image"
-                     onerror="this.onerror=null;this.src='https://via.placeholder.com/150/161616/D4AF37?text=NO+IMAGE';">
+                ${photoHtml}
                 <div class="recipe-card-content">
                     <h4>${recipe.beanName || (currentLang === 'ko' ? '원두명 미상' : 'Unknown Bean')}</h4>
                     <p><span class="label">${i18n[currentLang].mode}</span> ${recipe.mode.toUpperCase()}</p>
