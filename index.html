@@ -4,108 +4,259 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Note My Coffee | Pro Barista</title>
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note My Coffee | Pro Barista</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="top-controls">
-    <div class="mode-switch">
-        <button id="btn-espresso" class="mode-btn active">ESPRESSO</button>
-        <button id="btn-drip" class="mode-btn">HAND DRIP</button>
-    </div>
-    <div>
-        <button class="lang-btn active" id="l-en">EN</button>
-        <button class="lang-btn" id="l-ko">KO</button>
-    </div>
-    <button id="btn-view-logbook" class="mode-btn">VIEW LOGBOOK</button>
+<!-- 심리학: 권위 + 희소성 → 상단 배지 -->
+<div class="trust-bar">
+    <span class="trust-dot"></span>
+    <span id="trust-text">Pro Barista Edition · 오늘 <strong id="daily-count">--</strong>개의 레시피가 기록되었습니다</span>
 </div>
 
-<div class="console-box">
-    <div class="env-tag" id="weather-info">📍 SEOUL | ☀️ 18°C | 💧 45%</div>
+<div class="app-shell">
 
-    <!-- Dosing (Common) -->
-    <div class="control-group">
-        <div class="label-row">
-            <span class="label-text" id="lbl-dosing">DOSING</span>
-            <div class="value-display"><span id="v-dosing">18.0</span><span class="unit">g</span></div>
+    <!-- 헤더 -->
+    <header class="app-header">
+        <div class="brand">
+            <div class="brand-mark">☕</div>
+            <div class="brand-text">
+                <span class="brand-name">Note My Coffee</span>
+                <span class="brand-tagline" id="brand-tagline">당신의 추출을 과학으로</span>
+            </div>
         </div>
-        <input type="range" id="r-dosing" min="7" max="40" step="0.1" value="18">
+        <div class="header-actions">
+            <div class="lang-toggle">
+                <button class="lang-btn active" id="l-en">EN</button>
+                <button class="lang-btn" id="l-ko">KO</button>
+            </div>
+            <button id="btn-view-logbook" class="logbook-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <span id="lbl-logbook">LOG BOOK</span>
+                <span class="logbook-badge" id="logbook-count">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 심리학: 희소성 + 맥락 → 날씨/환경 정보 -->
+    <div class="env-strip">
+        <div class="env-info" id="weather-info">
+            <span class="env-dot"></span>
+            <span>📍 SEOUL · ☀️ 18°C · 💧 45%</span>
+        </div>
+        <div class="env-hint" id="env-hint">오늘 습도 기준 추출 강도 +0.5g 권장</div>
     </div>
 
-    <!-- Temp (Common) -->
-    <div class="control-group">
-        <div class="label-row">
-            <span class="label-text" id="lbl-temp">TEMP</span>
-            <div class="value-display"><span id="v-temp">92</span><span class="unit">°C</span></div>
-        </div>
-        <input type="range" id="r-temp" min="80" max="100" step="1" value="92">
+    <!-- 모드 전환 -->
+    <div class="mode-rail">
+        <button id="btn-espresso" class="mode-pill active">
+            <span class="mode-icon">⚡</span>
+            <span>ESPRESSO</span>
+        </button>
+        <button id="btn-drip" class="mode-pill">
+            <span class="mode-icon">🌿</span>
+            <span>HAND DRIP</span>
+        </button>
     </div>
 
-    <!-- Time (Dynamic) -->
-    <div class="control-group">
-        <div class="label-row">
-            <span class="label-text" id="lbl-time">TIME</span>
-            <div class="value-display"><span id="v-time">28.5</span><span class="unit" id="u-time">sec</span></div>
+    <!-- 심리학: 진행 효과 → 레시피 완성도 바 -->
+    <div class="progress-section">
+        <div class="progress-label">
+            <span id="progress-label-text">레시피 완성도</span>
+            <span class="progress-pct" id="progress-pct">75%</span>
         </div>
-        <input type="range" id="r-time" min="0" max="60" step="0.5" value="28.5">
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width: 75%"></div>
+        </div>
+        <div class="progress-hint" id="progress-hint">원두 이름을 기록하면 완성됩니다</div>
     </div>
 
-    <!-- Yield (Dynamic) -->
-    <div class="control-group">
-        <div class="label-row">
-            <span class="label-text" id="lbl-yield">YIELD</span>
-            <div class="value-display"><span id="v-yield">36</span><span class="unit">g</span></div>
+    <!-- 메인 컨트롤 패널 -->
+    <div class="console-box">
+
+        <div class="control-group" id="group-dosing">
+            <div class="control-header">
+                <div class="control-meta">
+                    <span class="control-label" id="lbl-dosing">DOSING</span>
+                    <span class="control-pro-hint" id="hint-dosing">프로 범위: 18–21g</span>
+                </div>
+                <div class="control-value">
+                    <span id="v-dosing">18.0</span>
+                    <span class="control-unit">g</span>
+                    <span class="quality-badge" id="qb-dosing">IDEAL</span>
+                </div>
+            </div>
+            <div class="slider-wrap">
+                <input type="range" id="r-dosing" min="7" max="40" step="0.1" value="18">
+                <div class="slider-zones">
+                    <span>7g</span>
+                    <span>40g</span>
+                </div>
+            </div>
         </div>
-        <input type="range" id="r-yield" min="10" max="60" step="1" value="36">
+
+        <div class="divider"></div>
+
+        <div class="control-group" id="group-temp">
+            <div class="control-header">
+                <div class="control-meta">
+                    <span class="control-label" id="lbl-temp">WATER TEMP</span>
+                    <span class="control-pro-hint" id="hint-temp">프로 범위: 90–96°C</span>
+                </div>
+                <div class="control-value">
+                    <span id="v-temp">92</span>
+                    <span class="control-unit">°C</span>
+                    <span class="quality-badge" id="qb-temp">IDEAL</span>
+                </div>
+            </div>
+            <div class="slider-wrap">
+                <input type="range" id="r-temp" min="80" max="100" step="1" value="92">
+                <div class="slider-zones">
+                    <span>80°C</span>
+                    <span>100°C</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="control-group" id="group-time">
+            <div class="control-header">
+                <div class="control-meta">
+                    <span class="control-label" id="lbl-time">EXTRACTION TIME</span>
+                    <span class="control-pro-hint" id="hint-time">프로 범위: 25–35sec</span>
+                </div>
+                <div class="control-value">
+                    <span id="v-time">28.5</span>
+                    <span class="control-unit" id="u-time">sec</span>
+                    <span class="quality-badge" id="qb-time">IDEAL</span>
+                </div>
+            </div>
+            <div class="slider-wrap">
+                <input type="range" id="r-time" min="0" max="60" step="0.5" value="28.5">
+                <div class="slider-zones">
+                    <span>0</span>
+                    <span>60s</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="control-group" id="group-yield">
+            <div class="control-header">
+                <div class="control-meta">
+                    <span class="control-label" id="lbl-yield">YIELD</span>
+                    <span class="control-pro-hint" id="hint-yield">브루 비율: 1:2</span>
+                </div>
+                <div class="control-value">
+                    <span id="v-yield">36</span>
+                    <span class="control-unit">g</span>
+                    <span class="quality-badge" id="qb-yield">IDEAL</span>
+                </div>
+            </div>
+            <div class="slider-wrap">
+                <input type="range" id="r-yield" min="10" max="60" step="1" value="36">
+                <div class="slider-zones">
+                    <span>10g</span>
+                    <span>60g</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="brew-ratio-card">
+            <div class="ratio-label" id="ratio-label">브루 레이시오</div>
+            <div class="ratio-display">
+                <div class="ratio-bar-wrap">
+                    <div class="ratio-coffee-bar" id="ratio-coffee-bar" style="width: 33%"></div>
+                    <div class="ratio-water-bar" id="ratio-water-bar" style="width: 67%"></div>
+                </div>
+                <div class="ratio-numbers">
+                    <span class="ratio-num coffee" id="ratio-num">1 : 2.0</span>
+                    <span class="ratio-status ideal" id="ratio-status">✓ SCA 권장 범위</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="save-btn" id="btn-save">
+            <span class="save-icon">✦</span>
+            <span id="lbl-save">LOG THIS RECIPE</span>
+            <span class="save-arrow">→</span>
+        </button>
+
+        <p class="save-nudge" id="save-nudge">지금 기록하지 않으면 이 레시피는 사라집니다</p>
+
     </div>
 
-    <button class="save-btn" id="btn-save">LOG RECIPE</button>
 </div>
 
-<!-- Recipe Detail Modal -->
 <div id="recipe-modal" class="modal">
+    <div class="modal-backdrop"></div>
     <div class="modal-content">
-        <h3>레시피 상세 기록</h3>
+        <div class="modal-progress-steps">
+            <div class="step active">1</div>
+            <div class="step-line"></div>
+            <div class="step active">2</div>
+            <div class="step-line"></div>
+            <div class="step" id="step-3">3</div>
+        </div>
+
+        <h3 id="modal-title">레시피 완성하기</h3>
+        <p class="modal-subtitle" id="modal-subtitle">원두 정보를 추가하면 나중에 재현할 수 있습니다</p>
+
         <div class="modal-form-group">
-            <label for="modal-bean-name" id="lbl-modal-bean-name">원두 이름:</label>
-            <input type="text" id="modal-bean-name" required>
+            <label for="modal-bean-name" id="lbl-modal-bean-name">원두 이름 <span class="required">*</span></label>
+            <input type="text" id="modal-bean-name" placeholder="예: Ethiopia Yirgacheffe">
         </div>
         <div class="modal-form-group">
-            <label for="modal-purchase-url" id="lbl-modal-purchase-url">구매처 URL:</label>
-            <input type="url" id="modal-purchase-url">
+            <label for="modal-purchase-url" id="lbl-modal-purchase-url">구매처 URL</label>
+            <input type="url" id="modal-purchase-url" placeholder="https://...">
         </div>
         <div class="modal-form-group">
-            <label for="modal-image-url" id="lbl-modal-image-url">원두 이미지 URL (선택):</label>
-            <input type="url" id="modal-image-url">
+            <label for="modal-image-url" id="lbl-modal-image-url">원두 이미지 URL</label>
+            <input type="url" id="modal-image-url" placeholder="https://...">
         </div>
         <div class="modal-form-group">
-            <label for="modal-taste-notes" id="lbl-modal-taste-notes">맛 노트:</label>
-            <textarea id="modal-taste-notes"></textarea>
+            <label for="modal-taste-notes" id="lbl-modal-taste-notes">테이스팅 노트</label>
+            <textarea id="modal-taste-notes" placeholder="꽃향, 복숭아, 밝은 산미..."></textarea>
         </div>
-        <div class="modal-form-group">
-            <label id="lbl-modal-overall-rating">전체 평점:</label>
-            <div class="rating-input" id="modal-overall-rating-container">
-                <input type="radio" id="rating-5" name="overallRating" value="5"><label for="rating-5">★</label>
-                <input type="radio" id="rating-4" name="overallRating" value="4"><label for="rating-4">★</label>
-                <input type="radio" id="rating-3" name="overallRating" value="3" checked><label for="rating-3">★</label>
-                <input type="radio" id="rating-2" name="overallRating" value="2"><label for="rating-2">★</label>
-                <input type="radio" id="rating-1" name="overallRating" value="1"><label for="rating-1">★</label>
+
+        <div class="modal-row">
+            <div class="modal-form-group half">
+                <label id="lbl-modal-overall-rating">평점</label>
+                <div class="rating-input" id="modal-overall-rating-container">
+                    <input type="radio" id="rating-5" name="overallRating" value="5">
+                    <label for="rating-5">★</label>
+                    <input type="radio" id="rating-4" name="overallRating" value="4">
+                    <label for="rating-4">★</label>
+                    <input type="radio" id="rating-3" name="overallRating" value="3" checked>
+                    <label for="rating-3">★</label>
+                    <input type="radio" id="rating-2" name="overallRating" value="2">
+                    <label for="rating-2">★</label>
+                    <input type="radio" id="rating-1" name="overallRating" value="1">
+                    <label for="rating-1">★</label>
+                </div>
+            </div>
+
+            <div class="modal-form-group half">
+                <label id="lbl-modal-success-fail">결과</label>
+                <div class="result-toggle">
+                    <button class="result-btn fail active" id="btn-fail">✗ FAIL</button>
+                    <button class="result-btn success" id="btn-success">✓ SUCCESS</button>
+                    <input type="checkbox" id="modal-success-fail" style="display:none">
+                </div>
             </div>
         </div>
-        <div class="modal-form-group">
-            <label id="lbl-modal-success-fail">성공 / 실패:</label>
-            <div class="success-fail-toggle">
-                <input type="checkbox" id="modal-success-fail">
-                <label for="modal-success-fail" class="toggle-label"></label>
-            </div>
-        </div>
+
         <div class="modal-actions">
-            <button class="save-btn" id="modal-save-recipe">레시피 저장</button>
-            <button class="cancel-btn" id="modal-cancel">취소</button>
+            <button class="modal-save-btn" id="modal-save-recipe">
+                <span id="lbl-modal-save">레시피 저장하기</span>
+                <span>→</span>
+            </button>
+            <button class="modal-cancel-btn" id="modal-cancel">취소</button>
         </div>
     </div>
 </div>
