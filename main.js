@@ -376,12 +376,12 @@ document.addEventListener('DOMContentLoaded', () => {
         el.btnDrip.classList.toggle('active', mode === 'drip');
 
         if (mode === 'espresso') {
-            el.rTime.max = 60; el.rTime.step = 0.5; el.rTime.value = 28.5;
-            el.rYield.max = 60; el.rYield.step = 1; el.rYield.value = 36;
+            el.rTime.max = 60; el.rTime.step = 0.1; el.rTime.value = 28.5;
+            el.rYield.max = 60; el.rYield.step = 0.1; el.rYield.value = 36;
             el.uTime.textContent = "sec";
         } else {
-            el.rTime.max = 300; el.rTime.step = 1; el.rTime.value = 150;
-            el.rYield.max = 600; el.rYield.step = 5; el.rYield.value = 250;
+            el.rTime.max = 300; el.rTime.step = 0.1; el.rTime.value = 150;
+            el.rYield.max = 600; el.rYield.step = 0.1; el.rYield.value = 250;
             el.uTime.textContent = "sec";
         }
 
@@ -400,10 +400,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (id === 'time' && currentMode === 'drip' && displayVal >= 60) {
             const m = Math.floor(displayVal / 60);
-            const s = displayVal % 60;
+            const s = (displayVal % 60).toFixed(1);
             displayStr = `${m}:${s < 10 ? '0' + s : s}`;
         } else {
-            displayStr = (id === 'dosing' || id === 'yield') ? displayVal.toFixed(1) : displayVal.toString();
+            displayStr = displayVal.toFixed(1);
         }
 
         const vEl = el[`v${id.charAt(0).toUpperCase() + id.slice(1)}`];
@@ -413,16 +413,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (qbEl) {
             const quality = getQualityLabel(parseFloat(val), id);
             updateQualityBadge(qbEl, quality);
-        }
-
-        // Update Visuals
-        if (id === 'dosing') {
-            const pct = (displayVal - 7) / (40 - 7) * 100;
-            el.visDosing.style.width = `${Math.min(100, Math.max(0, pct))}%`;
-        }
-        if (id === 'temp') {
-            const pct = (displayVal - 80) / (100 - 80) * 100;
-            el.visTemp.style.width = `${Math.min(100, Math.max(0, pct))}%`;
         }
 
         if (window.navigator.vibrate) window.navigator.vibrate(5);
