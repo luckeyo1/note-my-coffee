@@ -5,8 +5,9 @@ const CoffeeNotesStorage = {
     KEY: 'coffeeRecipes', // Changed key to reflect new recipe focus
     getRecipes() {
         try {
-            const recipes = localStorage.getItem(this.KEY);
-            return recipes ? JSON.parse(recipes) : [];
+            const recipesString = localStorage.getItem(this.KEY);
+            const recipes = recipesString ? JSON.parse(recipesString) : [];
+            return Array.isArray(recipes) ? recipes : [];
         } catch (e) {
             console.error("Error getting recipes from localStorage", e);
             return [];

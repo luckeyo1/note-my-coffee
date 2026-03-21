@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLang = 'en';
     let successResult = false;
     let uploadedImageData = ''; // Base64 image string
+    let audioCtx = null;
 
     // IMPORTANT: Replace 'YOUR_WEATHERAPI_KEY' with your actual WeatherAPI.com API key.
     const WEATHERAPI_KEY = '549486968354490e95c131115262003';
@@ -25,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmExitModal: "Discard this recipe?",
             progressLabel: "RECIPE COMPLETENESS",
             progressHint: "Add bean name to complete",
-            proHintDosing: "Pro range: 18–21g",
-            proHintTemp: "Pro range: 90–96°C",
-            proHintTime: "Pro range: 25–35sec",
-            proHintYield: "Brew ratio: 1:2",
+            proHintDosing: "Pro range: 18.0–21.0g",
+            proHintTemp: "Pro range: 90.0–96.0°C",
+            proHintTime: "Pro range: 25.0–35.0sec",
+            proHintYield: "Brew ratio: 1:2.0",
             ratioLabel: "BREW RATIO",
             ratioIdeal: "✓ SCA recommended",
             ratioWarning: "⚡ Adjust for balance",
@@ -65,10 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmExitModal: "이 레시피를 버리겠습니까?",
             progressLabel: "레시피 완성도",
             progressHint: "원두 이름을 기록하면 완성됩니다",
-            proHintDosing: "프로 범위: 18–21g",
-            proHintTemp: "프로 범위: 90–96°C",
-            proHintTime: "프로 범위: 25–35sec",
-            proHintYield: "브루 비율: 1:2",
+            proHintDosing: "프로 범위: 18.0–21.0g",
+            proHintTemp: "프로 범위: 90.0–96.0°C",
+            proHintTime: "프로 범위: 25.0–35.0sec",
+            proHintYield: "브루 비율: 1:2.0",
             ratioLabel: "브루 레이시오",
             ratioIdeal: "✓ SCA 권장 범위",
             ratioWarning: "⚡ 균형을 위해 조정 필요",
@@ -176,15 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
         visTemp: document.getElementById('vis-temp'),
     };
 
-    // ===== Stopwatch State =====
-    const sw = {
-        running: false,
-        elapsed: 0,
-        startTime: null,
-        rafId: null,
-        done: false,
-    };
-
+    // ===== Stopwatch =====
+    const sw = { running: false, elapsed: 0, startTime: null, rafId: null, done: false };
     const RING_CIRC = 326.7;
     const swGetMax = () => currentMode === 'espresso' ? 60 : 300;
 
@@ -193,23 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const min = Math.floor(total / 60);
         const sec = Math.floor(total % 60);
         const tenth = Math.floor((ms % 1000) / 100);
-        if (min > 0) return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${tenth}`;
-        return `${String(sec).padStart(2,'0')}.${tenth}`;
+        return min > 0 ? `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${tenth}` : `${String(sec).padStart(2,'0')}.${tenth}`;
     };
 
     const swUpdateRing = (elapsed) => {
-        const max = swGetMax() * 1000;
-        const pct = Math.min(elapsed / max, 1);
-        const offset = RING_CIRC * (1 - pct);
-        el.swRingProgress.style.strokeDashoffset = offset;
-
-        if (elapsed > max) {
-            el.swRingProgress.style.stroke = 'var(--danger)';
-        } else if (!sw.running && elapsed > 0) {
-            el.swRingProgress.style.stroke = 'var(--success)';
-        } else {
-            el.swRingProgress.style.stroke = 'var(--accent)';
-        }
+        const pct = Math.min(elapsed / (swGetMax() * 1000), 1);
+        el.swRingProgress.style.strokeDashoffset = RING_CIRC * (1 - pct);
+        el.swRingProgress.style.stroke = elapsed > (swGetMax() * 1000) ? 'var(--danger)' : (!sw.running && elapsed > 0 ? 'var(--success)' : 'var(--accent)');
     };
 
     const swTick = () => {
@@ -221,74 +205,50 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const swStart = () => {
-        sw.running = true;
-        sw.done = false;
-        sw.startTime = Date.now() - sw.elapsed;
-        el.swTime.classList.add('running');
-        el.swTime.classList.remove('done');
+        sw.running = true; sw.done = false; sw.startTime = Date.now() - sw.elapsed;
+        el.swTime.classList.add('running'); el.swTime.classList.remove('done');
         el.swStatus.textContent = i18n[currentLang].swStatusRunning;
         el.lblSwStart.textContent = i18n[currentLang].swStop;
         el.swBtnStart.classList.add('stop-mode');
-        el.swBtnReset.disabled = false;
-        el.swBtnApply.disabled = true;
+        el.swBtnReset.disabled = false; el.swBtnApply.disabled = true;
         el.swHint.textContent = i18n[currentLang].swHintRunning;
         sw.rafId = requestAnimationFrame(swTick);
     };
 
     const swStop = () => {
-        sw.running = false;
-        sw.done = true;
-        cancelAnimationFrame(sw.rafId);
-        el.swTime.classList.remove('running');
-        el.swTime.classList.add('done');
+        sw.running = false; sw.done = true; cancelAnimationFrame(sw.rafId);
+        el.swTime.classList.remove('running'); el.swTime.classList.add('done');
         el.swStatus.textContent = i18n[currentLang].swStatusDone;
         el.lblSwStart.textContent = i18n[currentLang].swRestart;
         el.swBtnStart.classList.remove('stop-mode');
         el.swBtnApply.disabled = false;
         swUpdateRing(sw.elapsed);
-
         const secs = sw.elapsed / 1000;
-        const proLow = currentMode === 'espresso' ? 25 : 120;
-        const proHigh = currentMode === 'espresso' ? 35 : 240;
-        
-        let hintKey = 'swHintIdeal';
-        if (secs < proLow) hintKey = 'swHintUnder';
-        else if (secs > proHigh) hintKey = 'swHintOver';
-        
-        el.swHint.textContent = i18n[currentLang][hintKey].replace('{sec}', secs.toFixed(1));
+        const proL = currentMode === 'espresso' ? 25 : 120;
+        const proH = currentMode === 'espresso' ? 35 : 240;
+        let k = 'swHintIdeal';
+        if (secs < proL) k = 'swHintUnder'; else if (secs > proH) k = 'swHintOver';
+        el.swHint.textContent = i18n[currentLang][k].replace('{sec}', secs.toFixed(1));
     };
 
     const swReset = () => {
-        cancelAnimationFrame(sw.rafId);
-        sw.running = false;
-        sw.done = false;
-        sw.elapsed = 0;
-        sw.startTime = null;
-        el.swTime.textContent = '00.0';
-        el.swTime.classList.remove('running','done');
+        cancelAnimationFrame(sw.rafId); sw.running = false; sw.done = false; sw.elapsed = 0; sw.startTime = null;
+        el.swTime.textContent = '00.0'; el.swTime.classList.remove('running','done');
         el.swStatus.textContent = i18n[currentLang].swStatusReady;
         el.lblSwStart.textContent = i18n[currentLang].swStart;
         el.swBtnStart.classList.remove('stop-mode');
-        el.swBtnReset.disabled = true;
-        el.swBtnApply.disabled = true;
+        el.swBtnReset.disabled = true; el.swBtnApply.disabled = true;
         el.swRingProgress.style.strokeDashoffset = RING_CIRC;
         el.swHint.textContent = i18n[currentLang].swHintReady;
     };
 
     const swApply = () => {
         if (sw.elapsed === 0) return;
-        const secs = sw.elapsed / 1000;
-        const max = swGetMax();
-        const clamped = Math.min(Math.max(secs, 0), max);
-        const step = currentMode === 'espresso' ? 0.5 : 1;
-        const snapped = Math.round(clamped / step) * step;
-
-        el.rTime.value = snapped;
+        const snapped = Math.floor((sw.elapsed / 1000) * 10) / 10;
+        el.rTime.value = snapped.toFixed(1);
         updateVal('time', snapped);
-
         el.swBtnApply.textContent = '✓';
-        el.swHint.textContent = i18n[currentLang].swApplied.replace('{sec}', snapped);
-
+        el.swHint.textContent = i18n[currentLang].swApplied.replace('{sec}', snapped.toFixed(1));
         setTimeout(() => {
             el.lblSwApply.textContent = i18n[currentLang].swApply;
             el.stopwatchPanel.classList.remove('open');
@@ -297,241 +257,130 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1500);
     };
 
-    // ===== Marketing & Logic =====
-    const qualityRanges = {
-        espresso: {
-            dosing:  { low: 14, idealLow: 17, idealHigh: 22, high: 26 },
-            temp:    { low: 85, idealLow: 90, idealHigh: 96, high: 99 },
-            time:    { low: 20, idealLow: 25, idealHigh: 35, high: 45 },
-            yield:   { low: 15, idealLow: 30, idealHigh: 50, high: 58 },
-        },
-        drip: {
-            dosing:  { low: 10, idealLow: 15, idealHigh: 25, high: 35 },
-            temp:    { low: 85, idealLow: 90, idealHigh: 96, high: 99 },
-            time:    { low: 90, idealLow: 120, idealHigh: 240, high: 280 },
-            yield:   { low: 80, idealLow: 150, idealHigh: 400, high: 500 },
-        }
+    // --- Audio ---
+    const playTick = () => {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.03);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.03);
+        } catch (e) {}
     };
 
-    const getQualityLabel = (val, key) => {
-        const r = qualityRanges[currentMode][key];
-        if (val < r.low || val > r.high) return 'extreme';
-        if (val < r.idealLow || val > r.idealHigh) return 'low';
-        return 'ideal';
-    };
-
-    const updateQualityBadge = (badgeEl, label) => {
-        badgeEl.className = `quality-badge ${label}`;
-        const labels = { ideal: 'IDEAL', low: 'CHECK', high: 'CHECK', extreme: 'OFF' };
-        badgeEl.textContent = labels[label] || 'IDEAL';
-    };
-
-    const updateBrewRatio = () => {
-        const dosing = parseFloat(el.rDosing.value);
-        const yieldVal = parseFloat(el.rYield.value);
-        const ratio = yieldVal / dosing;
-        el.ratioNum.textContent = `1 : ${ratio.toFixed(1)}`;
-
-        const coffeeWidth = (dosing / (dosing + yieldVal)) * 100;
-        el.ratioCoffeeBar.style.width = `${coffeeWidth}%`;
-
-        const lang = i18n[currentLang];
-        let isIdeal;
-        if (currentMode === 'espresso') {
-            isIdeal = ratio >= 1.5 && ratio <= 2.5;
+    // --- Logic ---
+    const updateVal = (id, val) => {
+        let dv = parseFloat(val);
+        let ds = '';
+        if (id === 'time' && currentMode === 'drip' && dv >= 60) {
+            const m = Math.floor(dv / 60); const s = (dv % 60).toFixed(1);
+            ds = `${m}:${s < 10 ? '0' + s : s}`;
         } else {
-            isIdeal = ratio >= 13 && ratio <= 18;
+            ds = dv.toFixed(1);
         }
-
-        el.ratioStatus.textContent = isIdeal ? lang.ratioIdeal : lang.ratioWarning;
-        el.ratioStatus.className = `ratio-status ${isIdeal ? 'ideal' : 'warning'}`;
+        const vEl = el[`v${id.charAt(0).toUpperCase() + id.slice(1)}`];
+        if (vEl && vEl.textContent !== ds) {
+            vEl.textContent = ds;
+            playTick();
+        }
+        const qbEl = el[`qb${id.charAt(0).toUpperCase() + id.slice(1)}`];
+        if (qbEl) {
+            const ranges = qualityRanges[currentMode][id];
+            let label = (dv < ranges.low || dv > ranges.high) ? 'extreme' : ((dv < ranges.idealLow || dv > ranges.idealHigh) ? 'low' : 'ideal');
+            qbEl.className = `quality-badge ${label}`;
+            qbEl.textContent = { ideal: 'IDEAL', low: 'CHECK', extreme: 'OFF' }[label];
+        }
+        // --- 비주얼 바 ---
+        if (id === 'dosing' && el.visDosing) el.visDosing.style.width = `${(dv - 7) / (40 - 7) * 100}%`;
+        if (id === 'temp' && el.visTemp) el.visTemp.style.width = `${(dv - 80) / (100 - 80) * 100}%`;
+        
+        updateBrewRatio(); updateProgress();
     };
 
-    const updateProgress = () => {
-        let score = 75; 
-        const beanFilled = el.modalBeanName && el.modalBeanName.value.trim().length > 0;
-        if (beanFilled) score = 100;
-
-        el.progressFill.style.width = `${score}%`;
-        el.progressPct.textContent = `${score}%`;
-        el.progressHint.textContent = beanFilled
-            ? (currentLang === 'ko' ? '완성된 레시피입니다 ✓' : 'Recipe complete ✓')
-            : i18n[currentLang].progressHint;
-    };
-
-    const updateLogbookBadge = () => {
-        const recipes = (typeof CoffeeNotesStorage !== 'undefined') ? CoffeeNotesStorage.getRecipes() : [];
-        const count = recipes.length;
-        el.logbookCount.textContent = count;
-        el.logbookCount.style.display = count > 0 ? 'flex' : 'none';
-
-        const today = new Date().toDateString();
-        const todayCount = recipes.filter(r => new Date(r.date).toDateString() === today).length;
-        el.dailyCount.textContent = todayCount;
+    const qualityRanges = {
+        espresso: { dosing: { low: 14, idealLow: 17, idealHigh: 22, high: 26 }, temp: { low: 85, idealLow: 90, idealHigh: 96, high: 99 }, time: { low: 20, idealLow: 25, idealHigh: 35, high: 45 }, yield: { low: 15, idealLow: 30, idealHigh: 50, high: 58 } },
+        drip: { dosing: { low: 10, idealLow: 15, idealHigh: 25, high: 35 }, temp: { low: 85, idealLow: 90, idealHigh: 96, high: 99 }, time: { low: 90, idealLow: 120, idealHigh: 240, high: 280 }, yield: { low: 80, idealLow: 150, idealHigh: 400, high: 500 } }
     };
 
     const setMode = (mode) => {
         currentMode = mode;
         el.btnEspresso.classList.toggle('active', mode === 'espresso');
         el.btnDrip.classList.toggle('active', mode === 'drip');
-
-        if (mode === 'espresso') {
-            el.rTime.max = 60; el.rTime.step = 0.1; el.rTime.value = 28.5;
-            el.rYield.max = 60; el.rYield.step = 0.1; el.rYield.value = 36;
-            el.uTime.textContent = "sec";
-        } else {
-            el.rTime.max = 300; el.rTime.step = 0.1; el.rTime.value = 150;
-            el.rYield.max = 600; el.rYield.step = 0.1; el.rYield.value = 250;
-            el.uTime.textContent = "sec";
-        }
-
-        updateVal('dosing', el.rDosing.value);
-        updateVal('temp', el.rTemp.value);
-        updateVal('time', el.rTime.value);
-        updateVal('yield', el.rYield.value);
-        updateBrewRatio();
-        updateProHints();
+        el.rTime.max = mode === 'espresso' ? 60 : 300;
+        el.rYield.max = mode === 'espresso' ? 60 : 600;
+        ['rDosing','rTemp','rTime','rYield'].forEach(k => el[k].step = 0.1);
+        updateVal('dosing', el.rDosing.value); updateVal('temp', el.rTemp.value);
+        updateVal('time', el.rTime.value); updateVal('yield', el.rYield.value);
+        updateBrewRatio(); updateProHints();
         if (el.stopwatchPanel.classList.contains('open')) swReset();
-    };
-
-    const updateVal = (id, val) => {
-        let displayVal = parseFloat(val);
-        let displayStr = '';
-
-        if (id === 'time' && currentMode === 'drip' && displayVal >= 60) {
-            const m = Math.floor(displayVal / 60);
-            const s = (displayVal % 60).toFixed(1);
-            displayStr = `${m}:${s < 10 ? '0' + s : s}`;
-        } else {
-            displayStr = displayVal.toFixed(1);
-        }
-
-        const vEl = el[`v${id.charAt(0).toUpperCase() + id.slice(1)}`];
-        if (vEl) vEl.textContent = displayStr;
-
-        const qbEl = el[`qb${id.charAt(0).toUpperCase() + id.slice(1)}`];
-        if (qbEl) {
-            const quality = getQualityLabel(parseFloat(val), id);
-            updateQualityBadge(qbEl, quality);
-        }
-
-        if (window.navigator.vibrate) window.navigator.vibrate(5);
-        updateBrewRatio();
-        updateProgress();
-    };
-
-    const updateProHints = () => {
-        const lang = i18n[currentLang];
-        el.hintDosing.textContent = lang.proHintDosing;
-        el.hintTemp.textContent = lang.proHintTemp;
-        el.hintTime.textContent = lang.proHintTime;
-        el.hintYield.textContent = lang.proHintYield;
-        el.ratioLabel.textContent = lang.ratioLabel;
-    };
-
-    const setLang = (lang) => {
-        currentLang = lang;
-        el.btnLangEn.classList.toggle('active', lang === 'en');
-        el.btnLangKo.classList.toggle('active', lang === 'ko');
-
-        const t = i18n[lang];
-        el.lblDosing.textContent = t.dosing;
-        el.lblTemp.textContent = t.temp;
-        el.lblTime.textContent = t.time;
-        el.lblYield.textContent = t.yield;
-        el.lblSave.textContent = t.save;
-        el.saveNudge.textContent = t.savingNudge;
-        el.brandTagline.textContent = t.brandTagline;
-        el.progressLabelText.textContent = t.progressLabel;
-
-        if (el.lblModalBeanName) el.lblModalBeanName.textContent = t.modalBeanName;
-        if (el.lblModalPurchaseUrl) el.lblModalPurchaseUrl.textContent = t.modalPurchaseUrl;
-        if (el.lblModalImageUrl) el.lblModalImageUrl.textContent = t.modalImageUrl;
-        if (el.lblModalTasteNotes) el.lblModalTasteNotes.textContent = t.modalTasteNotes;
-        if (el.lblModalOverallRating) el.lblModalOverallRating.textContent = t.modalOverallRating;
-        if (el.lblModalSuccessFail) el.lblModalSuccessFail.textContent = t.modalSuccessFail;
-        if (el.lblModalSave) el.lblModalSave.textContent = t.modalSave;
-        if (el.modalTitle) el.modalTitle.textContent = t.modalTitle;
-        if (el.modalSubtitle) el.modalSubtitle.textContent = t.modalSubtitle;
-        if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
-        
-        el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
-        el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
-        el.lblSwReset.textContent = "RESET";
-        el.lblSwApply.textContent = t.swApply;
-        el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
-
-        updateProHints();
-        updateProgress();
-        updateBrewRatio();
     };
 
     const fetchWeather = () => {
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
-        const setFallback = (msg) => {
-            const defaultLoc = currentLang === 'ko' ? '서울' : 'SEOUL';
-            if (infoSpan) infoSpan.innerHTML = `📍 <span contenteditable="true" class="editable-loc" title="Click to edit">${defaultLoc}</span> · ☀️ 18°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`;
-        };
-
-        if (!WEATHERAPI_KEY || WEATHERAPI_KEY === 'YOUR_WEATHERAPI_KEY') {
-            setFallback(currentLang === 'ko' ? "API 키 필요" : "API Key Required"); return;
-        }
+        const setFallback = (msg) => { if (infoSpan) infoSpan.innerHTML = `📍 SEOUL · ☀️ 18.0°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`; };
+        if (!WEATHERAPI_KEY) return setFallback("API 키 필요");
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const { latitude: lat, longitude: lon } = pos.coords;
-                const langCode = currentLang === 'ko' ? 'ko' : 'en';
-                const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}&aqi=no&lang=${langCode}`;
+                const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}&aqi=no&lang=${currentLang === 'ko' ? 'ko' : 'en'}`;
                 try {
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    
-                    // Improve location name: combine region and name if helpful
-                    const city = data.location.name;
-                    const region = data.location.region;
-                    const locationName = (region && !region.includes(city)) ? `${region} ${city}` : city;
-                    
-                    const temp = Math.round(data.current.temp_c);
-                    const humidity = data.current.humidity;
-                    const iconUrl = data.current.condition.icon;
-                    if (infoSpan) infoSpan.innerHTML = `📍 <span contenteditable="true" class="editable-loc" title="Click to edit">${locationName}</span> · <img src="${iconUrl}" style="vertical-align:middle;height:16px;"> ${temp}°C · 💧 ${humidity}%`;
-                    
-                    if (humidity > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${humidity}% — try slightly coarser grind`;
-                    else if (humidity < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 추출 강도 +0.5g 권장` : `Humidity ${humidity}% — consider +0.5g dosing`;
+                    const res = await fetch(url); const data = await res.json();
+                    const city = data.location.name; const temp = data.current.temp_c; const hum = data.current.humidity; const icon = data.current.condition.icon;
+                    if (infoSpan) infoSpan.innerHTML = `📍 ${city} · <img src="${icon}" style="vertical-align:middle;height:16px;"> ${temp.toFixed(1)}°C · 💧 ${hum}%`;
+                    if (hum > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${hum}% — try slightly coarser grind`;
+                    else if (hum < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 추출 강도 +0.5g 권장` : `Humidity ${hum}% — consider +0.5g dosing`;
                     else el.envHint.textContent = currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
-                } catch (e) { setFallback(currentLang === 'ko' ? "에러 발생" : "Error occurred"); }
-            }, (err) => {
-                const msg = err.code === 1 
-                    ? (currentLang === 'ko' ? "위치 권한 거부됨" : "Location Denied")
-                    : (currentLang === 'ko' ? "위치 오류" : "Location Error");
-                setFallback(msg);
-            }, {
-                enableHighAccuracy: true,
-                timeout: 8000,
-                maximumAge: 0
-            });
+                } catch (e) { setFallback("에러"); }
+            }, (err) => setFallback("위치 오류"));
         }
     };
 
-    // --- Events ---
-    // Handle Enter key on editable location
-    document.addEventListener('keydown', (e) => {
-        if (e.target.classList.contains('editable-loc') && e.key === 'Enter') {
-            e.preventDefault();
-            e.target.blur();
-        }
-    });
+    const updateBrewRatio = () => {
+        const d = parseFloat(el.rDosing.value); const y = parseFloat(el.rYield.value); const r = y / d;
+        el.ratioNum.textContent = `1 : ${r.toFixed(1)}`;
+        el.ratioCoffeeBar.style.width = `${(d / (d + y)) * 100}%`;
+        let ideal = currentMode === 'espresso' ? (r >= 1.5 && r <= 2.5) : (r >= 13 && r <= 18);
+        el.ratioStatus.textContent = ideal ? i18n[currentLang].ratioIdeal : i18n[currentLang].ratioWarning;
+        el.ratioStatus.className = `ratio-status ${ideal ? 'ideal' : 'warning'}`;
+    };
 
+    const updateProgress = () => {
+        let score = (el.modalBeanName && el.modalBeanName.value.trim().length > 0) ? 100 : 75;
+        el.progressFill.style.width = `${score}%`; el.progressPct.textContent = `${score}%`;
+        el.progressHint.textContent = score === 100 ? (currentLang === 'ko' ? '완성된 레시피입니다 ✓' : 'Recipe complete ✓') : i18n[currentLang].progressHint;
+    };
+
+    const updateLogbookBadge = () => {
+        const recipes = (typeof CoffeeNotesStorage !== 'undefined') ? CoffeeNotesStorage.getRecipes() : [];
+        if (!Array.isArray(recipes)) return;
+        el.logbookCount.textContent = recipes.length; el.logbookCount.style.display = recipes.length > 0 ? 'flex' : 'none';
+        const todayCount = recipes.filter(r => r && r.date && new Date(r.date).toDateString() === new Date().toDateString()).length;
+        el.dailyCount.textContent = todayCount;
+    };
+
+    const updateProHints = () => { ['Dosing','Temp','Time','Yield'].forEach(k => el[`hint${k}`].textContent = i18n[currentLang][`proHint${k}`]); el.ratioLabel.textContent = i18n[currentLang].ratioLabel; };
+
+    const setLang = (lang) => {
+        currentLang = lang; ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
+        const t = i18n[lang]; ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => el[k].textContent = t[k.replace('lbl','').toLowerCase()] || t[k]);
+        ['lblModalBeanName','lblModalPurchaseUrl','lblModalImageUrl','lblModalTasteNotes','lblModalOverallRating','lblModalSuccessFail','lblModalSave','modalTitle','modalSubtitle'].forEach(k => el[k].textContent = t[k.replace('lbl','').charAt(0).toLowerCase() + k.replace('lbl','').slice(1)] || t[k]);
+        if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
+        el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
+        el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
+        el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
+        updateProHints(); updateProgress(); updateBrewRatio();
+    };
+
+    // --- Events ---
     el.btnEspresso.addEventListener('click', () => setMode('espresso'));
     el.btnDrip.addEventListener('click', () => setMode('drip'));
     el.btnLangEn.addEventListener('click', () => setLang('en'));
     el.btnLangKo.addEventListener('click', () => setLang('ko'));
     el.btnViewLogbook.addEventListener('click', () => window.location.href = 'logbook.html');
-
-    el.rDosing.addEventListener('input', (e) => updateVal('dosing', e.target.value));
-    el.rTemp.addEventListener('input', (e) => updateVal('temp', e.target.value));
-    el.rTime.addEventListener('input', (e) => updateVal('time', e.target.value));
-    el.rYield.addEventListener('input', (e) => updateVal('yield', e.target.value));
-
+    ['rDosing','rTemp','rTime','rYield'].forEach(k => el[k].addEventListener('input', (e) => updateVal(k.substring(1).toLowerCase(), e.target.value)));
     el.btnStopwatch.addEventListener('click', () => {
         const isOpen = el.stopwatchPanel.classList.toggle('open');
         el.btnStopwatch.classList.toggle('active', isOpen);
@@ -541,50 +390,57 @@ document.addEventListener('DOMContentLoaded', () => {
     el.swBtnStart.addEventListener('click', () => { if (sw.running) swStop(); else swStart(); });
     el.swBtnReset.addEventListener('click', swReset);
     el.swBtnApply.addEventListener('click', swApply);
-
-    el.btnSave.addEventListener('click', openModal);
-    el.modalCancel.addEventListener('click', () => closeModal());
-    el.recipeModal.querySelector('.modal-backdrop')?.addEventListener('click', () => closeModal());
-
-    el.btnFail.addEventListener('click', () => {
-        successResult = false; el.modalSuccessFail.checked = false;
-        el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active');
+    el.btnSave.addEventListener('click', () => {
+        el.recipeModal.classList.add('active');
+        el.modalBeanName.value = ''; el.modalPurchaseUrl.value = ''; el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; el.modalTasteNotes.value = ''; el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; setTimeout(() => el.modalBeanName.focus(), 400);
     });
-    el.btnSuccess.addEventListener('click', () => {
-        successResult = true; el.modalSuccessFail.checked = true;
-        el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active');
-    });
-
+    el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));
+    el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
+    el.btnSuccess.addEventListener('click', () => { successResult = true; el.modalSuccessFail.checked = true; el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active'); });
     el.modalSaveRecipe.addEventListener('click', () => {
-        const beanName = el.modalBeanName.value.trim();
-        if (!beanName) { el.modalBeanName.focus(); return; }
+        try {
+            const bean = el.modalBeanName.value.trim(); if (!bean) return el.modalBeanName.focus();
+            
+            // Safety checks for DOM elements
+            const ratingInput = el.modalOverallRatingContainer.querySelector('input[name="overallRating"]:checked');
+            const weatherSpan = el.weatherInfo ? el.weatherInfo.querySelector('span:last-child') : null;
+            const weatherValue = weatherSpan ? weatherSpan.innerHTML : (currentLang === 'ko' ? '날씨 정보 없음' : 'Weather unavailable');
 
-        const recipe = {
-            id: Date.now().toString(),
-            date: new Date().toISOString(),
-            mode: currentMode,
-            dosing: parseFloat(el.rDosing.value),
-            temp: parseFloat(el.rTemp.value),
-            time: parseFloat(el.rTime.value),
-            yield: parseFloat(el.rYield.value),
-            beanName,
-            purchaseUrl: el.modalPurchaseUrl.value.trim(),
-            imageUrl: uploadedImageData,
-            tasteNotes: el.modalTasteNotes.value.trim(),
-            overallRating: getSelectedRating(),
-            success: successResult,
-            weather: el.weatherInfo.querySelector('span:last-child').innerHTML
-        };
+            // Image size check (approx 2MB limit for base64)
+            if (uploadedImageData && uploadedImageData.length > 2 * 1024 * 1024) {
+                alert(currentLang === 'ko' ? '이미지 크기가 너무 큽니다. 다른 사진을 선택해 주세요.' : 'Image size is too large. Please choose another photo.');
+                return;
+            }
 
-        if (typeof CoffeeNotesStorage !== 'undefined' && CoffeeNotesStorage.saveRecipe(recipe)) {
-            alert(i18n[currentLang].recipeSavedSuccess);
-            window.location.href = 'logbook.html';
+            const recipe = {
+                id: Date.now().toString(), date: new Date().toISOString(), mode: currentMode,
+                dosing: parseFloat(parseFloat(el.rDosing.value).toFixed(1)),
+                temp: parseFloat(parseFloat(el.rTemp.value).toFixed(1)),
+                time: parseFloat(parseFloat(el.rTime.value).toFixed(1)),
+                yield: parseFloat(parseFloat(el.rYield.value).toFixed(1)),
+                beanName: bean, purchaseUrl: el.modalPurchaseUrl.value.trim(), imageUrl: uploadedImageData, tasteNotes: el.modalTasteNotes.value.trim(), 
+                overallRating: ratingInput ? parseInt(ratingInput.value, 10) : 3, 
+                success: successResult, weather: weatherValue
+            };
+
+            if (typeof CoffeeNotesStorage !== 'undefined') {
+                if (CoffeeNotesStorage.saveRecipe(recipe)) {
+                    alert(i18n[currentLang].recipeSavedSuccess);
+                    window.location.href = 'logbook.html';
+                } else {
+                    alert(i18n[currentLang].recipeSavedFail);
+                }
+            } else {
+                alert(i18n[currentLang].recipeSavedFail);
+            }
+        } catch (error) {
+            console.error("Save failed:", error);
+            alert(i18n[currentLang].recipeSavedFail);
         }
     });
+    el.modalImageFile.addEventListener('change', (e) => {
+        const f = e.target.files[0]; if (f) { el.fileNameDisplay.innerText = f.name; const r = new FileReader(); r.onload = (ev) => { uploadedImageData = ev.target.result; el.btnImageUpload.innerText = i18n[currentLang].photoSelected; }; r.readAsDataURL(f); }
+    });
 
-    setLang(currentLang);
-    setMode(currentMode);
-    fetchWeather();
-    updateLogbookBadge();
-    updateProgress();
+    setMode('espresso'); fetchWeather(); updateLogbookBadge();
 });

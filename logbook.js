@@ -79,15 +79,20 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.recipeCardsGrid.innerHTML = ''; // Clear existing cards
         const recipes = CoffeeNotesStorage.getRecipes();
 
-        if (recipes.length === 0) {
+        if (!Array.isArray(recipes) || recipes.length === 0) {
             elements.recipeCardsGrid.innerHTML = `<p class="no-recipes-message">${i18n[currentLang].noRecipes}</p>`;
             return;
         }
 
         // Sort by date (newest first)
-        recipes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        recipes.sort((a, b) => {
+            const dateA = a && a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b && b.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA;
+        });
 
         recipes.forEach(recipe => {
+            if (!recipe) return;
             const card = document.createElement('div');
             card.className = 'recipe-card';
             
@@ -96,20 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? `<img src="${recipe.imageUrl}" alt="${recipe.beanName || 'Coffee'}" class="recipe-card-image">`
                 : '';
 
+            const safeMode = recipe.mode ? recipe.mode.toUpperCase() : 'UNKNOWN';
+            const safeWeather = recipe.weather || (currentLang === 'ko' ? '정보 없음' : 'No info');
+            const safeRating = parseInt(recipe.overallRating, 10) || 0;
+
             card.innerHTML = `
                 ${photoHtml}
                 <div class="recipe-card-content">
                     <h4>${recipe.beanName || (currentLang === 'ko' ? '원두명 미상' : 'Unknown Bean')}</h4>
-                    <p><span class="label">${i18n[currentLang].mode}</span> ${recipe.mode.toUpperCase()}</p>
-                    <p><span class="label">${i18n[currentLang].dosing}</span> ${recipe.dosing}g</p>
-                    <p><span class="label">${i18n[currentLang].temp}</span> ${recipe.temp}°C</p>
-                    <p><span class="label">${i18n[currentLang].time}</span> ${recipe.mode === 'espresso' ? recipe.time + 'sec' : `${Math.floor(recipe.time / 60)}:${(recipe.time % 60).toString().padStart(2, '0')}min`}</p>
-                    <p><span class="label">${i18n[currentLang].yield}</span> ${recipe.yield}g</p>
+                    <p><span class="label">${i18n[currentLang].mode}</span> ${safeMode}</p>
+                    <p><span class="label">${i18n[currentLang].dosing}</span> ${recipe.dosing || 0}g</p>
+                    <p><span class="label">${i18n[currentLang].temp}</span> ${recipe.temp || 0}°C</p>
+                    <p><span class="label">${i18n[currentLang].time}</span> ${recipe.mode === 'espresso' ? (recipe.time || 0) + 'sec' : `${Math.floor((recipe.time || 0) / 60)}:${((recipe.time || 0) % 60).toString().padStart(2, '0')}min`}</p>
+                    <p><span class="label">${i18n[currentLang].yield}</span> ${recipe.yield || 0}g</p>
                     <p><span class="label">${i18n[currentLang].tasteNotes}</span> ${recipe.tasteNotes || '-'}</p>
-                    <p class="recipe-card-rating">${_renderStars(recipe.overallRating)}</p>
+                    <p class="recipe-card-rating">${_renderStars(safeRating)}</p>
                     ${recipe.purchaseUrl ? `<p><a href="${recipe.purchaseUrl}" target="_blank">${i18n[currentLang].purchaseLink}</a></p>` : ''}
-                    <p><span class="label">${i18n[currentLang].weather}</span> ${recipe.weather}</p>
-                    <p><span class="label">Date:</span> ${new Date(recipe.date).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US')}</p>
+                    <p><span class="label">${i18n[currentLang].weather}</span> ${safeWeather}</p>
+                    <p><span class="label">Date:</span> ${recipe.date ? new Date(recipe.date).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US') : '-'}</p>
                 </div>
                 <div class="recipe-card-footer">
                     <span class="status-indicator ${recipe.success ? 'status-success' : 'status-fail'}">

@@ -45,7 +45,7 @@
     <div class="env-strip">
         <div class="env-info" id="weather-info">
             <span class="env-dot"></span>
-            <span>📍 SEOUL · ☀️ 18°C · 💧 45%</span>
+            <span>📍 SEOUL · ☀️ 18.0°C · 💧 45%</span>
         </div>
         <div class="env-hint" id="env-hint">Ideal extraction conditions today</div>
     </div>
@@ -82,7 +82,7 @@
             <div class="control-header">
                 <div class="control-meta">
                     <span class="control-label" id="lbl-dosing">DOSING</span>
-                    <span class="control-pro-hint" id="hint-dosing">Pro range: 18–21g</span>
+                    <span class="control-pro-hint" id="hint-dosing">Pro range: 18.0–21.0g</span>
                 </div>
                 <div class="control-value">
                     <span id="v-dosing">18.0</span>
@@ -91,9 +91,9 @@
                 </div>
             </div>
             <div class="visual-container">
-                <div class="visual-dosing-bar" id="vis-dosing"></div>
+                <div class="visual-bar visual-dosing-bar" id="vis-dosing" style="width: 33.3%;"></div>
             </div>
-            <input type="range" id="r-dosing" min="7" max="40" step="0.1" value="18">
+            <input type="range" id="r-dosing" min="7" max="40" step="0.1" value="18.0">
         </div>
 
         <div class="divider"></div>
@@ -103,18 +103,18 @@
             <div class="control-header">
                 <div class="control-meta">
                     <span class="control-label" id="lbl-temp">WATER TEMP</span>
-                    <span class="control-pro-hint" id="hint-temp">Pro range: 90–96°C</span>
+                    <span class="control-pro-hint" id="hint-temp">Pro range: 90.0–96.0°C</span>
                 </div>
                 <div class="control-value">
-                    <span id="v-temp">92</span>
+                    <span id="v-temp">92.0</span>
                     <span class="control-unit">°C</span>
                     <span class="quality-badge" id="qb-temp">IDEAL</span>
                 </div>
             </div>
             <div class="visual-container">
-                <div class="visual-temp-bar" id="vis-temp"></div>
+                <div class="visual-bar visual-temp-bar" id="vis-temp" style="width: 60%;"></div>
             </div>
-            <input type="range" id="r-temp" min="80" max="100" step="0.1" value="92">
+            <input type="range" id="r-temp" min="80" max="100" step="0.1" value="92.0">
         </div>
 
         <div class="divider"></div>
@@ -124,7 +124,7 @@
             <div class="control-header">
                 <div class="control-meta">
                     <span class="control-label" id="lbl-time">EXTRACTION TIME</span>
-                    <span class="control-pro-hint" id="hint-time">Pro range: 25–35sec</span>
+                    <span class="control-pro-hint" id="hint-time">Pro range: 25.0–35.0sec</span>
                 </div>
                 <div class="control-value">
                     <span id="v-time">28.5</span>
@@ -134,12 +134,10 @@
             </div>
             <input type="range" id="r-time" min="0" max="60" step="0.1" value="28.5">
             
-            <!-- Stopwatch Trigger -->
             <button id="btn-stopwatch" class="stopwatch-trigger">
                 <span id="lbl-stopwatch">⏱ OPEN STOPWATCH</span>
             </button>
 
-            <!-- Stopwatch Panel -->
             <div id="stopwatch-panel" class="stopwatch-panel">
                 <div class="sw-display">
                     <div class="sw-ring-wrap">
@@ -175,18 +173,17 @@
             <div class="control-header">
                 <div class="control-meta">
                     <span class="control-label" id="lbl-yield">YIELD</span>
-                    <span class="control-pro-hint" id="hint-yield">Brew ratio: 1:2</span>
+                    <span class="control-pro-hint" id="hint-yield">Brew ratio: 1:2.0</span>
                 </div>
                 <div class="control-value">
-                    <span id="v-yield">36</span>
+                    <span id="v-yield">36.0</span>
                     <span class="control-unit">g</span>
                     <span class="quality-badge" id="qb-yield">IDEAL</span>
                 </div>
             </div>
-            <input type="range" id="r-yield" min="10" max="60" step="0.1" value="36">
+            <input type="range" id="r-yield" min="10" max="60" step="0.1" value="36.0">
         </div>
 
-        <!-- 브루 레이시오 카드 -->
         <div class="brew-ratio-card">
             <div class="ratio-label" id="ratio-label">BREW RATIO</div>
             <div class="ratio-display">
@@ -213,7 +210,6 @@
 
 </div>
 
-<!-- 레시피 상세 모달 -->
 <div id="recipe-modal" class="modal">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
