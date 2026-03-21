@@ -4,24 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Note My Coffee | Logbook</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="top-controls">
-    <button id="btn-new-recipe" class="mode-btn active">NEW RECIPE</button>
-    <div class="lang-switch">
-        <button class="lang-btn active" id="l-en">EN</button>
-        <button class="lang-btn" id="l-ko">KO</button>
+<div class="app-shell">
+    <!-- 헤더 (index.html과 통일) -->
+    <header class="app-header">
+        <div class="brand">
+            <div class="brand-mark">☕</div>
+            <div class="brand-text">
+                <span class="brand-name">Note My Coffee</span>
+                <span class="brand-tagline">LOGBOOK</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="lang-toggle">
+                <button class="lang-btn active" id="l-en">EN</button>
+                <button class="lang-btn" id="l-ko">KO</button>
+            </div>
+            <!-- PC용 새 레시피 버튼 (헤더에 위치) -->
+            <button id="btn-new-recipe" class="logbook-btn primary-action-btn">
+                <span id="lbl-new-recipe">+ NEW RECIPE</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="console-box" id="logbook-container">
+        <h2 class="logbook-title">나의 레시피 기록</h2>
+        <div id="recipe-cards-grid">
+            <!-- Recipe cards will be loaded here by logbook.js -->
+        </div>
     </div>
 </div>
 
-<div class="console-box" id="logbook-container">
-    <h2 class="logbook-title">나의 레시피 기록</h2>
-    <div id="recipe-cards-grid">
-        <!-- Recipe cards will be loaded here by logbook.js -->
-    </div>
-</div>
+<!-- 모바일용 플로팅 액션 버튼 (FAB) -->
+<button id="mobile-fab" class="fab-btn" title="Create New Recipe">
+    <span>+</span>
+</button>
 
 <script src="storage.js"></script>
 <script src="logbook.js" defer></script>

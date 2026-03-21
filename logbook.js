@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Element Cache ---
     const elements = {
         btnNewRecipe: document.getElementById('btn-new-recipe'),
+        mobileFab: document.getElementById('mobile-fab'),
         btnLangEn: document.getElementById('l-en'),
         btnLangKo: document.getElementById('l-ko'),
         logbookTitle: document.querySelector('.logbook-title'),
@@ -125,6 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
     elements.btnNewRecipe.addEventListener('click', () => { window.location.href = 'index.html'; });
+    if (elements.mobileFab) {
+        elements.mobileFab.addEventListener('click', () => { window.location.href = 'index.html'; });
+    }
     elements.btnLangEn.addEventListener('click', () => setLang('en'));
     elements.btnLangKo.addEventListener('click', () => setLang('ko'));
 

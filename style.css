@@ -306,6 +306,168 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shado
     transition: width 0.4s var(--transition);
 }
 
+/* ===== LOGBOOK SPECIFIC & UX IMPROVEMENTS ===== */
+.primary-action-btn {
+    background: var(--ink) !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.primary-action-btn:hover {
+    background: var(--ink-soft) !important;
+    transform: translateY(-1px);
+}
+
+.logbook-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--ink);
+    margin-bottom: 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+}
+
+#recipe-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.recipe-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+.recipe-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.recipe-card-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid var(--border);
+}
+
+.recipe-card-content {
+    padding: 18px;
+    flex: 1;
+}
+.recipe-card-content h4 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: var(--ink);
+}
+.recipe-card-content p {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+.recipe-card-content .label {
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+}
+
+.recipe-card-rating {
+    color: var(--gold);
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.recipe-card-footer {
+    padding: 12px 18px;
+    background: var(--cream-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-indicator {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+.status-success { background: var(--success-bg); color: var(--success); }
+.status-fail { background: var(--danger-bg); color: var(--danger); }
+
+.delete-btn {
+    background: none;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.delete-btn:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+.no-recipes-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ink-muted);
+    font-style: italic;
+}
+
+/* Floating Action Button (FAB) */
+.fab-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    display: none; /* Hidden on PC */
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    z-index: 100;
+    transition: var(--transition);
+}
+.fab-btn:hover {
+    transform: scale(1.1);
+    background: var(--gold);
+}
+
+/* PC vs Mobile UX Adjustments */
+@media (max-width: 768px) {
+    .app-header .primary-action-btn {
+        display: none; /* Hide PC button on small screens */
+    }
+    .fab-btn {
+        display: flex; /* Show FAB on mobile */
+    }
+    #recipe-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
     .app-shell { padding: 16px 14px 60px; }
