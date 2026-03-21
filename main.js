@@ -171,6 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lblSwStart: document.getElementById('lbl-sw-start'),
         lblSwReset: document.getElementById('lbl-sw-reset'),
         lblSwApply: document.getElementById('lbl-sw-apply'),
+        // Visuals
+        visDosing: document.getElementById('vis-dosing'),
+        visTemp: document.getElementById('vis-temp'),
     };
 
     // ===== Stopwatch State =====
@@ -400,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const s = displayVal % 60;
             displayStr = `${m}:${s < 10 ? '0' + s : s}`;
         } else {
-            displayStr = id === 'dosing' ? displayVal.toFixed(1) : displayVal.toString();
+            displayStr = (id === 'dosing' || id === 'yield') ? displayVal.toFixed(1) : displayVal.toString();
         }
 
         const vEl = el[`v${id.charAt(0).toUpperCase() + id.slice(1)}`];
@@ -410,6 +413,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (qbEl) {
             const quality = getQualityLabel(parseFloat(val), id);
             updateQualityBadge(qbEl, quality);
+        }
+
+        // Update Visuals
+        if (id === 'dosing') {
+            const pct = (displayVal - 7) / (40 - 7) * 100;
+            el.visDosing.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+        }
+        if (id === 'temp') {
+            const pct = (displayVal - 80) / (100 - 80) * 100;
+            el.visTemp.style.width = `${Math.min(100, Math.max(0, pct))}%`;
         }
 
         if (window.navigator.vibrate) window.navigator.vibrate(5);
@@ -467,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
         const setFallback = (msg) => {
             const defaultLoc = currentLang === 'ko' ? '서울' : 'SEOUL';
-            if (infoSpan) infoSpan.innerHTML = `📍 ${defaultLoc} · ☀️ 18°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`;
+            if (infoSpan) infoSpan.innerHTML = `📍 <span contenteditable="true" class="editable-loc" title="Click to edit">${defaultLoc}</span> · ☀️ 18°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`;
         };
 
         if (!WEATHERAPI_KEY || WEATHERAPI_KEY === 'YOUR_WEATHERAPI_KEY') {
@@ -490,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const temp = Math.round(data.current.temp_c);
                     const humidity = data.current.humidity;
                     const iconUrl = data.current.condition.icon;
-                    if (infoSpan) infoSpan.innerHTML = `📍 ${locationName} · <img src="${iconUrl}" style="vertical-align:middle;height:16px;"> ${temp}°C · 💧 ${humidity}%`;
+                    if (infoSpan) infoSpan.innerHTML = `📍 <span contenteditable="true" class="editable-loc" title="Click to edit">${locationName}</span> · <img src="${iconUrl}" style="vertical-align:middle;height:16px;"> ${temp}°C · 💧 ${humidity}%`;
                     
                     if (humidity > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${humidity}% — try slightly coarser grind`;
                     else if (humidity < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 추출 강도 +0.5g 권장` : `Humidity ${humidity}% — consider +0.5g dosing`;
@@ -509,48 +522,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Image Upload Logic ---
-    el.modalImageFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            el.fileNameDisplay.innerText = file.name;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                uploadedImageData = ev.target.result;
-                el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
-            };
-            reader.readAsDataURL(file);
+    // --- Events ---
+    // Handle Enter key on editable location
+    document.addEventListener('keydown', (e) => {
+        if (e.target.classList.contains('editable-loc') && e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
         }
     });
 
-    const openModal = () => {
-        el.recipeModal.classList.add('active');
-        el.modalBeanName.value = '';
-        el.modalPurchaseUrl.value = '';
-        el.modalImageFile.value = '';
-        uploadedImageData = '';
-        el.fileNameDisplay.innerText = '';
-        el.btnImageUpload.innerText = i18n[currentLang].selectPhoto;
-        el.modalTasteNotes.value = '';
-        el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true;
-        successResult = false;
-        el.btnFail.classList.add('active');
-        el.btnSuccess.classList.remove('active');
-        el.modalSuccessFail.checked = false;
-        setTimeout(() => el.modalBeanName.focus(), 400);
-    };
-
-    const closeModal = (confirmExit = true) => {
-        if (confirmExit && !confirm(i18n[currentLang].confirmExitModal)) return;
-        el.recipeModal.classList.remove('active');
-    };
-
-    const getSelectedRating = () => {
-        const sel = el.modalOverallRatingContainer.querySelector('input[name="overallRating"]:checked');
-        return sel ? parseInt(sel.value) : 3;
-    };
-
-    // --- Events ---
     el.btnEspresso.addEventListener('click', () => setMode('espresso'));
     el.btnDrip.addEventListener('click', () => setMode('drip'));
     el.btnLangEn.addEventListener('click', () => setLang('en'));

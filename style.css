@@ -264,6 +264,48 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shado
     color: var(--gold);
 }
 
+/* Editable Location */
+.editable-loc {
+    border-bottom: 1px dashed var(--ink-ghost);
+    cursor: text;
+    padding: 0 2px;
+    border-radius: 2px;
+    transition: var(--transition);
+    display: inline-block;
+}
+.editable-loc:hover {
+    background: var(--cream-dark);
+    border-bottom-color: var(--gold);
+}
+.editable-loc:focus {
+    outline: none;
+    background: var(--panel);
+    border-bottom: 1px solid var(--gold);
+    box-shadow: 0 0 0 3px var(--gold-pale);
+}
+
+/* Visual Indicators */
+.visual-container {
+    height: 6px;
+    background: var(--cream-dark);
+    border-radius: 999px;
+    margin: 8px 0 12px;
+    overflow: hidden;
+    position: relative;
+}
+.visual-dosing-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--ink-soft);
+    transition: width 0.4s var(--transition);
+}
+.visual-temp-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3498db, #e74c3c);
+    transition: width 0.4s var(--transition);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
     .app-shell { padding: 16px 14px 60px; }
