@@ -242,6 +242,28 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.1); box-shado
 .modal-cancel-btn { width: 100%; background: none; border: none; color: var(--ink-muted); cursor: pointer; padding: 10px; transition: var(--transition); }
 .modal-cancel-btn:hover { color: var(--ink); background: var(--cream-dark); }
 
+/* Star Rating UI */
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 2px;
+}
+.rating-input input { display: none; }
+.rating-input label {
+    font-size: 26px;
+    color: var(--ink-ghost);
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 2px;
+}
+.rating-input label:hover,
+.rating-input label:hover ~ label,
+.rating-input input:checked ~ label,
+.rating-input input:checked + label {
+    color: var(--gold);
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
     .app-shell { padding: 16px 14px 60px; }

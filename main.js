@@ -466,11 +466,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchWeather = () => {
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
         const setFallback = (msg) => {
-            if (infoSpan) infoSpan.innerHTML = `📍 SEOUL · ☀️ 18°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`;
+            const defaultLoc = currentLang === 'ko' ? '서울' : 'SEOUL';
+            if (infoSpan) infoSpan.innerHTML = `📍 ${defaultLoc} · ☀️ 18°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`;
         };
 
         if (!WEATHERAPI_KEY || WEATHERAPI_KEY === 'YOUR_WEATHERAPI_KEY') {
-            setFallback("API 키 필요"); return;
+            setFallback(currentLang === 'ko' ? "API 키 필요" : "API Key Required"); return;
         }
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -480,17 +481,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const res = await fetch(url);
                     const data = await res.json();
+                    
+                    // Improve location name: combine region and name if helpful
                     const city = data.location.name;
+                    const region = data.location.region;
+                    const locationName = (region && !region.includes(city)) ? `${region} ${city}` : city;
+                    
                     const temp = Math.round(data.current.temp_c);
                     const humidity = data.current.humidity;
                     const iconUrl = data.current.condition.icon;
-                    if (infoSpan) infoSpan.innerHTML = `📍 ${city} · <img src="${iconUrl}" style="vertical-align:middle;height:16px;"> ${temp}°C · 💧 ${humidity}%`;
+                    if (infoSpan) infoSpan.innerHTML = `📍 ${locationName} · <img src="${iconUrl}" style="vertical-align:middle;height:16px;"> ${temp}°C · 💧 ${humidity}%`;
                     
                     if (humidity > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${humidity}% — try slightly coarser grind`;
                     else if (humidity < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${humidity}% — 추출 강도 +0.5g 권장` : `Humidity ${humidity}% — consider +0.5g dosing`;
                     else el.envHint.textContent = currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
-                } catch (e) { setFallback("에러 발생"); }
-            }, (err) => setFallback(err.code === 1 ? "권한 차단됨" : "위치 오류"));
+                } catch (e) { setFallback(currentLang === 'ko' ? "에러 발생" : "Error occurred"); }
+            }, (err) => {
+                const msg = err.code === 1 
+                    ? (currentLang === 'ko' ? "위치 권한 거부됨" : "Location Denied")
+                    : (currentLang === 'ko' ? "위치 오류" : "Location Error");
+                setFallback(msg);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 8000,
+                maximumAge: 0
+            });
         }
     };
 
