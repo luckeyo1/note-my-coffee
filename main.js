@@ -323,11 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.zTimeMax) el.zTimeMax.textContent = `${timeMax}s`;
         if (el.zYieldMax) el.zYieldMax.textContent = `${yieldMax}g`;
 
-        // Adjust steps for better control sensitivity: more "spacious" intervals
-        el.rDosing.step = 0.1; 
+        // Sliders set to 0.5 for easier handling, buttons handle 0.1 fine-tuning
+        el.rDosing.step = 0.5; 
         el.rTemp.step = 0.5;
-        el.rTime.step = mode === 'espresso' ? 0.5 : 1.0;
-        el.rYield.step = mode === 'espresso' ? 0.5 : 1.0;
+        el.rTime.step = 0.5;
+        el.rYield.step = 0.5;
 
         updateVal('dosing', el.rDosing.value); updateVal('temp', el.rTemp.value);
         updateVal('time', el.rTime.value); updateVal('yield', el.rYield.value);
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Fine Tune Helpers ---
     const fineTune = (id, delta) => {
         const input = el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`];
-        const step = parseFloat(input.step) || 0.1;
+        const step = 0.1; // Fixed 0.1 step for fine-tuning buttons
         let newValue = parseFloat(input.value) + (delta * step);
         newValue = Math.max(parseFloat(input.min), Math.min(parseFloat(input.max), newValue));
         input.value = newValue.toFixed(1);
@@ -410,14 +410,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     ['rDosing','rTemp','rTime','rYield'].forEach(k => {
         const id = k.substring(1).toLowerCase();
-        el[k].addEventListener('input', (e) => updateVal(id, e.target.value));
-        
-        // Fine tune buttons
-        const container = el[k].parentElement;
-        const btnMinus = container.querySelector('.btn-minus');
-        const btnPlus = container.querySelector('.btn-plus');
-        if (btnMinus) btnMinus.addEventListener('click', () => fineTune(id, -1));
-        if (btnPlus) btnPlus.addEventListener('click', () => fineTune(id, 1));
+        const rangeEl = el[k];
+        if (rangeEl) {
+            rangeEl.addEventListener('input', (e) => updateVal(id, e.target.value));
+            
+            // Fine tune buttons: look within the parent wrapper
+            const wrapper = rangeEl.closest('.slider-wrapper');
+            if (wrapper) {
+                const btnMinus = wrapper.querySelector('.btn-minus');
+                const btnPlus = wrapper.querySelector('.btn-plus');
+                if (btnMinus) btnMinus.addEventListener('click', () => fineTune(id, -1));
+                if (btnPlus) btnPlus.addEventListener('click', () => fineTune(id, 1));
+            }
+        }
     });
 
     el.btnStopwatch.addEventListener('click', () => {

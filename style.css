@@ -171,17 +171,18 @@ body {
 .slider-wrapper {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
+    padding: 10px 0;
 }
 .fine-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--border-strong);
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border-strong);
     background: var(--panel);
-    color: var(--ink-soft);
-    font-size: 18px;
-    font-weight: 500;
+    color: var(--ink);
+    font-size: 20px;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -193,17 +194,47 @@ body {
 .fine-btn:hover {
     background: var(--cream-dark);
     border-color: var(--ink-muted);
-    transform: translateY(-1px);
 }
 .fine-btn:active {
-    transform: scale(0.95);
-    box-shadow: none;
+    transform: scale(0.92);
+    background: var(--cream-dark);
 }
 
-input[type=range] { flex: 1; height: 8px; appearance: none; background: var(--cream-dark); border-radius: 999px; outline: none; cursor: pointer; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; background: var(--panel); border: 2px solid var(--ink); border-radius: 50%; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.15); transition: var(--transition); }
-input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 4px 14px rgba(0,0,0,0.22); }
-.slider-zones { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 48px; font-size: 10px; color: var(--ink-ghost); font-family: var(--font-mono); }
+input[type=range] { 
+    flex: 1; 
+    height: 12px; 
+    appearance: none; 
+    background: var(--cream-dark); 
+    border-radius: 999px; 
+    outline: none; 
+    cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb { 
+    -webkit-appearance: none; 
+    width: 32px; 
+    height: 32px; 
+    background: var(--panel); 
+    border: 2.5px solid var(--ink); 
+    border-radius: 50%; 
+    cursor: pointer; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18); 
+    transition: var(--transition); 
+}
+input[type=range]::-webkit-slider-thumb:hover { 
+    transform: scale(1.1); 
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25); 
+}
+
+.slider-zones { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-top: 4px; 
+    padding: 0 60px; 
+    font-size: 11px; 
+    color: var(--ink-ghost); 
+    font-family: var(--font-mono); 
+    font-weight: 500;
+}
 
 .divider { height: 1px; background: var(--border); margin: 0 -4px; }
 
