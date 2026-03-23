@@ -93,7 +93,15 @@
             <div class="visual-container">
                 <div class="visual-bar visual-dosing-bar" id="vis-dosing" style="width: 33.3%;"></div>
             </div>
-            <input type="range" id="r-dosing" min="7" max="40" step="0.1" value="18.0">
+            <div class="slider-wrapper">
+                <button class="fine-btn btn-minus" aria-label="Decrease">−</button>
+                <input type="range" id="r-dosing" min="7" max="40" step="0.1" value="18.0">
+                <button class="fine-btn btn-plus" aria-label="Increase">+</button>
+            </div>
+            <div class="slider-zones">
+                <span>7g</span>
+                <span>40g</span>
+            </div>
         </div>
 
         <div class="divider"></div>
@@ -114,7 +122,15 @@
             <div class="visual-container">
                 <div class="visual-bar visual-temp-bar" id="vis-temp" style="width: 60%;"></div>
             </div>
-            <input type="range" id="r-temp" min="80" max="100" step="0.1" value="92.0">
+            <div class="slider-wrapper">
+                <button class="fine-btn btn-minus" aria-label="Decrease">−</button>
+                <input type="range" id="r-temp" min="80" max="100" step="0.5" value="92.0">
+                <button class="fine-btn btn-plus" aria-label="Increase">+</button>
+            </div>
+            <div class="slider-zones">
+                <span>80°C</span>
+                <span>100°C</span>
+            </div>
         </div>
 
         <div class="divider"></div>
@@ -132,7 +148,6 @@
                     <span class="quality-badge" id="qb-time">IDEAL</span>
                 </div>
             </div>
-            <input type="range" id="r-time" min="0" max="60" step="0.1" value="28.5">
             
             <button id="btn-stopwatch" class="stopwatch-trigger">
                 <span id="lbl-stopwatch">⏱ OPEN STOPWATCH</span>
@@ -164,6 +179,16 @@
                 </div>
                 <p id="sw-hint" class="sw-hint">Press START to begin extraction</p>
             </div>
+
+            <div class="slider-wrapper" style="margin-top:20px;">
+                <button class="fine-btn btn-minus" aria-label="Decrease">−</button>
+                <input type="range" id="r-time" min="0" max="60" step="0.5" value="28.5">
+                <button class="fine-btn btn-plus" aria-label="Increase">+</button>
+            </div>
+            <div class="slider-zones">
+                <span id="z-time-min">0s</span>
+                <span id="z-time-max">60s</span>
+            </div>
         </div>
 
         <div class="divider"></div>
@@ -181,20 +206,29 @@
                     <span class="quality-badge" id="qb-yield">IDEAL</span>
                 </div>
             </div>
-            <input type="range" id="r-yield" min="10" max="60" step="0.1" value="36.0">
-        </div>
+            
+            <div class="brew-ratio-card">
+                <div class="ratio-label" id="ratio-label">BREW RATIO</div>
+                <div class="ratio-display">
+                    <div class="ratio-bar-wrap">
+                        <div class="ratio-coffee-bar" id="ratio-coffee-bar" style="width: 33%"></div>
+                        <div class="ratio-water-bar" id="ratio-water-bar" style="width: 67%"></div>
+                    </div>
+                    <div class="ratio-numbers">
+                        <span class="ratio-num" id="ratio-num">1 : 2.0</span>
+                        <span class="ratio-status ideal" id="ratio-status">✓ SCA recommended</span>
+                    </div>
+                </div>
+            </div>
 
-        <div class="brew-ratio-card">
-            <div class="ratio-label" id="ratio-label">BREW RATIO</div>
-            <div class="ratio-display">
-                <div class="ratio-bar-wrap">
-                    <div class="ratio-coffee-bar" id="ratio-coffee-bar" style="width: 33%"></div>
-                    <div class="ratio-water-bar" id="ratio-water-bar" style="width: 67%"></div>
-                </div>
-                <div class="ratio-numbers">
-                    <span class="ratio-num" id="ratio-num">1 : 2.0</span>
-                    <span class="ratio-status ideal" id="ratio-status">✓ SCA recommended</span>
-                </div>
+            <div class="slider-wrapper">
+                <button class="fine-btn btn-minus" aria-label="Decrease">−</button>
+                <input type="range" id="r-yield" min="10" max="60" step="0.5" value="36.0">
+                <button class="fine-btn btn-plus" aria-label="Increase">+</button>
+            </div>
+            <div class="slider-zones">
+                <span id="z-yield-min">10g</span>
+                <span id="z-yield-max">60g</span>
             </div>
         </div>
 

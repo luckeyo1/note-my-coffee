@@ -175,6 +175,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Visuals
         visDosing: document.getElementById('vis-dosing'),
         visTemp: document.getElementById('vis-temp'),
+        // Zones
+        zTimeMin: document.getElementById('z-time-min'),
+        zTimeMax: document.getElementById('z-time-max'),
+        zYieldMin: document.getElementById('z-yield-min'),
+        zYieldMax: document.getElementById('z-yield-max'),
     };
 
     // ===== Stopwatch =====
@@ -309,13 +314,35 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMode = mode;
         el.btnEspresso.classList.toggle('active', mode === 'espresso');
         el.btnDrip.classList.toggle('active', mode === 'drip');
-        el.rTime.max = mode === 'espresso' ? 60 : 300;
-        el.rYield.max = mode === 'espresso' ? 60 : 600;
-        ['rDosing','rTemp','rTime','rYield'].forEach(k => el[k].step = 0.1);
+        
+        const timeMax = mode === 'espresso' ? 60 : 300;
+        const yieldMax = mode === 'espresso' ? 60 : 600;
+        el.rTime.max = timeMax;
+        el.rYield.max = yieldMax;
+        
+        if (el.zTimeMax) el.zTimeMax.textContent = `${timeMax}s`;
+        if (el.zYieldMax) el.zYieldMax.textContent = `${yieldMax}g`;
+
+        // Adjust steps for better control sensitivity: more "spacious" intervals
+        el.rDosing.step = 0.1; 
+        el.rTemp.step = 0.5;
+        el.rTime.step = mode === 'espresso' ? 0.5 : 1.0;
+        el.rYield.step = mode === 'espresso' ? 0.5 : 1.0;
+
         updateVal('dosing', el.rDosing.value); updateVal('temp', el.rTemp.value);
         updateVal('time', el.rTime.value); updateVal('yield', el.rYield.value);
         updateBrewRatio(); updateProHints();
         if (el.stopwatchPanel.classList.contains('open')) swReset();
+    };
+
+    // --- Fine Tune Helpers ---
+    const fineTune = (id, delta) => {
+        const input = el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`];
+        const step = parseFloat(input.step) || 0.1;
+        let newValue = parseFloat(input.value) + (delta * step);
+        newValue = Math.max(parseFloat(input.min), Math.min(parseFloat(input.max), newValue));
+        input.value = newValue.toFixed(1);
+        updateVal(id, input.value);
     };
 
     const fetchWeather = () => {
@@ -380,7 +407,19 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnLangEn.addEventListener('click', () => setLang('en'));
     el.btnLangKo.addEventListener('click', () => setLang('ko'));
     el.btnViewLogbook.addEventListener('click', () => window.location.href = 'logbook.html');
-    ['rDosing','rTemp','rTime','rYield'].forEach(k => el[k].addEventListener('input', (e) => updateVal(k.substring(1).toLowerCase(), e.target.value)));
+    
+    ['rDosing','rTemp','rTime','rYield'].forEach(k => {
+        const id = k.substring(1).toLowerCase();
+        el[k].addEventListener('input', (e) => updateVal(id, e.target.value));
+        
+        // Fine tune buttons
+        const container = el[k].parentElement;
+        const btnMinus = container.querySelector('.btn-minus');
+        const btnPlus = container.querySelector('.btn-plus');
+        if (btnMinus) btnMinus.addEventListener('click', () => fineTune(id, -1));
+        if (btnPlus) btnPlus.addEventListener('click', () => fineTune(id, 1));
+    });
+
     el.btnStopwatch.addEventListener('click', () => {
         const isOpen = el.stopwatchPanel.classList.toggle('open');
         el.btnStopwatch.classList.toggle('active', isOpen);
