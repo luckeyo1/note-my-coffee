@@ -252,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const snapped = Math.floor((sw.elapsed / 1000) * 10) / 10;
         el.rTime.value = snapped.toFixed(1);
         updateVal('time', snapped);
+        syncRuler('time', snapped);
         el.swBtnApply.textContent = '✓';
         el.swHint.textContent = i18n[currentLang].swApplied.replace('{sec}', snapped.toFixed(1));
         setTimeout(() => {
@@ -274,6 +275,62 @@ document.addEventListener('DOMContentLoaded', () => {
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + 0.03);
         } catch (e) {}
+    };
+
+    // --- Ruler Picker Logic ---
+    const PX_PER_UNIT = 120; // 1.0 unit = 120px (0.1 unit = 12px) - WIDE GAPS
+    const rulerState = {};
+
+    const initRulers = () => {
+        ['dosing', 'temp', 'time', 'yield'].forEach(id => {
+            const viewport = document.getElementById(`rv-${id}`);
+            const track = document.getElementById(`rt-${id}`);
+            const input = document.getElementById(`r-${id}`);
+            if (!viewport || !track || !input) return;
+
+            const min = parseFloat(input.min);
+            const max = parseFloat(input.max);
+            const range = max - min;
+            
+            // Set track width based on range
+            track.style.width = `${range * PX_PER_UNIT}px`;
+
+            // Scrolling event
+            viewport.addEventListener('scroll', () => {
+                if (rulerState[id]?.syncing) return;
+                const scrollPos = viewport.scrollLeft;
+                const val = min + (scrollPos / PX_PER_UNIT);
+                const clamped = Math.max(min, Math.min(max, val)).toFixed(1);
+                
+                if (input.value !== clamped) {
+                    input.value = clamped;
+                    updateVal(id, clamped);
+                }
+            });
+
+            // Initial position
+            syncRuler(id, input.value, false);
+        });
+    };
+
+    const syncRuler = (id, val, smooth = true) => {
+        const viewport = document.getElementById(`rv-${id}`);
+        const input = document.getElementById(`r-${id}`);
+        if (!viewport || !input) return;
+
+        const min = parseFloat(input.min);
+        const targetScroll = (parseFloat(val) - min) * PX_PER_UNIT;
+
+        if (!rulerState[id]) rulerState[id] = {};
+        rulerState[id].syncing = true;
+        
+        viewport.scrollTo({
+            left: targetScroll,
+            behavior: smooth ? 'smooth' : 'auto'
+        });
+
+        // Unlock after animation
+        setTimeout(() => { if (rulerState[id]) rulerState[id].syncing = false; }, smooth ? 500 : 50);
     };
 
     // --- Logic ---
@@ -323,14 +380,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.zTimeMax) el.zTimeMax.textContent = `${timeMax}s`;
         if (el.zYieldMax) el.zYieldMax.textContent = `${yieldMax}g`;
 
-        // Sliders set to 0.5 for easier handling, buttons handle 0.1 fine-tuning
-        el.rDosing.step = 0.5; 
-        el.rTemp.step = 0.5;
-        el.rTime.step = 0.5;
-        el.rYield.step = 0.5;
+        // Update track widths
+        ['time', 'yield'].forEach(id => {
+            const track = document.getElementById(`rt-${id}`);
+            const input = document.getElementById(`r-${id}`);
+            if (track && input) track.style.width = `${(parseFloat(input.max) - parseFloat(input.min)) * PX_PER_UNIT}px`;
+        });
 
         updateVal('dosing', el.rDosing.value); updateVal('temp', el.rTemp.value);
         updateVal('time', el.rTime.value); updateVal('yield', el.rYield.value);
+        
+        // Sync ruler positions
+        ['dosing', 'temp', 'time', 'yield'].forEach(id => syncRuler(id, el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`].value, false));
+
         updateBrewRatio(); updateProHints();
         if (el.stopwatchPanel.classList.contains('open')) swReset();
     };
@@ -338,11 +400,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Fine Tune Helpers ---
     const fineTune = (id, delta) => {
         const input = el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`];
-        const step = 0.1; // Fixed 0.1 step for fine-tuning buttons
+        const step = 0.1; 
         let newValue = parseFloat(input.value) + (delta * step);
         newValue = Math.max(parseFloat(input.min), Math.min(parseFloat(input.max), newValue));
         input.value = newValue.toFixed(1);
         updateVal(id, input.value);
+        syncRuler(id, input.value);
     };
 
     const fetchWeather = () => {
@@ -408,21 +471,13 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnLangKo.addEventListener('click', () => setLang('ko'));
     el.btnViewLogbook.addEventListener('click', () => window.location.href = 'logbook.html');
     
-    ['rDosing','rTemp','rTime','rYield'].forEach(k => {
-        const id = k.substring(1).toLowerCase();
-        const rangeEl = el[k];
-        if (rangeEl) {
-            rangeEl.addEventListener('input', (e) => updateVal(id, e.target.value));
-            
-            // Fine tune buttons: look within the parent wrapper
-            const wrapper = rangeEl.closest('.slider-wrapper');
-            if (wrapper) {
-                const btnMinus = wrapper.querySelector('.btn-minus');
-                const btnPlus = wrapper.querySelector('.btn-plus');
-                if (btnMinus) btnMinus.addEventListener('click', () => fineTune(id, -1));
-                if (btnPlus) btnPlus.addEventListener('click', () => fineTune(id, 1));
-            }
-        }
+    // Fine tune buttons
+    document.querySelectorAll('.fine-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const delta = btn.classList.contains('btn-plus') ? 1 : -1;
+            fineTune(id, delta);
+        });
     });
 
     el.btnStopwatch.addEventListener('click', () => {
@@ -486,5 +541,5 @@ document.addEventListener('DOMContentLoaded', () => {
         const f = e.target.files[0]; if (f) { el.fileNameDisplay.innerText = f.name; const r = new FileReader(); r.onload = (ev) => { uploadedImageData = ev.target.result; el.btnImageUpload.innerText = i18n[currentLang].photoSelected; }; r.readAsDataURL(f); }
     });
 
-    setMode('espresso'); fetchWeather(); updateLogbookBadge();
+    initRulers(); setMode('espresso'); fetchWeather(); updateLogbookBadge();
 });
