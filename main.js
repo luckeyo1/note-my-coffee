@@ -474,6 +474,15 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnLangKo.addEventListener('click', () => setLang('ko'));
     el.btnViewLogbook.addEventListener('click', () => window.location.href = 'logbook.html');
     
+    // Range sliders
+    [el.rDosing, el.rTemp, el.rTime, el.rYield].forEach(input => {
+        if (!input) return;
+        input.addEventListener('input', (e) => {
+            const id = e.target.id.replace('r-', '');
+            updateVal(id, e.target.value);
+        });
+    });
+
     // Fine tune buttons
     document.querySelectorAll('.fine-btn').forEach(btn => {
         btn.addEventListener('click', () => {
