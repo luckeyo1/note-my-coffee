@@ -258,10 +258,17 @@
         <h3 id="modal-title">Complete Your Recipe</h3>
         <p class="modal-subtitle" id="modal-subtitle">Adding bean info lets you recreate this cup perfectly</p>
 
-        <div class="modal-form-group">
-            <label for="modal-bean-name" id="lbl-modal-bean-name">BEAN NAME <span class="required" style="color:var(--gold)">*</span></label>
-            <input type="text" id="modal-bean-name" placeholder="e.g. Ethiopia Yirgacheffe">
+        <div class="modal-row" style="display:flex; gap:14px;">
+            <div class="modal-form-group" style="flex:2;">
+                <label for="modal-bean-name" id="lbl-modal-bean-name">BEAN NAME <span class="required" style="color:var(--gold)">*</span></label>
+                <input type="text" id="modal-bean-name" placeholder="e.g. Ethiopia Yirgacheffe">
+            </div>
+            <div class="modal-form-group" style="flex:1;">
+                <label for="modal-origin" id="lbl-modal-origin">ORIGIN</label>
+                <input type="text" id="modal-origin" placeholder="e.g. Africa">
+            </div>
         </div>
+
         <div class="modal-form-group">
             <label for="modal-purchase-url" id="lbl-modal-purchase-url">PURCHASE URL</label>
             <input type="url" id="modal-purchase-url" placeholder="https://...">
@@ -274,8 +281,19 @@
                 <span id="file-name-display" style="font-size: 12px; color: var(--ink-muted); margin-left: 10px;"></span>
             </div>
         </div>
+        
         <div class="modal-form-group">
             <label for="modal-taste-notes" id="lbl-modal-taste-notes">TASTING NOTES</label>
+            <div class="tag-cloud" id="taste-tag-cloud">
+                <span class="taste-tag" data-value="Floral">#Floral</span>
+                <span class="taste-tag" data-value="Fruity">#Fruity</span>
+                <span class="taste-tag" data-value="Nutty">#Nutty</span>
+                <span class="taste-tag" data-value="Chocolaty">#Chocolaty</span>
+                <span class="taste-tag" data-value="Sweet">#Sweet</span>
+                <span class="taste-tag" data-value="Acidic">#Acidic</span>
+                <span class="taste-tag" data-value="Bitter">#Bitter</span>
+                <span class="taste-tag" data-value="Spicy">#Spicy</span>
+            </div>
             <textarea id="modal-taste-notes" placeholder="Floral, peach, bright acidity..."></textarea>
         </div>
 

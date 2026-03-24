@@ -323,6 +323,55 @@ input[type=range]::-webkit-slider-thumb:hover {
 .modal-form-group input, .modal-form-group textarea { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border-strong); background: var(--cream); border-radius: var(--radius-sm); outline: none; transition: var(--transition); font-family: var(--font-body); font-size: 14px; }
 .modal-form-group input:focus, .modal-form-group textarea:focus { border-color: var(--ink); background: var(--panel); }
 
+/* Rating UI (Stars) */
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 4px;
+}
+.rating-input input { display: none; }
+.rating-input label {
+    font-size: 28px;
+    color: var(--ink-ghost);
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 0;
+}
+.rating-input label:hover,
+.rating-input label:hover ~ label,
+.rating-input input:checked ~ label {
+    color: var(--gold);
+}
+
+/* Tag Cloud */
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.taste-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    background: var(--cream-dark);
+    color: var(--ink-muted);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+.taste-tag:hover {
+    background: var(--gold-pale);
+    color: var(--gold);
+}
+.taste-tag.active {
+    background: var(--gold);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(184,134,11,0.25);
+}
+
 .file-input-wrapper { display: flex; align-items: center; }
 .result-btn { flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--border-strong); background: var(--panel); color: var(--ink-muted); transition: var(--transition); }
 .result-btn:hover { background: var(--cream-dark); border-color: var(--ink-muted); color: var(--ink-soft); }

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherError: "📍 Weather unavailable",
             viewLogbook: "LOG BOOK",
             brandTagline: "Turn extraction into science",
-            modalBeanName: "BEAN NAME", modalPurchaseUrl: "PURCHASE URL",
+            modalBeanName: "BEAN NAME", modalOrigin: "ORIGIN", modalPurchaseUrl: "PURCHASE URL",
             modalImageUrl: "COVER PHOTO", modalTasteNotes: "TASTING NOTES",
             modalOverallRating: "RATING", modalSuccessFail: "RESULT",
             modalSave: "Save Recipe →", modalCancel: "Cancel",
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherError: "📍 날씨 정보 없음",
             viewLogbook: "로그북",
             brandTagline: "당신의 추출을 과학으로",
-            modalBeanName: "원두 이름", modalPurchaseUrl: "구매처 URL",
+            modalBeanName: "원두 이름", modalOrigin: "원산지", modalPurchaseUrl: "구매처 URL",
             modalImageUrl: "겉표지 사진", modalTasteNotes: "테이스팅 노트",
             modalOverallRating: "평점", modalSuccessFail: "결과",
             modalSave: "레시피 저장하기 →", modalCancel: "취소",
@@ -131,16 +131,19 @@ document.addEventListener('DOMContentLoaded', () => {
         ratioStatus: document.getElementById('ratio-status'),
         recipeModal: document.getElementById('recipe-modal'),
         modalBeanName: document.getElementById('modal-bean-name'),
+        modalOrigin: document.getElementById('modal-origin'),
         modalPurchaseUrl: document.getElementById('modal-purchase-url'),
         modalImageFile: document.getElementById('modal-image-file'),
         btnImageUpload: document.getElementById('btn-image-upload'),
         fileNameDisplay: document.getElementById('file-name-display'),
         modalTasteNotes: document.getElementById('modal-taste-notes'),
+        tasteTagCloud: document.getElementById('taste-tag-cloud'),
         modalOverallRatingContainer: document.getElementById('modal-overall-rating-container'),
         modalSuccessFail: document.getElementById('modal-success-fail'),
         modalSaveRecipe: document.getElementById('modal-save-recipe'),
         modalCancel: document.getElementById('modal-cancel'),
         lblModalBeanName: document.getElementById('lbl-modal-bean-name'),
+        lblModalOrigin: document.getElementById('lbl-modal-origin'),
         lblModalPurchaseUrl: document.getElementById('lbl-modal-purchase-url'),
         lblModalImageUrl: document.getElementById('lbl-modal-image-url'),
         lblModalTasteNotes: document.getElementById('lbl-modal-taste-notes'),
@@ -459,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const setLang = (lang) => {
         currentLang = lang; ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
         const t = i18n[lang]; ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => el[k].textContent = t[k.replace('lbl','').toLowerCase()] || t[k]);
-        ['lblModalBeanName','lblModalPurchaseUrl','lblModalImageUrl','lblModalTasteNotes','lblModalOverallRating','lblModalSuccessFail','lblModalSave','modalTitle','modalSubtitle'].forEach(k => el[k].textContent = t[k.replace('lbl','').charAt(0).toLowerCase() + k.replace('lbl','').slice(1)] || t[k]);
+        ['lblModalBeanName','lblModalOrigin','lblModalPurchaseUrl','lblModalImageUrl','lblModalTasteNotes','lblModalOverallRating','lblModalSuccessFail','lblModalSave','modalTitle','modalSubtitle'].forEach(k => el[k].textContent = t[k.replace('lbl','').charAt(0).toLowerCase() + k.replace('lbl','').slice(1)] || t[k]);
         if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
         el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
         el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
@@ -492,6 +495,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Tasting tags
+    if (el.tasteTagCloud) {
+        el.tasteTagCloud.querySelectorAll('.taste-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('active');
+                const val = tag.getAttribute('data-value');
+                let currentNotes = el.modalTasteNotes.value.split(',').map(s => s.trim()).filter(s => s);
+                if (tag.classList.contains('active')) {
+                    if (!currentNotes.includes(val)) currentNotes.push(val);
+                } else {
+                    currentNotes = currentNotes.filter(s => s !== val);
+                }
+                el.modalTasteNotes.value = currentNotes.join(', ');
+            });
+        });
+    }
+
     el.btnStopwatch.addEventListener('click', () => {
         const isOpen = el.stopwatchPanel.classList.toggle('open');
         el.btnStopwatch.classList.toggle('active', isOpen);
@@ -503,7 +523,9 @@ document.addEventListener('DOMContentLoaded', () => {
     el.swBtnApply.addEventListener('click', swApply);
     el.btnSave.addEventListener('click', () => {
         el.recipeModal.classList.add('active');
-        el.modalBeanName.value = ''; el.modalPurchaseUrl.value = ''; el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; el.modalTasteNotes.value = ''; el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; setTimeout(() => el.modalBeanName.focus(), 400);
+        el.modalBeanName.value = ''; el.modalOrigin.value = ''; el.modalPurchaseUrl.value = ''; el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; el.modalTasteNotes.value = '';
+        if (el.tasteTagCloud) el.tasteTagCloud.querySelectorAll('.taste-tag').forEach(t => t.classList.remove('active'));
+        el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; setTimeout(() => el.modalBeanName.focus(), 400);
     });
     el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));
     el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
@@ -529,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 temp: parseFloat(parseFloat(el.rTemp.value).toFixed(1)),
                 time: parseFloat(parseFloat(el.rTime.value).toFixed(1)),
                 yield: parseFloat(parseFloat(el.rYield.value).toFixed(1)),
-                beanName: bean, purchaseUrl: el.modalPurchaseUrl.value.trim(), imageUrl: uploadedImageData, tasteNotes: el.modalTasteNotes.value.trim(), 
+                beanName: bean, origin: el.modalOrigin.value.trim(), purchaseUrl: el.modalPurchaseUrl.value.trim(), imageUrl: uploadedImageData, tasteNotes: el.modalTasteNotes.value.trim(), 
                 overallRating: ratingInput ? parseInt(ratingInput.value, 10) : 3, 
                 success: successResult, weather: weatherValue
             };
