@@ -399,7 +399,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Fine Tune Helpers ---
     const fineTune = (id, delta) => {
+        if (!id) return; // ID가 없으면 중단 (방어 로직)
         const input = el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`];
+        if (!input) return;
+
         const step = 0.1; 
         let newValue = parseFloat(input.value) + (delta * step);
         newValue = Math.max(parseFloat(input.min), Math.min(parseFloat(input.max), newValue));
