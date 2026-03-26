@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fileNameDisplay: document.getElementById('file-name-display'),
         modalTasteNotes: document.getElementById('modal-taste-notes'),
         tasteTagCloud: document.getElementById('taste-tag-cloud'),
+        originTagCloud: document.getElementById('origin-tag-cloud'),
         modalOverallRatingContainer: document.getElementById('modal-overall-rating-container'),
         modalSuccessFail: document.getElementById('modal-success-fail'),
         modalSaveRecipe: document.getElementById('modal-save-recipe'),
@@ -512,6 +513,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Origin tags
+    if (el.originTagCloud) {
+        el.originTagCloud.querySelectorAll('.taste-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('active');
+                const val = tag.getAttribute('data-value');
+                let currentOrigin = el.modalOrigin.value.split(',').map(s => s.trim()).filter(s => s);
+                if (tag.classList.contains('active')) {
+                    if (!currentOrigin.includes(val)) currentOrigin.push(val);
+                } else {
+                    currentOrigin = currentOrigin.filter(s => s !== val);
+                }
+                el.modalOrigin.value = currentOrigin.join(', ');
+            });
+        });
+    }
+
     el.btnStopwatch.addEventListener('click', () => {
         const isOpen = el.stopwatchPanel.classList.toggle('open');
         el.btnStopwatch.classList.toggle('active', isOpen);
@@ -525,6 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.recipeModal.classList.add('active');
         el.modalBeanName.value = ''; el.modalOrigin.value = ''; el.modalPurchaseUrl.value = ''; el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; el.modalTasteNotes.value = '';
         if (el.tasteTagCloud) el.tasteTagCloud.querySelectorAll('.taste-tag').forEach(t => t.classList.remove('active'));
+        if (el.originTagCloud) el.originTagCloud.querySelectorAll('.taste-tag').forEach(t => t.classList.remove('active'));
         el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; setTimeout(() => el.modalBeanName.focus(), 400);
     });
     el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));

@@ -258,15 +258,24 @@
         <h3 id="modal-title">Complete Your Recipe</h3>
         <p class="modal-subtitle" id="modal-subtitle">Adding bean info lets you recreate this cup perfectly</p>
 
-        <div class="modal-row" style="display:flex; gap:14px;">
-            <div class="modal-form-group" style="flex:2;">
-                <label for="modal-bean-name" id="lbl-modal-bean-name">BEAN NAME <span class="required" style="color:var(--gold)">*</span></label>
-                <input type="text" id="modal-bean-name" placeholder="e.g. Ethiopia Yirgacheffe">
+        <div class="modal-form-group">
+            <label for="modal-bean-name" id="lbl-modal-bean-name">BEAN NAME <span class="required" style="color:var(--gold)">*</span></label>
+            <input type="text" id="modal-bean-name" placeholder="e.g. Ethiopia Yirgacheffe">
+        </div>
+
+        <div class="modal-form-group">
+            <label for="modal-origin" id="lbl-modal-origin">ORIGIN</label>
+            <div class="tag-cloud" id="origin-tag-cloud">
+                <span class="taste-tag" data-value="Ethiopia">#Ethiopia</span>
+                <span class="taste-tag" data-value="Colombia">#Colombia</span>
+                <span class="taste-tag" data-value="Brazil">#Brazil</span>
+                <span class="taste-tag" data-value="Kenya">#Kenya</span>
+                <span class="taste-tag" data-value="Guatemala">#Guatemala</span>
+                <span class="taste-tag" data-value="Indonesia">#Indonesia</span>
+                <span class="taste-tag" data-value="Costa Rica">#Costa Rica</span>
+                <span class="taste-tag" data-value="Panama">#Panama</span>
             </div>
-            <div class="modal-form-group" style="flex:1;">
-                <label for="modal-origin" id="lbl-modal-origin">ORIGIN</label>
-                <input type="text" id="modal-origin" placeholder="e.g. Africa">
-            </div>
+            <input type="text" id="modal-origin" placeholder="e.g. Africa">
         </div>
 
         <div class="modal-form-group">
