@@ -1,4 +1,10 @@
 // logbook.js
+import { 
+    auth, 
+    onAuthStateChanged 
+} from "./firebase-config.js";
+import CoffeeNotesStorage from "./storage.js";
+
 document.addEventListener('DOMContentLoaded', () => {
     let currentLang = 'en'; // Default language
 
@@ -53,6 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
         recipeCardsGrid: document.getElementById('recipe-cards-grid'),
     };
 
+    // --- Auth Logic ---
+    onAuthStateChanged(auth, (user) => {
+        CoffeeNotesStorage.setCurrentUser(user);
+        renderRecipeCards(); // Re-render when auth state changes
+    });
+
     // --- Functions ---
     const setLang = (lang) => {
         currentLang = lang;
@@ -68,35 +80,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return '★'.repeat(rating) + '☆'.repeat(5 - rating);
     };
 
-    const deleteRecipe = (id) => {
+    const deleteRecipe = async (id) => {
         if (confirm(i18n[currentLang].deleteConfirm)) {
-            CoffeeNotesStorage.deleteRecipe(id);
+            await CoffeeNotesStorage.deleteRecipe(id);
             renderRecipeCards(); // Re-render the list after deletion
         }
     };
 
-    const renderRecipeCards = () => {
+    const renderRecipeCards = async () => {
+        elements.recipeCardsGrid.innerHTML = '<div class="loading">Loading recipes...</div>';
+        const recipes = await CoffeeNotesStorage.getRecipes();
+
         elements.recipeCardsGrid.innerHTML = ''; // Clear existing cards
-        const recipes = CoffeeNotesStorage.getRecipes();
 
         if (!Array.isArray(recipes) || recipes.length === 0) {
             elements.recipeCardsGrid.innerHTML = `<p class="no-recipes-message">${i18n[currentLang].noRecipes}</p>`;
             return;
         }
 
-        // Sort by date (newest first)
-        recipes.sort((a, b) => {
-            const dateA = a && a.date ? new Date(a.date).getTime() : 0;
-            const dateB = b && b.date ? new Date(b.date).getTime() : 0;
-            return dateB - dateA;
-        });
-
         recipes.forEach(recipe => {
             if (!recipe) return;
             const card = document.createElement('div');
             card.className = 'recipe-card';
             
-            // Photo display logic: Only show if imageUrl exists
             const photoHtml = recipe.imageUrl 
                 ? `<img src="${recipe.imageUrl}" alt="${recipe.beanName || 'Coffee'}" class="recipe-card-image">`
                 : '';
@@ -129,8 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             elements.recipeCardsGrid.appendChild(card);
         });
-
-        // Event listeners are now handled by event delegation on the parent grid
     };
 
     // --- Event Listeners ---
@@ -141,9 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.btnLangEn.addEventListener('click', () => setLang('en'));
     elements.btnLangKo.addEventListener('click', () => setLang('ko'));
 
-    // **FIX: Use Event Delegation for delete buttons**
     elements.recipeCardsGrid.addEventListener('click', (e) => {
-        // Check if a delete button was clicked
         if (e.target && e.target.classList.contains('delete-btn')) {
             const id = e.target.dataset.id;
             if (id) {
@@ -153,5 +155,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Initial Setup ---
-    setLang(currentLang); // Apply initial language settings and render cards
+    setLang(currentLang);
 });

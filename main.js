@@ -1,3 +1,13 @@
+// main.js
+import { 
+    auth, 
+    googleProvider, 
+    signInWithPopup, 
+    signOut, 
+    onAuthStateChanged 
+} from "./firebase-config.js";
+import CoffeeNotesStorage from "./storage.js";
+
 document.addEventListener('DOMContentLoaded', () => {
     let currentMode = 'espresso';
     let currentLang = 'en';
@@ -17,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherError: "📍 Weather unavailable",
             viewLogbook: "LOG BOOK",
             brandTagline: "Turn extraction into science",
+            lblLogin: "Login with Google",
+            modalBeanStatus: "BEAN STATUS", statusNew: "🆕 NEW BAG", statusOpen: "📦 OPENED",
             modalBeanName: "BEAN NAME", modalOrigin: "ORIGIN", modalPurchaseUrl: "PURCHASE URL",
             modalImageUrl: "COVER PHOTO", modalTasteNotes: "TASTING NOTES",
             modalOverallRating: "RATING", modalSuccessFail: "RESULT",
@@ -26,10 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmExitModal: "Discard this recipe?",
             progressLabel: "RECIPE COMPLETENESS",
             progressHint: "Add bean name to complete",
-            proHintDosing: "Pro range: 18.0–21.0g",
-            proHintTemp: "Pro range: 90.0–96.0°C",
-            proHintTime: "Pro range: 25.0–35.0sec",
-            proHintYield: "Brew ratio: 1:2.0",
+            proHintDosing: "Pro range: {min}–{max}g",
+            proHintTemp: "Pro range: {min}–{max}°C",
+            proHintTime: "Pro range: {min}–{max}sec",
+            proHintYield: "Brew ratio: 1:{ratio}",
             ratioLabel: "BREW RATIO",
             ratioIdeal: "✓ SCA recommended",
             ratioWarning: "⚡ Adjust for balance",
@@ -57,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherError: "📍 날씨 정보 없음",
             viewLogbook: "로그북",
             brandTagline: "당신의 추출을 과학으로",
+            lblLogin: "구글 로그인",
+            modalBeanStatus: "원두 상태", statusNew: "🆕 새 원두", statusOpen: "📦 개봉 중",
             modalBeanName: "원두 이름", modalOrigin: "원산지", modalPurchaseUrl: "구매처 URL",
             modalImageUrl: "겉표지 사진", modalTasteNotes: "테이스팅 노트",
             modalOverallRating: "평점", modalSuccessFail: "결과",
@@ -66,10 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmExitModal: "이 레시피를 버리겠습니까?",
             progressLabel: "레시피 완성도",
             progressHint: "원두 이름을 기록하면 완성됩니다",
-            proHintDosing: "프로 범위: 18.0–21.0g",
-            proHintTemp: "프로 범위: 90.0–96.0°C",
-            proHintTime: "프로 범위: 25.0–35.0sec",
-            proHintYield: "브루 비율: 1:2.0",
+            proHintDosing: "프로 범위: {min}–{max}g",
+            proHintTemp: "프로 범위: {min}–{max}°C",
+            proHintTime: "프로 범위: {min}–{max}sec",
+            proHintYield: "브루 비율: 1:{ratio}",
             ratioLabel: "브루 레이시오",
             ratioIdeal: "✓ SCA 권장 범위",
             ratioWarning: "⚡ 균형을 위해 조정 필요",
@@ -162,6 +176,19 @@ document.addEventListener('DOMContentLoaded', () => {
         hintYield: document.getElementById('hint-yield'),
         btnFail: document.getElementById('btn-fail'),
         btnSuccess: document.getElementById('btn-success'),
+        // Auth UI
+        btnLogin: document.getElementById('btn-login'),
+        btnLogout: document.getElementById('btn-logout'),
+        userProfile: document.getElementById('user-profile'),
+        userPhoto: document.getElementById('user-photo'),
+        userName: document.getElementById('user-name'),
+        lblLogin: document.getElementById('lbl-login'),
+        // Bean Status UI
+        btnStatusNew: document.getElementById('btn-status-new'),
+        btnStatusOpen: document.getElementById('btn-status-open'),
+        modalBeanStatus: document.getElementById('modal-bean-status'),
+        openedBeansContainer: document.getElementById('opened-beans-container'),
+        lblModalBeanStatus: document.getElementById('lbl-modal-bean-status'),
         // Stopwatch
         btnStopwatch: document.getElementById('btn-stopwatch'),
         lblStopwatch: document.getElementById('lbl-stopwatch'),
@@ -185,6 +212,70 @@ document.addEventListener('DOMContentLoaded', () => {
         zYieldMin: document.getElementById('z-yield-min'),
         zYieldMax: document.getElementById('z-yield-max'),
     };
+
+    // --- Auth Logic ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            el.btnLogin.style.display = 'none';
+            el.userProfile.style.display = 'flex';
+            el.userPhoto.src = user.photoURL || '';
+            el.userName.textContent = user.displayName || 'User';
+            CoffeeNotesStorage.setCurrentUser(user);
+        } else {
+            el.btnLogin.style.display = 'flex';
+            el.userProfile.style.display = 'none';
+            CoffeeNotesStorage.setCurrentUser(null);
+        }
+        updateLogbookBadge();
+    });
+
+    el.btnLogin.addEventListener('click', async () => {
+        try {
+            await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+            console.error("Login failed", error);
+        }
+    });
+
+    el.btnLogout.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error("Logout failed", error);
+        }
+    });
+
+    // --- Bean Status Logic ---
+    const setBeanStatus = async (status) => {
+        el.modalBeanStatus.value = status;
+        el.btnStatusNew.classList.toggle('active', status === 'new');
+        el.btnStatusOpen.classList.toggle('active', status === 'open');
+        
+        if (status === 'open') {
+            const recentBeans = await CoffeeNotesStorage.getRecentBeans();
+            if (recentBeans.length > 0) {
+                el.openedBeansContainer.innerHTML = recentBeans
+                    .map(bean => `<span class="taste-tag" data-bean="${bean}">${bean}</span>`)
+                    .join('');
+                el.openedBeansContainer.style.display = 'flex';
+                
+                // Add click events to chips
+                el.openedBeansContainer.querySelectorAll('.taste-tag').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        el.modalBeanName.value = chip.getAttribute('data-bean');
+                        updateProgress();
+                    });
+                });
+            } else {
+                el.openedBeansContainer.style.display = 'none';
+            }
+        } else {
+            el.openedBeansContainer.style.display = 'none';
+        }
+    };
+
+    el.btnStatusNew.addEventListener('click', () => setBeanStatus('new'));
+    el.btnStatusOpen.addEventListener('click', () => setBeanStatus('open'));
 
     // ===== Stopwatch =====
     const sw = { running: false, elapsed: 0, startTime: null, rafId: null, done: false };
@@ -233,11 +324,19 @@ document.addEventListener('DOMContentLoaded', () => {
         el.swBtnApply.disabled = false;
         swUpdateRing(sw.elapsed);
         const secs = sw.elapsed / 1000;
-        const proL = currentMode === 'espresso' ? 25 : 120;
-        const proH = currentMode === 'espresso' ? 35 : 240;
+        const qr = qualityRanges[currentMode].time;
+        const proL = qr.idealLow;
+        const proH = qr.idealHigh;
         let k = 'swHintIdeal';
         if (secs < proL) k = 'swHintUnder'; else if (secs > proH) k = 'swHintOver';
-        el.swHint.textContent = i18n[currentLang][k].replace('{sec}', secs.toFixed(1));
+        
+        let displaySecs;
+        if (currentMode === 'drip' && secs >= 60) {
+            displaySecs = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
+        } else {
+            displaySecs = secs.toFixed(1);
+        }
+        el.swHint.textContent = i18n[currentLang][k].replace('{sec}', displaySecs);
     };
 
     const swReset = () => {
@@ -368,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const qualityRanges = {
         espresso: { dosing: { low: 14, idealLow: 17, idealHigh: 22, high: 26 }, temp: { low: 85, idealLow: 90, idealHigh: 96, high: 99 }, time: { low: 20, idealLow: 25, idealHigh: 35, high: 45 }, yield: { low: 15, idealLow: 30, idealHigh: 50, high: 58 } },
-        drip: { dosing: { low: 10, idealLow: 15, idealHigh: 25, high: 35 }, temp: { low: 85, idealLow: 90, idealHigh: 96, high: 99 }, time: { low: 90, idealLow: 120, idealHigh: 240, high: 280 }, yield: { low: 80, idealLow: 150, idealHigh: 400, high: 500 } }
+        drip: { dosing: { low: 10, idealLow: 15, idealHigh: 25, high: 35 }, temp: { low: 85, idealLow: 90, idealHigh: 96, high: 99 }, time: { low: 90, idealLow: 120, idealHigh: 240, high: 280 }, yield: { low: 100, idealLow: 225, idealHigh: 450, high: 550 } }
     };
 
     const setMode = (mode) => {
@@ -450,20 +549,51 @@ document.addEventListener('DOMContentLoaded', () => {
         el.progressHint.textContent = score === 100 ? (currentLang === 'ko' ? '완성된 레시피입니다 ✓' : 'Recipe complete ✓') : i18n[currentLang].progressHint;
     };
 
-    const updateLogbookBadge = () => {
-        const recipes = (typeof CoffeeNotesStorage !== 'undefined') ? CoffeeNotesStorage.getRecipes() : [];
+    const updateLogbookBadge = async () => {
+        const recipes = await CoffeeNotesStorage.getRecipes();
         if (!Array.isArray(recipes)) return;
         el.logbookCount.textContent = recipes.length; el.logbookCount.style.display = recipes.length > 0 ? 'flex' : 'none';
         const todayCount = recipes.filter(r => r && r.date && new Date(r.date).toDateString() === new Date().toDateString()).length;
         el.dailyCount.textContent = todayCount;
     };
 
-    const updateProHints = () => { ['Dosing','Temp','Time','Yield'].forEach(k => el[`hint${k}`].textContent = i18n[currentLang][`proHint${k}`]); el.ratioLabel.textContent = i18n[currentLang].ratioLabel; };
+    const updateProHints = () => { 
+        const qr = qualityRanges[currentMode];
+        const t = i18n[currentLang];
+
+        // Dosing
+        el.hintDosing.textContent = t.proHintDosing.replace('{min}', qr.dosing.idealLow.toFixed(1)).replace('{max}', qr.dosing.idealHigh.toFixed(1));
+        
+        // Temp
+        el.hintTemp.textContent = t.proHintTemp.replace('{min}', qr.temp.idealLow.toFixed(1)).replace('{max}', qr.temp.idealHigh.toFixed(1));
+
+        // Time
+        let tMin = qr.time.idealLow, tMax = qr.time.idealHigh;
+        let tMinStr, tMaxStr;
+        if (currentMode === 'drip') {
+            tMinStr = `${Math.floor(tMin / 60)}:${String(tMin % 60).padStart(2, '0')}`;
+            tMaxStr = `${Math.floor(tMax / 60)}:${String(tMax % 60).padStart(2, '0')}`;
+        } else {
+            tMinStr = tMin.toFixed(1);
+            tMaxStr = tMax.toFixed(1);
+        }
+        el.hintTime.textContent = t.proHintTime.replace('{min}', tMinStr).replace('{max}', tMaxStr);
+
+        // Yield (Ratio)
+        let ratioStr = currentMode === 'espresso' ? "1:2.0" : "1:15–1:18";
+        el.hintYield.textContent = t.proHintYield.replace('{ratio}', ratioStr.split(':')[1] || ratioStr);
+        
+        el.ratioLabel.textContent = t.ratioLabel;
+    };
 
     const setLang = (lang) => {
         currentLang = lang; ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
         const t = i18n[lang]; ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => el[k].textContent = t[k.replace('lbl','').toLowerCase()] || t[k]);
-        ['lblModalBeanName','lblModalOrigin','lblModalPurchaseUrl','lblModalImageUrl','lblModalTasteNotes','lblModalOverallRating','lblModalSuccessFail','lblModalSave','modalTitle','modalSubtitle'].forEach(k => el[k].textContent = t[k.replace('lbl','').charAt(0).toLowerCase() + k.replace('lbl','').slice(1)] || t[k]);
+        ['lblModalBeanName','lblModalOrigin','lblModalPurchaseUrl','lblModalImageUrl','lblModalTasteNotes','lblModalOverallRating','lblModalSuccessFail','lblModalSave','modalTitle','modalSubtitle','lblLogin','lblModalBeanStatus'].forEach(k => {
+            if (el[k]) el[k].textContent = t[k.replace('lbl','').charAt(0).toLowerCase() + k.replace('lbl','').slice(1)] || t[k];
+        });
+        if (el.btnStatusNew) el.btnStatusNew.textContent = t.statusNew;
+        if (el.btnStatusOpen) el.btnStatusOpen.textContent = t.statusOpen;
         if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
         el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
         el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
@@ -539,49 +669,50 @@ document.addEventListener('DOMContentLoaded', () => {
     el.swBtnStart.addEventListener('click', () => { if (sw.running) swStop(); else swStart(); });
     el.swBtnReset.addEventListener('click', swReset);
     el.swBtnApply.addEventListener('click', swApply);
+    
     el.btnSave.addEventListener('click', () => {
         el.recipeModal.classList.add('active');
         el.modalBeanName.value = ''; el.modalOrigin.value = ''; el.modalPurchaseUrl.value = ''; el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; el.modalTasteNotes.value = '';
         if (el.tasteTagCloud) el.tasteTagCloud.querySelectorAll('.taste-tag').forEach(t => t.classList.remove('active'));
         if (el.originTagCloud) el.originTagCloud.querySelectorAll('.taste-tag').forEach(t => t.classList.remove('active'));
-        el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; setTimeout(() => el.modalBeanName.focus(), 400);
+        el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; 
+        setBeanStatus('new'); // Reset to new by default
+        setTimeout(() => el.modalBeanName.focus(), 400);
     });
+
     el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));
     el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
     el.btnSuccess.addEventListener('click', () => { successResult = true; el.modalSuccessFail.checked = true; el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active'); });
-    el.modalSaveRecipe.addEventListener('click', () => {
+    
+    el.modalSaveRecipe.addEventListener('click', async () => {
         try {
             const bean = el.modalBeanName.value.trim(); if (!bean) return el.modalBeanName.focus();
             
-            // Safety checks for DOM elements
             const ratingInput = el.modalOverallRatingContainer.querySelector('input[name="overallRating"]:checked');
             const weatherSpan = el.weatherInfo ? el.weatherInfo.querySelector('span:last-child') : null;
             const weatherValue = weatherSpan ? weatherSpan.innerHTML : (currentLang === 'ko' ? '날씨 정보 없음' : 'Weather unavailable');
 
-            // Image size check (approx 2MB limit for base64)
             if (uploadedImageData && uploadedImageData.length > 2 * 1024 * 1024) {
                 alert(currentLang === 'ko' ? '이미지 크기가 너무 큽니다. 다른 사진을 선택해 주세요.' : 'Image size is too large. Please choose another photo.');
                 return;
             }
 
             const recipe = {
-                id: Date.now().toString(), date: new Date().toISOString(), mode: currentMode,
+                date: new Date().toISOString(), mode: currentMode,
                 dosing: parseFloat(parseFloat(el.rDosing.value).toFixed(1)),
                 temp: parseFloat(parseFloat(el.rTemp.value).toFixed(1)),
                 time: parseFloat(parseFloat(el.rTime.value).toFixed(1)),
                 yield: parseFloat(parseFloat(el.rYield.value).toFixed(1)),
                 beanName: bean, origin: el.modalOrigin.value.trim(), purchaseUrl: el.modalPurchaseUrl.value.trim(), imageUrl: uploadedImageData, tasteNotes: el.modalTasteNotes.value.trim(), 
                 overallRating: ratingInput ? parseInt(ratingInput.value, 10) : 3, 
-                success: successResult, weather: weatherValue
+                success: successResult, weather: weatherValue,
+                beanStatus: el.modalBeanStatus.value
             };
 
-            if (typeof CoffeeNotesStorage !== 'undefined') {
-                if (CoffeeNotesStorage.saveRecipe(recipe)) {
-                    alert(i18n[currentLang].recipeSavedSuccess);
-                    window.location.href = 'logbook.html';
-                } else {
-                    alert(i18n[currentLang].recipeSavedFail);
-                }
+            const saved = await CoffeeNotesStorage.saveRecipe(recipe);
+            if (saved) {
+                alert(i18n[currentLang].recipeSavedSuccess);
+                window.location.href = 'logbook.html';
             } else {
                 alert(i18n[currentLang].recipeSavedFail);
             }
@@ -590,6 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(i18n[currentLang].recipeSavedFail);
         }
     });
+
     el.modalImageFile.addEventListener('change', (e) => {
         const f = e.target.files[0]; if (f) { el.fileNameDisplay.innerText = f.name; const r = new FileReader(); r.onload = (ev) => { uploadedImageData = ev.target.result; el.btnImageUpload.innerText = i18n[currentLang].photoSelected; }; r.readAsDataURL(f); }
     });
