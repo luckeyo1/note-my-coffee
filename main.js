@@ -688,6 +688,21 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const bean = el.modalBeanName.value.trim(); if (!bean) return el.modalBeanName.focus();
             
+            // Login Nudge
+            if (!auth.currentUser) {
+                const wantLogin = confirm(currentLang === 'ko' 
+                    ? "로그인하지 않고 저장하면 이 기기에만 저장됩니다. 구글 로그인으로 모든 기기에서 레시피를 동기화하시겠습니까?" 
+                    : "Saving as guest will only store data on this device. Would you like to login with Google to sync across all devices?");
+                if (wantLogin) {
+                    try {
+                        await signInWithPopup(auth, googleProvider);
+                        // After successful login, the onAuthStateChanged will trigger and update the storage user
+                    } catch (error) {
+                        console.error("Login nudge failed", error);
+                    }
+                }
+            }
+
             const ratingInput = el.modalOverallRatingContainer.querySelector('input[name="overallRating"]:checked');
             const weatherSpan = el.weatherInfo ? el.weatherInfo.querySelector('span:last-child') : null;
             const weatherValue = weatherSpan ? weatherSpan.innerHTML : (currentLang === 'ko' ? '날씨 정보 없음' : 'Weather unavailable');

@@ -26,6 +26,8 @@
     --radius-md: 14px;
     --radius-lg: 20px;
     --radius-xl: 28px;
+    --ink-dark: #000000;
+    --font-brand: 'Cormorant Garamond', serif;
     --font-display: 'Cormorant Garamond', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
     --font-mono: 'DM Mono', monospace;
