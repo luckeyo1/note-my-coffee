@@ -59,7 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
             swHintOver: "⚡ {sec}s — possible over-extraction",
             swHintIdeal: "✓ {sec}s — within SCA range",
             swApplied: "{sec}s applied to extraction time",
-            swBtnOpen: "⏱ OPEN STOPWATCH", swBtnClose: "⏱ CLOSE STOPWATCH"
+            swBtnOpen: "⏱ OPEN STOPWATCH", swBtnClose: "⏱ CLOSE STOPWATCH",
+            originTags: ["Ethiopia", "Colombia", "Brazil", "Kenya", "Guatemala", "Indonesia", "Costa Rica", "Panama"],
+            tasteTags: ["Floral", "Fruity", "Nutty", "Chocolaty", "Sweet", "Acidic", "Bitter", "Spicy"]
         },
         ko: {
             dosing: "도징량", temp: "물 온도", time: "추출 시간", yield: "추출량",
@@ -101,7 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
             swHintOver: "⚡ {sec}초 — 과다추출 가능성",
             swHintIdeal: "✓ {sec}초 — SCA 권장 범위 내",
             swApplied: "{sec}초가 추출 시간에 반영되었습니다",
-            swBtnOpen: "⏱ 스톱워치 열기", swBtnClose: "⏱ 스톱워치 닫기"
+            swBtnOpen: "⏱ 스톱워치 열기", swBtnClose: "⏱ 스톱워치 닫기",
+            originTags: ["에티오피아", "콜롬비아", "브라질", "케냐", "과테말라", "인도네시아", "코스타리카", "파나마"],
+            tasteTags: ["플로럴", "프루티", "고소한", "초콜릿", "달콤한", "산미있는", "쌉쌀한", "스파이시"]
         }
     };
 
@@ -586,6 +590,23 @@ document.addEventListener('DOMContentLoaded', () => {
         el.ratioLabel.textContent = t.ratioLabel;
     };
 
+    const renderTagCloud = (container, tags, inputEl) => {
+        container.innerHTML = tags.map(tag => `<span class="taste-tag" data-value="${tag}">#${tag}</span>`).join('');
+        container.querySelectorAll('.taste-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('active');
+                const val = tag.getAttribute('data-value');
+                let currentVals = inputEl.value.split(',').map(s => s.trim()).filter(s => s);
+                if (tag.classList.contains('active')) {
+                    if (!currentVals.includes(val)) currentVals.push(val);
+                } else {
+                    currentVals = currentVals.filter(s => s !== val);
+                }
+                inputEl.value = currentVals.join(', ');
+            });
+        });
+    };
+
     const setLang = (lang) => {
         currentLang = lang; ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
         const t = i18n[lang]; ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => el[k].textContent = t[k.replace('lbl','').toLowerCase()] || t[k]);
@@ -598,6 +619,10 @@ document.addEventListener('DOMContentLoaded', () => {
         el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
         el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
         el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
+        
+        renderTagCloud(el.originTagCloud, t.originTags, el.modalOrigin);
+        renderTagCloud(el.tasteTagCloud, t.tasteTags, el.modalTasteNotes);
+
         updateProHints(); updateProgress(); updateBrewRatio();
     };
 
@@ -625,40 +650,6 @@ document.addEventListener('DOMContentLoaded', () => {
             fineTune(id, delta);
         });
     });
-
-    // Tasting tags
-    if (el.tasteTagCloud) {
-        el.tasteTagCloud.querySelectorAll('.taste-tag').forEach(tag => {
-            tag.addEventListener('click', () => {
-                tag.classList.toggle('active');
-                const val = tag.getAttribute('data-value');
-                let currentNotes = el.modalTasteNotes.value.split(',').map(s => s.trim()).filter(s => s);
-                if (tag.classList.contains('active')) {
-                    if (!currentNotes.includes(val)) currentNotes.push(val);
-                } else {
-                    currentNotes = currentNotes.filter(s => s !== val);
-                }
-                el.modalTasteNotes.value = currentNotes.join(', ');
-            });
-        });
-    }
-
-    // Origin tags
-    if (el.originTagCloud) {
-        el.originTagCloud.querySelectorAll('.taste-tag').forEach(tag => {
-            tag.addEventListener('click', () => {
-                tag.classList.toggle('active');
-                const val = tag.getAttribute('data-value');
-                let currentOrigin = el.modalOrigin.value.split(',').map(s => s.trim()).filter(s => s);
-                if (tag.classList.contains('active')) {
-                    if (!currentOrigin.includes(val)) currentOrigin.push(val);
-                } else {
-                    currentOrigin = currentOrigin.filter(s => s !== val);
-                }
-                el.modalOrigin.value = currentOrigin.join(', ');
-            });
-        });
-    }
 
     el.btnStopwatch.addEventListener('click', () => {
         const isOpen = el.stopwatchPanel.classList.toggle('open');

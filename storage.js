@@ -63,6 +63,7 @@ const CoffeeNotesStorage = {
                 return docRef.id;
             } catch (e) {
                 console.error("Error saving recipe to Firestore", e);
+                alert("Firestore 저장 실패: " + e.message);
                 return false;
             }
         }
