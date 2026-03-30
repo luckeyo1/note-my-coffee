@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tasteTags: ["Floral", "Fruity", "Nutty", "Chocolaty", "Sweet", "Acidic", "Bitter", "Spicy"]
         },
         ko: {
-            dosing: "도징량", temp: "물 온도", time: "추출 시간", yield: "추출량",
+            dosing: "도징량", temp: "물 온도", time: "추출 시간", yield: "추출 량",
             save: "레시피 기록하기",
             weather: "📍 위치 확인 중...",
             locationDenied: "📍 위치 접근 거부",
@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.modalBeanStatus.value = status;
         el.btnStatusNew.classList.toggle('active', status === 'new');
         el.btnStatusOpen.classList.toggle('active', status === 'open');
-        
+
         if (status === 'open') {
             const recentBeans = await CoffeeNotesStorage.getRecentBeans();
             if (recentBeans.length > 0) {
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .map(bean => `<span class="taste-tag" data-bean="${bean}">${bean}</span>`)
                     .join('');
                 el.openedBeansContainer.style.display = 'flex';
-                
+
                 // Add click events to chips
                 el.openedBeansContainer.querySelectorAll('.taste-tag').forEach(chip => {
                     chip.addEventListener('click', () => {
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const proH = qr.idealHigh;
         let k = 'swHintIdeal';
         if (secs < proL) k = 'swHintUnder'; else if (secs > proH) k = 'swHintOver';
-        
+
         let displaySecs;
         if (currentMode === 'drip' && secs >= 60) {
             displaySecs = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const min = parseFloat(input.min);
             const max = parseFloat(input.max);
             const range = max - min;
-            
+
             // Set track width based on range
             track.style.width = `${range * PX_PER_UNIT}px`;
 
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const scrollPos = viewport.scrollLeft;
                 const val = min + (scrollPos / PX_PER_UNIT);
                 const clamped = Math.max(min, Math.min(max, val)).toFixed(1);
-                
+
                 if (input.value !== clamped) {
                     input.value = clamped;
                     updateVal(id, clamped);
@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!rulerState[id]) rulerState[id] = {};
         rulerState[id].syncing = true;
-        
+
         viewport.scrollTo({
             left: targetScroll,
             behavior: smooth ? 'smooth' : 'auto'
@@ -465,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- 비주얼 바 ---
         if (id === 'dosing' && el.visDosing) el.visDosing.style.width = `${(dv - 7) / (40 - 7) * 100}%`;
         if (id === 'temp' && el.visTemp) el.visTemp.style.width = `${(dv - 80) / (100 - 80) * 100}%`;
-        
+
         updateBrewRatio(); updateProgress();
     };
 
@@ -478,12 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMode = mode;
         el.btnEspresso.classList.toggle('active', mode === 'espresso');
         el.btnDrip.classList.toggle('active', mode === 'drip');
-        
+
         const timeMax = mode === 'espresso' ? 60 : 300;
         const yieldMax = mode === 'espresso' ? 60 : 600;
         el.rTime.max = timeMax;
         el.rYield.max = yieldMax;
-        
+
         if (el.zTimeMax) el.zTimeMax.textContent = `${timeMax}s`;
         if (el.zYieldMax) el.zYieldMax.textContent = `${yieldMax}g`;
 
@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateVal('dosing', el.rDosing.value); updateVal('temp', el.rTemp.value);
         updateVal('time', el.rTime.value); updateVal('yield', el.rYield.value);
-        
+
         // Sync ruler positions
         ['dosing', 'temp', 'time', 'yield'].forEach(id => syncRuler(id, el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`].value, false));
 
@@ -520,8 +520,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchWeather = () => {
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
-        const setFallback = (msg) => { if (infoSpan) infoSpan.innerHTML = `📍 SEOUL · ☀️ 18.0°C · 💧 45% <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`; };
-        if (!WEATHERAPI_KEY) return setFallback("API 키 필요");
+        const setFallback = (msg) => { 
+            const defaultWeather = currentLang === 'ko' ? "📍 서울 · ☀️ 18.0°C · 💧 45%" : "📍 SEOUL · ☀️ 18.0°C · 💧 45%";
+            if (infoSpan) infoSpan.innerHTML = `${defaultWeather} <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`; 
+        };
+
+        if (infoSpan) infoSpan.innerHTML = i18n[currentLang].weather;
+
+        if (!WEATHERAPI_KEY) return setFallback(currentLang === 'ko' ? "API 키 필요" : "API Key Required");
+
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const { latitude: lat, longitude: lon } = pos.coords;
@@ -533,8 +540,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (hum > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${hum}% — try slightly coarser grind`;
                     else if (hum < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 추출 강도 +0.5g 권장` : `Humidity ${hum}% — consider +0.5g dosing`;
                     else el.envHint.textContent = currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
-                } catch (e) { setFallback("에러"); }
-            }, (err) => setFallback("위치 오류"));
+                } catch (e) { setFallback(currentLang === 'ko' ? "데이터 오류" : "API Error"); }
+            }, (err) => {
+                let msg = currentLang === 'ko' ? "위치 권한 필요" : "Location Denied";
+                if (err.code === 1) msg = currentLang === 'ko' ? "위치 차단됨" : "Location Blocked";
+                setFallback(msg);
+            }, { timeout: 10000 });
+        } else {
+            setFallback(currentLang === 'ko' ? "지원 안 함" : "Not Supported");
         }
     };
 
@@ -567,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Dosing
         el.hintDosing.textContent = t.proHintDosing.replace('{min}', qr.dosing.idealLow.toFixed(1)).replace('{max}', qr.dosing.idealHigh.toFixed(1));
-        
+
         // Temp
         el.hintTemp.textContent = t.proHintTemp.replace('{min}', qr.temp.idealLow.toFixed(1)).replace('{max}', qr.temp.idealHigh.toFixed(1));
 
@@ -586,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Yield (Ratio)
         let ratioStr = currentMode === 'espresso' ? "1:2.0" : "1:15–1:18";
         el.hintYield.textContent = t.proHintYield.replace('{ratio}', ratioStr.split(':')[1] || ratioStr);
-        
+
         el.ratioLabel.textContent = t.ratioLabel;
     };
 
@@ -619,11 +632,11 @@ document.addEventListener('DOMContentLoaded', () => {
         el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
         el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
         el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
-        
+
         renderTagCloud(el.originTagCloud, t.originTags, el.modalOrigin);
         renderTagCloud(el.tasteTagCloud, t.tasteTags, el.modalTasteNotes);
 
-        updateProHints(); updateProgress(); updateBrewRatio();
+        updateProHints(); updateProgress(); updateBrewRatio(); fetchWeather();
     };
 
     // --- Events ---
@@ -632,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnLangEn.addEventListener('click', () => setLang('en'));
     el.btnLangKo.addEventListener('click', () => setLang('ko'));
     el.btnViewLogbook.addEventListener('click', () => window.location.href = 'logbook.html');
-    
+
     // Range sliders
     [el.rDosing, el.rTemp, el.rTime, el.rYield].forEach(input => {
         if (!input) return;
@@ -660,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.swBtnStart.addEventListener('click', () => { if (sw.running) swStop(); else swStart(); });
     el.swBtnReset.addEventListener('click', swReset);
     el.swBtnApply.addEventListener('click', swApply);
-    
+
     el.btnSave.addEventListener('click', () => {
         el.recipeModal.classList.add('active');
         el.modalBeanName.value = ''; el.modalOrigin.value = ''; el.modalPurchaseUrl.value = ''; el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; el.modalTasteNotes.value = '';
@@ -674,11 +687,11 @@ document.addEventListener('DOMContentLoaded', () => {
     el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));
     el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
     el.btnSuccess.addEventListener('click', () => { successResult = true; el.modalSuccessFail.checked = true; el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active'); });
-    
+
     el.modalSaveRecipe.addEventListener('click', async () => {
         try {
             const bean = el.modalBeanName.value.trim(); if (!bean) return el.modalBeanName.focus();
-            
+
             // Login Nudge
             if (!auth.currentUser) {
                 const wantLogin = confirm(currentLang === 'ko' 
@@ -734,3 +747,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initRulers(); setMode('espresso'); fetchWeather(); updateLogbookBadge();
 });
+
