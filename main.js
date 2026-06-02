@@ -15,6 +15,43 @@ document.addEventListener('DOMContentLoaded', () => {
     let uploadedImageData = ''; // Base64 image string
     let audioCtx = null;
 
+    const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.6) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(dataUrl);
+                };
+                img.onerror = (e) => reject(e);
+            };
+            reader.onerror = (e) => reject(e);
+        });
+    };
+
     // IMPORTANT: Replace 'YOUR_WEATHERAPI_KEY' with your actual WeatherAPI.com API key.
     const WEATHERAPI_KEY = '549486968354490e95c131115262003';
 
@@ -711,7 +748,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const weatherSpan = el.weatherInfo ? el.weatherInfo.querySelector('span:last-child') : null;
             const weatherValue = weatherSpan ? weatherSpan.innerHTML : (currentLang === 'ko' ? '날씨 정보 없음' : 'Weather unavailable');
 
-            if (uploadedImageData && uploadedImageData.length > 2 * 1024 * 1024) {
+            // Limit to 1MB (Firestore document limit)
+            if (uploadedImageData && uploadedImageData.length > 1 * 1024 * 1024) {
                 alert(currentLang === 'ko' ? '이미지 크기가 너무 큽니다. 다른 사진을 선택해 주세요.' : 'Image size is too large. Please choose another photo.');
                 return;
             }

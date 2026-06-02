@@ -21,12 +21,19 @@ This project is a coffee brewing recipe logger that uses Firebase for authentica
 3.  **UI/UX Improvements for Auth:**
     - Add a "Login Nudge" when saving a recipe as a guest, explaining the benefits of syncing (Firestore).
     - Ensure the user profile display is polished.
-4.  **Verification:**
+4.  **Storage & Performance Optimization (Capacity Issue):**
+    - **Issue:** Users reporting "out of capacity" error due to large Base64 images in `localStorage` and Firestore document limits.
+    - **Fix:** Implement client-side image compression using Canvas API before saving. 
+    - **Policy:** Limit compressed images to ~500KB to ensure compatibility with Firestore (1MB limit) and maximize `localStorage` efficiency.
+5.  **Verification:**
     - Check for any console errors.
     - Verify the auth flow logic.
 
 ## Action Steps
-1.  [ ] Fix `style.css` variables.
-2.  [ ] Refine `firebase-config.js` structure.
-3.  [ ] Add a login nudge in `main.js` when saving as a guest.
-4.  [ ] Provide instructions for the user to insert their Firebase config.
+1.  [x] Fix `style.css` variables.
+2.  [x] Refine `firebase-config.js` structure.
+3.  [x] Add a login nudge in `main.js` when saving as a guest.
+4.  [ ] Implement client-side image compression in `main.js`.
+5.  [ ] Reduce maximum photo size limit in `main.js`.
+6.  [ ] Provide instructions for the user to insert their Firebase config.
+
