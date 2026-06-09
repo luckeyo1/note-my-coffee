@@ -138,9 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Event Listeners ---
-    elements.btnNewRecipe.addEventListener('click', () => { window.location.href = 'index.html'; });
+    elements.btnNewRecipe.addEventListener('click', () => { window.location.href = 'app.html'; });
     if (elements.mobileFab) {
-        elements.mobileFab.addEventListener('click', () => { window.location.href = 'index.html'; });
+        elements.mobileFab.addEventListener('click', () => { window.location.href = 'app.html'; });
     }
     elements.btnLangEn.addEventListener('click', () => setLang('en'));
     elements.btnLangKo.addEventListener('click', () => setLang('ko'));

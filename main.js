@@ -641,25 +641,54 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderTagCloud = (container, tags, inputEl) => {
+        if (!container || !inputEl) return;
+
+        const updateTagsActiveState = () => {
+            const currentVals = inputEl.value.split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+            container.querySelectorAll('.taste-tag').forEach(tag => {
+                const val = tag.getAttribute('data-value').toLowerCase();
+                tag.classList.toggle('active', currentVals.includes(val));
+            });
+        };
+
         container.innerHTML = tags.map(tag => `<span class="taste-tag" data-value="${tag}">#${tag}</span>`).join('');
         container.querySelectorAll('.taste-tag').forEach(tag => {
             tag.addEventListener('click', () => {
-                tag.classList.toggle('active');
                 const val = tag.getAttribute('data-value');
                 let currentVals = inputEl.value.split(',').map(s => s.trim()).filter(s => s);
-                if (tag.classList.contains('active')) {
-                    if (!currentVals.includes(val)) currentVals.push(val);
+                
+                const index = currentVals.findIndex(v => v.toLowerCase() === val.toLowerCase());
+                if (index === -1) {
+                    currentVals.push(val);
                 } else {
-                    currentVals = currentVals.filter(s => s !== val);
+                    currentVals.splice(index, 1);
                 }
+                
                 inputEl.value = currentVals.join(', ');
+                updateTagsActiveState();
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
             });
         });
+
+        // Sync on manual input
+        inputEl.addEventListener('input', updateTagsActiveState);
+        updateTagsActiveState(); // Initial sync
     };
 
     const setLang = (lang) => {
         currentLang = lang; ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
-        const t = i18n[lang]; ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => el[k].textContent = t[k.replace('lbl','').toLowerCase()] || t[k]);
+        const t = i18n[lang]; 
+        
+        ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => {
+            if (!el[k]) return;
+            let key = k.replace('lbl','');
+            // Specific overrides for keys that don't match standard mapping
+            if (key === 'saveNudge') key = 'savingNudge';
+            if (key === 'progressLabelText') key = 'progressLabel';
+            // Try lowercase, then original key
+            el[k].textContent = t[key.charAt(0).toLowerCase() + key.slice(1)] || t[key] || t[k];
+        });
+
         ['lblModalBeanName','lblModalOrigin','lblModalPurchaseUrl','lblModalImageUrl','lblModalTasteNotes','lblModalOverallRating','lblModalSuccessFail','lblModalSave','modalTitle','modalSubtitle','lblLogin','lblModalBeanStatus'].forEach(k => {
             if (el[k]) el[k].textContent = t[k.replace('lbl','').charAt(0).toLowerCase() + k.replace('lbl','').slice(1)] || t[k];
         });
@@ -713,9 +742,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.btnSave.addEventListener('click', () => {
         el.recipeModal.classList.add('active');
-        el.modalBeanName.value = ''; el.modalOrigin.value = ''; el.modalPurchaseUrl.value = ''; el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; el.modalTasteNotes.value = '';
-        if (el.tasteTagCloud) el.tasteTagCloud.querySelectorAll('.taste-tag').forEach(t => t.classList.remove('active'));
-        if (el.originTagCloud) el.originTagCloud.querySelectorAll('.taste-tag').forEach(t => t.classList.remove('active'));
+        el.modalBeanName.value = ''; 
+        el.modalOrigin.value = ''; el.modalOrigin.dispatchEvent(new Event('input'));
+        el.modalPurchaseUrl.value = ''; 
+        el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; 
+        el.modalTasteNotes.value = ''; el.modalTasteNotes.dispatchEvent(new Event('input'));
+        
         el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; 
         setBeanStatus('new'); // Reset to new by default
         setTimeout(() => el.modalBeanName.focus(), 400);
@@ -783,6 +815,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const f = e.target.files[0]; if (f) { el.fileNameDisplay.innerText = f.name; const r = new FileReader(); r.onload = (ev) => { uploadedImageData = ev.target.result; el.btnImageUpload.innerText = i18n[currentLang].photoSelected; }; r.readAsDataURL(f); }
     });
 
-    initRulers(); setMode('espresso'); fetchWeather(); updateLogbookBadge();
+    initRulers(); setMode('espresso'); setLang(currentLang); fetchWeather(); updateLogbookBadge();
 });
 

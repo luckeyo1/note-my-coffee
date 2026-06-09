@@ -27,11 +27,24 @@
     --radius-lg: 20px;
     --radius-xl: 28px;
     --ink-dark: #000000;
+    --bg-deep: #0D0B0A;
     --font-brand: 'Cormorant Garamond', serif;
     --font-display: 'Cormorant Garamond', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
     --font-mono: 'DM Mono', monospace;
     --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== NOISE TEXTURE ===== */
+body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url('https://grainy-gradients.vercel.app/noise.svg');
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 9999;
 }
 
 /* ===== RESET & BASE ===== */
@@ -665,3 +678,27 @@ input[type=range]::-webkit-slider-thumb:hover {
     }
 }
 
+
+/* ===== LANDING PAGE SPECIFIC OVERRIDES ===== */
+.landing-page body {
+    background: var(--bg-deep);
+}
+
+.glow-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.glow-btn::before {
+    content: "";
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(212,175,55,0.2) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.glow-btn:hover::before {
+    opacity: 1;
+}

@@ -3,367 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note My Coffee | Pro Barista</title>
+    <title>Note My Coffee | Extraction into Science</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;700&family=DM+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: var(--bg-deep);
+            color: var(--ink);
+        }
+        .landing-container {
+            position: relative;
+            z-index: 10;
+        }
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 20px;
+            background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
+        }
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .hero-title {
+            font-family: 'Cormorant+Garamond', serif;
+            font-size: clamp(3rem, 10vw, 6rem);
+            font-weight: 600;
+            margin: 0;
+            line-height: 0.9;
+            letter-spacing: -0.02em;
+            color: var(--gold);
+        }
+        .hero-subtitle {
+            font-family: 'DM Sans', sans-serif;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            font-weight: 300;
+            margin-top: 20px;
+            color: var(--ink-muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .cta-group {
+            margin-top: 50px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .primary-cta {
+            background: var(--gold);
+            color: var(--bg-deep);
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        .primary-cta:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.5);
+        }
+        .secondary-cta {
+            background: transparent;
+            color: var(--gold);
+            padding: 18px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .secondary-cta:hover {
+            background: rgba(212, 175, 55, 0.05);
+            border-color: var(--gold);
+        }
+        .features {
+            padding: 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(212, 175, 55, 0.2);
+        }
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .feature-title {
+            font-family: 'Cormorant+Garamond', serif;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--gold);
+        }
+        .feature-desc {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--ink-muted);
+        }
+        footer {
+            padding: 50px 20px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--ink-muted);
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
-<body>
+<body class="landing-page">
 
-<!-- 상단 사회적 증명 배지 -->
-<div class="trust-bar">
-    <span class="trust-dot"></span>
-    <span id="trust-text">Pro Barista Edition · 오늘 <strong id="daily-count">--</strong>개의 레시피가 기록되었습니다</span>
-</div>
+    <div id="three-canvas"></div>
 
-<div class="app-shell">
-
-    <!-- 헤더 -->
-    <header class="app-header">
-        <div class="brand">
-            <div class="brand-mark">☕</div>
-            <div class="brand-text">
-                <span class="brand-name">Note My Coffee</span>
-                <span class="brand-tagline" id="brand-tagline">Turn extraction into science</span>
+    <div class="landing-container">
+        <section class="hero">
+            <h1 class="hero-title">NOTE<br>MY COFFEE</h1>
+            <p class="hero-subtitle">Turn Extraction into Science</p>
+            <div class="cta-group">
+                <button id="btn-get-started" class="primary-cta">Start Brewing Now</button>
+                <a href="app.html" class="secondary-cta">Explore as Guest</a>
             </div>
-        </div>
-        <div class="header-actions">
-            <div id="auth-container" class="auth-container">
-                <button id="btn-login" class="login-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                    <span id="lbl-login">Login with Google</span>
-                </button>
-                <div id="user-profile" class="user-profile" style="display: none;">
-                    <img id="user-photo" src="" alt="User Photo" class="user-photo">
-                    <span id="user-name" class="user-name"></span>
-                    <button id="btn-logout" class="logout-btn" title="Logout">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    </button>
-                </div>
-            </div>
-            <div class="lang-toggle">
-                <button class="lang-btn active" id="l-en">EN</button>
-                <button class="lang-btn" id="l-ko">KO</button>
-            </div>
-            <button id="btn-view-logbook" class="logbook-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                <span id="lbl-logbook">LOG BOOK</span>
-                <span class="logbook-badge" id="logbook-count">0</span>
-            </button>
-        </div>
-    </header>
+        </section>
 
-    <!-- 날씨 및 환경 정보 -->
-    <div class="env-strip">
-        <div class="env-info" id="weather-info">
-            <span class="env-dot"></span>
-            <span>📍 SEOUL · ☀️ 18.0°C · 💧 45%</span>
-        </div>
-        <div class="env-hint" id="env-hint">Ideal extraction conditions today</div>
+        <section class="features">
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <h3 class="feature-title">Precision Tracking</h3>
+                <p class="feature-desc">Monitor dosing, water temperature, and extraction time with surgical accuracy. Every variable matters.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📓</span>
+                <h3 class="feature-title">Intelligent Logbook</h3>
+                <p class="feature-desc">Your entire brewing history, organized. Revisit your best shots and learn from the failures.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">☁️</span>
+                <h3 class="feature-title">Cloud Synchronization</h3>
+                <p class="feature-desc">Access your recipes from any device. Securely backed up with Google infrastructure.</p>
+            </div>
+        </section>
+
+        <footer>
+            &copy; 2026 Note My Coffee. Science in every sip.
+        </footer>
     </div>
 
-    <!-- 모드 전환 -->
-    <div class="mode-rail">
-        <button id="btn-espresso" class="mode-pill active">
-            <span class="mode-icon">⚡</span>
-            <span>ESPRESSO</span>
-        </button>
-        <button id="btn-drip" class="mode-pill">
-            <span class="mode-icon">🌿</span>
-            <span>HAND DRIP</span>
-        </button>
-    </div>
-
-    <!-- 레시피 완성도 바 -->
-    <div class="progress-section">
-        <div class="progress-label">
-            <span id="progress-label-text">RECIPE COMPLETENESS</span>
-            <span class="progress-pct" id="progress-pct">75%</span>
-        </div>
-        <div class="progress-track">
-            <div class="progress-fill" id="progress-fill" style="width: 75%"></div>
-        </div>
-        <div class="progress-hint" id="progress-hint">Add bean name to complete</div>
-    </div>
-
-    <!-- 메인 컨트롤 패널 -->
-    <div class="console-box">
-
-        <!-- Dosing -->
-        <div class="control-group">
-            <div class="control-header">
-                <div class="control-meta">
-                    <span class="control-label" id="lbl-dosing">DOSING</span>
-                    <span class="control-pro-hint" id="hint-dosing">Pro range: 18.0–21.0g</span>
-                </div>
-                <div class="control-value">
-                    <span id="v-dosing">18.0</span>
-                    <span class="control-unit">g</span>
-                    <span class="quality-badge" id="qb-dosing">IDEAL</span>
-                </div>
-            </div>
-            <div class="visual-container">
-                <div id="vis-dosing" class="visual-bar visual-dosing-bar" style="width: 33.3%;"></div>
-            </div>
-            <div class="slider-wrapper">
-                <button class="fine-btn btn-minus" data-id="dosing">−</button>
-                <input type="range" id="r-dosing" min="7" max="40" step="0.1" value="18.0">
-                <button class="fine-btn btn-plus" data-id="dosing">+</button>
-            </div>
-            <div class="slider-zones">
-                <span>7g</span>
-                <span>40g</span>
-            </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- Temp -->
-        <div class="control-group">
-            <div class="control-header">
-                <div class="control-meta">
-                    <span class="control-label" id="lbl-temp">WATER TEMP</span>
-                    <span class="control-pro-hint" id="hint-temp">Pro range: 90.0–96.0°C</span>
-                </div>
-                <div class="control-value">
-                    <span id="v-temp">92.0</span>
-                    <span class="control-unit">°C</span>
-                    <span class="quality-badge" id="qb-temp">IDEAL</span>
-                </div>
-            </div>
-            <div class="visual-container">
-                <div id="vis-temp" class="visual-bar visual-temp-bar" style="width: 60%;"></div>
-            </div>
-            <div class="slider-wrapper">
-                <button class="fine-btn btn-minus" data-id="temp">−</button>
-                <input type="range" id="r-temp" min="80" max="100" step="0.1" value="92.0">
-                <button class="fine-btn btn-plus" data-id="temp">+</button>
-            </div>
-            <div class="slider-zones">
-                <span>80°C</span>
-                <span>100°C</span>
-            </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- Time + Stopwatch -->
-        <div class="control-group">
-            <div class="control-header">
-                <div class="control-meta">
-                    <span class="control-label" id="lbl-time">EXTRACTION TIME</span>
-                    <span class="control-pro-hint" id="hint-time">Pro range: 25.0–35.0sec</span>
-                </div>
-                <div class="control-value">
-                    <span id="v-time">28.5</span>
-                    <span class="control-unit" id="u-time">sec</span>
-                    <span class="quality-badge" id="qb-time">IDEAL</span>
-                </div>
-            </div>
-            
-            <button id="btn-stopwatch" class="stopwatch-trigger">
-                <span id="lbl-stopwatch">⏱ OPEN STOPWATCH</span>
-            </button>
-
-            <div id="stopwatch-panel" class="stopwatch-panel">
-                <div class="sw-display">
-                    <div class="sw-ring-wrap">
-                        <svg class="sw-ring" viewBox="0 0 120 120">
-                            <circle class="sw-ring-bg" cx="60" cy="60" r="52"></circle>
-                            <circle id="sw-ring-progress" class="sw-ring-progress" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
-                        </svg>
-                        <div class="sw-time-overlay">
-                            <div id="sw-time" class="sw-time">00.0</div>
-                            <div id="sw-status" class="sw-status">READY</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="sw-controls">
-                    <button id="sw-btn-reset" class="sw-btn sw-btn-reset" disabled>
-                        <span id="lbl-sw-reset">RESET</span>
-                    </button>
-                    <button id="sw-btn-start" class="sw-btn sw-btn-start">
-                        <span id="lbl-sw-start">START</span>
-                    </button>
-                    <button id="sw-btn-apply" class="sw-btn sw-btn-apply" disabled>
-                        <span id="lbl-sw-apply">APPLY</span>
-                    </button>
-                </div>
-                <p id="sw-hint" class="sw-hint">Press START to begin extraction</p>
-            </div>
-
-            <div class="slider-wrapper" style="margin-top:20px;">
-                <button class="fine-btn btn-minus" data-id="time">−</button>
-                <input type="range" id="r-time" min="0" max="60" step="0.1" value="28.5">
-                <button class="fine-btn btn-plus" data-id="time">+</button>
-            </div>
-            <div class="slider-zones">
-                <span id="z-time-min">0s</span>
-                <span id="z-time-max">60s</span>
-            </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- Yield -->
-        <div class="control-group">
-            <div class="control-header">
-                <div class="control-meta">
-                    <span class="control-label" id="lbl-yield">YIELD</span>
-                    <span class="control-pro-hint" id="hint-yield">Brew ratio: 1:2.0</span>
-                </div>
-                <div class="control-value">
-                    <span id="v-yield">36.0</span>
-                    <span class="control-unit">g</span>
-                    <span class="quality-badge" id="qb-yield">IDEAL</span>
-                </div>
-            </div>
-            
-            <div class="brew-ratio-card">
-                <div class="ratio-label" id="ratio-label">BREW RATIO</div>
-                <div class="ratio-display">
-                    <div class="ratio-bar-wrap">
-                        <div class="ratio-coffee-bar" id="ratio-coffee-bar" style="width: 33%"></div>
-                        <div class="ratio-water-bar" id="ratio-water-bar" style="width: 67%"></div>
-                    </div>
-                    <div class="ratio-numbers">
-                        <span class="ratio-num" id="ratio-num">1 : 2.0</span>
-                        <span class="ratio-status ideal" id="ratio-status">✓ SCA recommended</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="slider-wrapper">
-                <button class="fine-btn btn-minus" data-id="yield">−</button>
-                <input type="range" id="r-yield" min="10" max="60" step="0.1" value="36.0">
-                <button class="fine-btn btn-plus" data-id="yield">+</button>
-            </div>
-            <div class="slider-zones">
-                <span id="z-yield-min">10g</span>
-                <span id="z-yield-max">60g</span>
-            </div>
-        </div>
-
-        <button class="save-btn" id="btn-save">
-            <span class="save-icon">✦</span>
-            <span id="lbl-save">LOG THIS RECIPE</span>
-            <span class="save-arrow">→</span>
-        </button>
-
-        <p class="save-nudge" id="save-nudge">Unsaved recipes are lost forever</p>
-
-    </div>
-
-</div>
-
-<div id="recipe-modal" class="modal">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content">
-        <div class="modal-progress-steps">
-            <div class="step active">1</div>
-            <div class="step-line"></div>
-            <div class="step active">2</div>
-            <div class="step-line"></div>
-            <div class="step">3</div>
-        </div>
-
-        <h3 id="modal-title">Complete Your Recipe</h3>
-        <p class="modal-subtitle" id="modal-subtitle">Adding bean info lets you recreate this cup perfectly</p>
-
-        <div class="modal-form-group">
-            <label id="lbl-modal-bean-status">BEAN STATUS</label>
-            <div class="bean-status-toggle" style="display:flex; gap:6px; margin-bottom:12px;">
-                <button class="result-btn status-btn new active" id="btn-status-new">🆕 NEW BAG</button>
-                <button class="result-btn status-btn open" id="btn-status-open">📦 OPENED</button>
-                <input type="hidden" id="modal-bean-status" value="new">
-            </div>
-        </div>
-
-        <div class="modal-form-group" id="group-bean-name">
-            <label for="modal-bean-name" id="lbl-modal-bean-name">BEAN NAME <span class="required" style="color:var(--gold)">*</span></label>
-            <div id="opened-beans-container" class="tag-cloud" style="display:none; margin-bottom:10px;">
-                <!-- Recently opened beans will be injected here -->
-            </div>
-            <input type="text" id="modal-bean-name" placeholder="e.g. Ethiopia Yirgacheffe">
-        </div>
-
-        <div class="modal-form-group">
-            <label for="modal-origin" id="lbl-modal-origin">ORIGIN</label>
-            <div class="tag-cloud" id="origin-tag-cloud">
-                <span class="taste-tag" data-value="Ethiopia">#Ethiopia</span>
-                <span class="taste-tag" data-value="Colombia">#Colombia</span>
-                <span class="taste-tag" data-value="Brazil">#Brazil</span>
-                <span class="taste-tag" data-value="Kenya">#Kenya</span>
-                <span class="taste-tag" data-value="Guatemala">#Guatemala</span>
-                <span class="taste-tag" data-value="Indonesia">#Indonesia</span>
-                <span class="taste-tag" data-value="Costa Rica">#Costa Rica</span>
-                <span class="taste-tag" data-value="Panama">#Panama</span>
-            </div>
-            <input type="text" id="modal-origin" placeholder="e.g. Africa">
-        </div>
-
-        <div class="modal-form-group">
-            <label for="modal-purchase-url" id="lbl-modal-purchase-url">PURCHASE URL</label>
-            <input type="url" id="modal-purchase-url" placeholder="https://...">
-        </div>
-        <div class="modal-form-group">
-            <label id="lbl-modal-image-url">COVER PHOTO</label>
-            <div class="file-input-wrapper" style="display:flex; align-items:center;">
-                <input type="file" id="modal-image-file" accept="image/*" style="display:none">
-                <button type="button" class="result-btn" onclick="document.getElementById('modal-image-file').click()" id="btn-image-upload" style="flex:1;">📷 Choose Photo</button>
-                <span id="file-name-display" style="font-size: 12px; color: var(--ink-muted); margin-left: 10px;"></span>
-            </div>
-        </div>
-        
-        <div class="modal-form-group">
-            <label for="modal-taste-notes" id="lbl-modal-taste-notes">TASTING NOTES</label>
-            <div class="tag-cloud" id="taste-tag-cloud">
-                <span class="taste-tag" data-value="Floral">#Floral</span>
-                <span class="taste-tag" data-value="Fruity">#Fruity</span>
-                <span class="taste-tag" data-value="Nutty">#Nutty</span>
-                <span class="taste-tag" data-value="Chocolaty">#Chocolaty</span>
-                <span class="taste-tag" data-value="Sweet">#Sweet</span>
-                <span class="taste-tag" data-value="Acidic">#Acidic</span>
-                <span class="taste-tag" data-value="Bitter">#Bitter</span>
-                <span class="taste-tag" data-value="Spicy">#Spicy</span>
-            </div>
-            <textarea id="modal-taste-notes" placeholder="Floral, peach, bright acidity..."></textarea>
-        </div>
-
-        <div class="modal-row" style="display:flex; gap:14px;">
-            <div class="modal-form-group" style="flex:1;">
-                <label id="lbl-modal-overall-rating">RATING</label>
-                <div class="rating-input" id="modal-overall-rating-container">
-                    <input type="radio" id="rating-5" name="overallRating" value="5"><label for="rating-5">★</label>
-                    <input type="radio" id="rating-4" name="overallRating" value="4"><label for="rating-4">★</label>
-                    <input type="radio" id="rating-3" name="overallRating" value="3" checked><label for="rating-3">★</label>
-                    <input type="radio" id="rating-2" name="overallRating" value="2"><label for="rating-2">★</label>
-                    <input type="radio" id="rating-1" name="overallRating" value="1"><label for="rating-1">★</label>
-                </div>
-            </div>
-
-            <div class="modal-form-group" style="flex:1;">
-                <label id="lbl-modal-success-fail">RESULT</label>
-                <div class="result-toggle" style="display:flex; gap:6px;">
-                    <button class="result-btn fail active" id="btn-fail">✗ FAIL</button>
-                    <button class="result-btn success" id="btn-success">✓ SUCCESS</button>
-                    <input type="checkbox" id="modal-success-fail" style="display:none">
-                </div>
-            </div>
-        </div>
-
-        <div class="modal-actions">
-            <button class="modal-save-btn" id="modal-save-recipe">
-                <span id="lbl-modal-save">Save Recipe →</span>
-            </button>
-            <button class="modal-cancel-btn" id="modal-cancel">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<script type="module" src="storage.js"></script>
-<script type="module" src="main.js" defer></script>
-
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+          }
+        }
+    </script>
+    <script type="module" src="landing.js"></script>
 </body>
 </html>
