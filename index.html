@@ -15,8 +15,8 @@
             --lp-gold: #D4AF37;
             --lp-bg: #050505;
             --lp-panel: #121212;
-            --lp-text: #E0E0E0;
-            --lp-sub-text: #888;
+            --lp-text: #F0F0F0; /* Brighter for better contrast */
+            --lp-sub-text: #BBB; /* Brighter subtext */
         }
 
         body.landing-page {
@@ -39,6 +39,31 @@
         }
 
         .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* Navigation */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(5,5,5,0.8), transparent);
+            backdrop-filter: blur(5px);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: 700;
+        }
 
         /* Hero Section */
         .hero {
@@ -66,8 +91,9 @@
             color: var(--gold);
             letter-spacing: 0.3em;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             margin-bottom: 24px;
+            font-weight: 700;
         }
 
         .hero h1 {
@@ -76,6 +102,7 @@
             line-height: 1.1;
             margin-bottom: 30px;
             font-weight: 700;
+            color: #FFF;
         }
 
         .hero mark {
@@ -84,23 +111,11 @@
             position: relative;
             display: inline-block;
         }
-        
-        .hero mark::after {
-            content: '';
-            position: absolute;
-            bottom: 10%;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: var(--gold);
-            opacity: 0.3;
-            border-radius: 2px;
-        }
 
         .hero p {
-            font-size: 1.25rem;
-            color: var(--ink-ghost);
-            max-width: 600px;
+            font-size: 1.35rem;
+            color: var(--lp-text);
+            max-width: 650px;
             margin: 0 auto 48px;
             font-weight: 400;
         }
@@ -112,26 +127,26 @@
             gap: 12px;
             padding: 20px 48px;
             background: var(--gold);
-            color: var(--ink-dark);
+            color: #000;
             text-decoration: none;
             border-radius: 999px;
             font-weight: 700;
             font-size: 1.1rem;
             transition: var(--transition);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
             border: none;
             cursor: pointer;
         }
         
         .btn-premium:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.5);
             background: var(--gold-light);
         }
 
         /* Section Styling */
         section {
-            padding: 120px 0;
+            padding: 140px 0;
             position: relative;
         }
 
@@ -142,15 +157,22 @@
 
         .section-header h2 {
             font-family: var(--font-display);
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             color: var(--gold);
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .section-header p {
+            font-size: 1.2rem;
+            color: var(--lp-sub-text);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         /* Story Section */
         .story-section { background: rgba(10, 10, 10, 0.5); backdrop-filter: blur(10px); }
         .story-box {
-            border-left: 1px solid var(--gold);
+            border-left: 2px solid var(--gold);
             padding: 60px;
             background: var(--panel);
             border-radius: 0 40px 40px 0;
@@ -160,18 +182,46 @@
         }
         .story-box blockquote {
             font-family: var(--font-display);
-            font-size: 2rem;
+            font-size: 2.2rem;
             color: var(--gold);
             margin: 0 0 30px 0;
             line-height: 1.3;
         }
-
-        /* Features Grid - Container Queries */
-        .features-container {
-            container-type: inline-size;
-            container-name: feature-grid;
+        .story-box p {
+            font-size: 1.1rem;
+            color: #DDD;
         }
 
+        /* Process Section */
+        .process-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+        .process-step {
+            text-align: center;
+        }
+        .step-num {
+            font-family: var(--font-display);
+            font-size: 4rem;
+            color: rgba(212, 175, 55, 0.1);
+            margin-bottom: -40px;
+            font-weight: 700;
+        }
+        .process-step h3 {
+            color: var(--gold);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .process-step p {
+            color: var(--lp-sub-text);
+            font-size: 1rem;
+        }
+
+        /* Features Grid */
         .ui-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -179,7 +229,7 @@
         }
 
         .ui-card {
-            background: rgba(18, 18, 18, 0.8);
+            background: rgba(18, 18, 18, 0.85);
             padding: 48px;
             border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -193,29 +243,60 @@
             border-color: var(--gold);
             background: rgba(22, 22, 22, 0.95);
             transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
         .ui-card h3 {
             color: var(--gold);
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-family: var(--font-body);
         }
 
         .ui-card p {
-            color: var(--lp-sub-text);
-            font-size: 1rem;
+            color: #CCC;
+            font-size: 1.05rem;
         }
 
-        @container feature-grid (min-width: 700px) {
-            .ui-card {
-                padding: 60px;
-            }
+        /* Testimonials */
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
         }
+        .testimonial-card {
+            background: rgba(255,255,255,0.03);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .testimonial-card p {
+            font-style: italic;
+            color: var(--lp-text);
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #000;
+        }
+        .author-info h4 { font-size: 1rem; margin: 0; color: var(--gold); }
+        .author-info span { font-size: 0.8rem; color: var(--lp-sub-text); }
 
-        /* Pricing Card Glassmorphism */
+        /* Pricing Card */
         .price-wrapper {
             display: flex;
             justify-content: center;
@@ -224,7 +305,7 @@
         }
         
         .price-card {
-            background: rgba(17, 17, 17, 0.7);
+            background: rgba(17, 17, 17, 0.8);
             backdrop-filter: blur(20px);
             padding: 60px 40px;
             border-radius: 40px;
@@ -236,22 +317,22 @@
         
         .price-card.featured {
             border: 1.5px solid var(--gold);
-            background: rgba(22, 22, 22, 0.8);
+            background: rgba(22, 22, 22, 0.9);
             transform: scale(1.05);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
         }
 
-        .price-card h4 { font-size: 0.9rem; color: var(--gold); margin-bottom: 12px; letter-spacing: 2px; }
+        .price-card h4 { font-size: 1rem; color: var(--gold); margin-bottom: 12px; letter-spacing: 2px; font-weight: 700; }
         .price-card .cost { font-family: var(--font-display); font-size: 3.5rem; font-weight: 700; color: #fff; margin-bottom: 24px; }
-        .price-card ul { list-style: none; padding: 0; margin: 40px 0; font-size: 0.95rem; color: var(--ink-ghost); text-align: left; }
+        .price-card ul { list-style: none; padding: 0; margin: 40px 0; font-size: 1rem; color: #BBB; text-align: left; }
         .price-card li { margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
         .price-card li::before { content: '→'; color: var(--gold); font-weight: bold; }
 
         footer {
-            padding: 80px 0;
+            padding: 100px 0;
             text-align: center;
-            color: var(--ink-muted);
-            font-size: 0.9rem;
+            color: var(--lp-sub-text);
+            font-size: 1rem;
             border-top: 1px solid rgba(255,255,255,0.05);
             background: var(--bg-deep);
         }
@@ -271,20 +352,30 @@
             .hero h1 { font-size: 3rem; }
             .price-card.featured { transform: scale(1); }
             .story-box { padding: 40px 30px; }
+            .section-header h2 { font-size: 2.2rem; }
         }
     </style>
 </head>
 <body class="landing-page">
 
+<nav class="nav-bar">
+    <div class="container nav-container">
+        <a href="#" class="nav-logo">NOTE MY COFFEE</a>
+        <div id="nav-actions">
+            <!-- Dynamic Actions -->
+        </div>
+    </div>
+</nav>
+
 <div id="three-canvas"></div>
 
-<section class="hero">
+<section class="hero" id="home">
     <div class="container">
         <div class="hero-content" id="hero-content">
             <h4>Exclusive for Coffee Lovers</h4>
             <h1>당신의 <mark>인생 커피</mark>가<br>재현되지 않는 진짜 이유</h1>
             <p>0.1g의 오차와 실시간 습도 변화.<br>감각에 의존하는 대신 데이터로 맛을 소유하세요.</p>
-            <button id="btn-get-started" class="btn-premium">시작하기</button>
+            <button id="btn-get-started" class="btn-premium"><span>지금 무료로 시작하기</span></button>
         </div>
     </div>
 </section>
@@ -302,26 +393,83 @@
     </div>
 </section>
 
+<section class="process-section">
+    <div class="container">
+        <div class="section-header reveal">
+            <h2>The Science of Brewing</h2>
+            <p>직관을 데이터로 바꾸는 세 단계의 여정</p>
+        </div>
+        
+        <div class="process-grid">
+            <div class="process-step reveal">
+                <div class="step-num">01</div>
+                <h3>실시간 환경 동기화</h3>
+                <p>추출 당시의 기온과 습도를 자동으로 기록하여 외부 변수를 통제합니다.</p>
+            </div>
+            <div class="process-step reveal">
+                <div class="step-num">02</div>
+                <h3>정밀 레시피 아카이브</h3>
+                <p>도징량, 물 온도, 추출 시간 등 모든 핵심 변수를 1초 만에 기록합니다.</p>
+            </div>
+            <div class="process-step reveal">
+                <div class="step-num">03</div>
+                <h3>데이터 기반 재현</h3>
+                <p>과거의 '인생 한 잔'을 다시 재현하기 위한 최적의 가이드를 제공받습니다.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="ui-preview">
     <div class="container">
         <div class="section-header reveal">
-            <h2>Crafted for Precision</h2>
-            <p style="color: var(--ink-ghost);">바쁜 아침, 1초 만에 완료되는 압도적인 기록 경험</p>
+            <h2>Crafted for Baristas</h2>
+            <p>바쁜 아침, 1초 만에 완료되는 압도적인 기록 경험</p>
         </div>
         
-        <div class="features-container">
-            <div class="ui-grid">
-                <div class="ui-card reveal">
-                    <h3>Tactile Control</h3>
-                    <p>바리스타 전용 <b>슬라이더 UI</b>로 0.1g, 0.5초 단위의 미세한 수치를 1초 만에 기록하세요. 타이핑의 번거로움을 완전히 제거했습니다.</p>
+        <div class="ui-grid">
+            <div class="ui-card reveal">
+                <h3>Tactile Control</h3>
+                <p>바리스타 전용 <b>슬라이더 UI</b>로 0.1g, 0.5초 단위의 미세한 수치를 1초 만에 기록하세요. 타이핑의 번거로움을 완전히 제거했습니다.</p>
+            </div>
+            <div class="ui-card reveal">
+                <h3>Environment Sync</h3>
+                <p>위치 권한 하나로 현재 위치의 <b>기온과 습도</b>를 자동 매칭합니다. 습도가 변할 때 레시피를 어떻게 보정해야 할지 데이터가 답해줍니다.</p>
+            </div>
+            <div class="ui-card reveal">
+                <h3>Dual Mode Console</h3>
+                <p>에스프레소와 핸드드립, 각 추출 특성에 맞춘 <b>전용 콘솔</b>을 제공합니다. 당신이 사용하는 모든 도구의 데이터를 한 곳에서 관리하세요.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="testimonials">
+    <div class="container">
+        <div class="section-header reveal">
+            <h2>Trusted by Experts</h2>
+            <p>이미 많은 바리스타와 홈브루어들이 데이터를 선택했습니다.</p>
+        </div>
+        
+        <div class="testimonial-grid">
+            <div class="testimonial-card reveal">
+                <p>"원두 세팅 잡는 시간이 절반으로 줄었습니다. 습도 변화에 따른 분쇄도 조절이 이제는 감이 아닌 수치로 가능해졌어요."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">K</div>
+                    <div class="author-info">
+                        <h4>김바리스타</h4>
+                        <span>스페셜티 카페 운영</span>
+                    </div>
                 </div>
-                <div class="ui-card reveal">
-                    <h3>Environment Sync</h3>
-                    <p>위치 권한 하나로 현재 위치의 <b>기온과 습도</b>를 자동 매칭합니다. 습도가 변할 때 레시피를 어떻게 보정해야 할지 데이터가 답해줍니다.</p>
-                </div>
-                <div class="ui-card reveal">
-                    <h3>Dual Mode Console</h3>
-                    <p>에스프레소와 핸드드립, 각 추출 특성에 맞춘 <b>전용 콘솔</b>을 제공합니다. 당신이 사용하는 모든 도구의 데이터를 한 곳에서 관리하세요.</p>
+            </div>
+            <div class="testimonial-card reveal">
+                <p>"매일 아침 같은 맛을 내는 게 소원이었는데, 이 앱 덕분에 제 레시피의 문제점을 찾았습니다. 홈브루잉의 필수품입니다."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">L</div>
+                    <div class="author-info">
+                        <h4>이홈브루</h4>
+                        <span>5년차 홈브루어</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -332,7 +480,7 @@
     <div class="container">
         <div class="section-header reveal">
             <h2>Investment in Taste</h2>
-            <p style="color: var(--ink-ghost);">원두 한 봉지 가격으로 얻는 완벽한 일관성</p>
+            <p>원두 한 봉지 가격으로 얻는 완벽한 일관성</p>
         </div>
         
         <div class="price-wrapper">
@@ -365,7 +513,7 @@
 <footer>
     <div class="container">
         <p>NOTE MY COFFEE | PROFESSIONAL BREWING ARCHIVE</p>
-        <p style="margin-top: 10px; color: var(--gold);">PRESERVE YOUR PERFECT CUP</p>
+        <p style="margin-top: 10px; color: var(--gold); letter-spacing: 2px;">PRESERVE YOUR PERFECT CUP</p>
     </div>
 </footer>
 

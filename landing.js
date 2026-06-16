@@ -9,22 +9,32 @@ import {
 document.addEventListener('DOMContentLoaded', () => {
     // --- Auth Check ---
     onAuthStateChanged(auth, (user) => {
+        const btnText = document.querySelector('#btn-get-started span') || document.getElementById('btn-get-started');
         if (user) {
-            // Already logged in, go to app
-            window.location.href = 'app.html';
+            // Logged in: Change button text but don't force redirect
+            if (btnText) btnText.textContent = '콘솔로 이동하기';
+            document.querySelectorAll('.btn-get-started-alt').forEach(btn => {
+                btn.textContent = '지금 바로 시작하기';
+            });
+        } else {
+            if (btnText) btnText.textContent = '지금 무료로 시작하기';
         }
     });
 
     const btnGetStarted = document.getElementById('btn-get-started');
     btnGetStarted.addEventListener('click', async () => {
+        if (auth.currentUser) {
+            window.location.href = 'app.html';
+            return;
+        }
+        
         try {
             await signInWithPopup(auth, googleProvider);
             window.location.href = 'app.html';
         } catch (error) {
             console.error("Login failed", error);
-            // Fallback for popup blocked or cancelled
             if (error.code !== 'auth/popup-closed-by-user') {
-                alert("Login failed. Please try again or explore as guest.");
+                alert("로그인에 실패했습니다. 다시 시도하거나 게스트로 탐색해 주세요.");
             }
         }
     });
