@@ -3,189 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note My Coffee | Extraction into Science</title>
+    <title>Note My Coffee | 데이터로 지키는 당신의 인생 커피</title>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;700&family=DM+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=Noto+Serif+KR:wght@700&family=Noto+Sans+KR:wght@300;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+        /* Landing Page Specific Enhancements */
+        :root {
+            --lp-gold: #D4AF37;
+            --lp-bg: #050505;
+            --lp-panel: #121212;
+            --lp-text: #E0E0E0;
+            --lp-sub-text: #888;
+        }
+
+        body.landing-page {
             background-color: var(--bg-deep);
-            color: var(--ink);
+            color: var(--lp-text);
+            font-family: var(--font-body);
+            margin: 0;
+            line-height: 1.8;
+            overflow-x: hidden;
         }
-        .landing-container {
-            position: relative;
-            z-index: 10;
-        }
-        .hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 0 20px;
-            background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 70%);
-        }
+
         #three-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
-            pointer-events: none;
+            z-index: -1;
             opacity: 0.6;
         }
-        .hero-title {
-            font-family: 'Cormorant+Garamond', serif;
-            font-size: clamp(3rem, 10vw, 6rem);
-            font-weight: 600;
-            margin: 0;
-            line-height: 0.9;
-            letter-spacing: -0.02em;
-            color: var(--gold);
-        }
-        .hero-subtitle {
-            font-family: 'DM Sans', sans-serif;
-            font-size: clamp(1rem, 3vw, 1.5rem);
-            font-weight: 300;
-            margin-top: 20px;
-            color: var(--ink-muted);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-        }
-        .cta-group {
-            margin-top: 50px;
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
+            align-items: center;
             justify-content: center;
+            text-align: center;
+            position: relative;
         }
-        .primary-cta {
+        
+        .hero-content {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease-out;
+        }
+        
+        .hero-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero h4 {
+            font-family: var(--font-body);
+            color: var(--gold);
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            line-height: 1.1;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .hero mark {
+            background: none;
+            color: var(--gold);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .hero mark::after {
+            content: '';
+            position: absolute;
+            bottom: 10%;
+            left: 0;
+            width: 100%;
+            height: 4px;
             background: var(--gold);
-            color: var(--bg-deep);
-            padding: 18px 40px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
+            opacity: 0.3;
+            border-radius: 2px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--ink-ghost);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            font-weight: 400;
+        }
+
+        /* CTA Button Sophistication */
+        .btn-premium {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 48px;
+            background: var(--gold);
+            color: var(--ink-dark);
             text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.2);
             border: none;
             cursor: pointer;
         }
-        .primary-cta:hover {
+        
+        .btn-premium:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.5);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.4);
+            background: var(--gold-light);
         }
-        .secondary-cta {
-            background: transparent;
+
+        /* Section Styling */
+        section {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
             color: var(--gold);
-            padding: 18px 40px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(212, 175, 55, 0.3);
+            margin-bottom: 16px;
         }
-        .secondary-cta:hover {
-            background: rgba(212, 175, 55, 0.05);
-            border-color: var(--gold);
-        }
-        .features {
-            padding: 100px 20px;
-            max-width: 1200px;
+
+        /* Story Section */
+        .story-section { background: rgba(10, 10, 10, 0.5); backdrop-filter: blur(10px); }
+        .story-box {
+            border-left: 1px solid var(--gold);
+            padding: 60px;
+            background: var(--panel);
+            border-radius: 0 40px 40px 0;
+            box-shadow: var(--shadow-lg);
+            max-width: 800px;
             margin: 0 auto;
+        }
+        .story-box blockquote {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            color: var(--gold);
+            margin: 0 0 30px 0;
+            line-height: 1.3;
+        }
+
+        /* Features Grid - Container Queries */
+        .features-container {
+            container-type: inline-size;
+            container-name: feature-grid;
+        }
+
+        .ui-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
+            gap: 30px;
         }
-        .feature-card {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 40px;
-            border-radius: 24px;
+
+        .ui-card {
+            background: rgba(18, 18, 18, 0.8);
+            padding: 48px;
+            border-radius: 32px;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s ease;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        .feature-card:hover {
+
+        .ui-card:hover {
+            border-color: var(--gold);
+            background: rgba(22, 22, 22, 0.95);
             transform: translateY(-10px);
-            border-color: rgba(212, 175, 55, 0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
-        .feature-icon {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            display: block;
-        }
-        .feature-title {
-            font-family: 'Cormorant+Garamond', serif;
-            font-size: 1.8rem;
-            margin-bottom: 15px;
+
+        .ui-card h3 {
             color: var(--gold);
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: var(--font-body);
         }
-        .feature-desc {
+
+        .ui-card p {
+            color: var(--lp-sub-text);
             font-size: 1rem;
-            line-height: 1.6;
-            color: var(--ink-muted);
         }
+
+        @container feature-grid (min-width: 700px) {
+            .ui-card {
+                padding: 60px;
+            }
+        }
+
+        /* Pricing Card Glassmorphism */
+        .price-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .price-card {
+            background: rgba(17, 17, 17, 0.7);
+            backdrop-filter: blur(20px);
+            padding: 60px 40px;
+            border-radius: 40px;
+            width: 360px;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            transition: var(--transition);
+        }
+        
+        .price-card.featured {
+            border: 1.5px solid var(--gold);
+            background: rgba(22, 22, 22, 0.8);
+            transform: scale(1.05);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+
+        .price-card h4 { font-size: 0.9rem; color: var(--gold); margin-bottom: 12px; letter-spacing: 2px; }
+        .price-card .cost { font-family: var(--font-display); font-size: 3.5rem; font-weight: 700; color: #fff; margin-bottom: 24px; }
+        .price-card ul { list-style: none; padding: 0; margin: 40px 0; font-size: 0.95rem; color: var(--ink-ghost); text-align: left; }
+        .price-card li { margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .price-card li::before { content: '→'; color: var(--gold); font-weight: bold; }
+
         footer {
-            padding: 50px 20px;
+            padding: 80px 0;
             text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
             color: var(--ink-muted);
             font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: var(--bg-deep);
+        }
+
+        /* Scroll Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            .price-card.featured { transform: scale(1); }
+            .story-box { padding: 40px 30px; }
         }
     </style>
 </head>
 <body class="landing-page">
 
-    <div id="three-canvas"></div>
+<div id="three-canvas"></div>
 
-    <div class="landing-container">
-        <section class="hero">
-            <h1 class="hero-title">NOTE<br>MY COFFEE</h1>
-            <p class="hero-subtitle">Turn Extraction into Science</p>
-            <div class="cta-group">
-                <button id="btn-get-started" class="primary-cta">Start Brewing Now</button>
-                <a href="app.html" class="secondary-cta">Explore as Guest</a>
-            </div>
-        </section>
-
-        <section class="features">
-            <div class="feature-card">
-                <span class="feature-icon">⚡</span>
-                <h3 class="feature-title">Precision Tracking</h3>
-                <p class="feature-desc">Monitor dosing, water temperature, and extraction time with surgical accuracy. Every variable matters.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">📓</span>
-                <h3 class="feature-title">Intelligent Logbook</h3>
-                <p class="feature-desc">Your entire brewing history, organized. Revisit your best shots and learn from the failures.</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">☁️</span>
-                <h3 class="feature-title">Cloud Synchronization</h3>
-                <p class="feature-desc">Access your recipes from any device. Securely backed up with Google infrastructure.</p>
-            </div>
-        </section>
-
-        <footer>
-            &copy; 2026 Note My Coffee. Science in every sip.
-        </footer>
+<section class="hero">
+    <div class="container">
+        <div class="hero-content" id="hero-content">
+            <h4>Exclusive for Coffee Lovers</h4>
+            <h1>당신의 <mark>인생 커피</mark>가<br>재현되지 않는 진짜 이유</h1>
+            <p>0.1g의 오차와 실시간 습도 변화.<br>감각에 의존하는 대신 데이터로 맛을 소유하세요.</p>
+            <button id="btn-get-started" class="btn-premium">시작하기</button>
+        </div>
     </div>
+</section>
 
-    <script type="importmap">
-        {
-          "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-          }
-        }
-    </script>
-    <script type="module" src="landing.js"></script>
+<section class="story-section">
+    <div class="container">
+        <div class="story-box reveal">
+            <blockquote>"비싼 원두 한 봉지를 샀는데,<br>절반은 세팅을 잡다가 버렸습니다."</blockquote>
+            <p>
+                저 또한 매일 아침 커피를 내리는 유저였습니다. 정말 완벽한 한 잔이 내려졌을 때의 그 기쁨, 하지만 다음 날이면 사라지는 그 맛의 실체를 찾고 싶었습니다.<br><br>
+                비가 오면 습도가 변하고, 원두는 매일 가스를 내뱉으며 숙성됩니다. 이 미세한 변화를 기록하지 못한다면 우리는 매일 비싼 원두를 낭비할 수밖에 없습니다. <br><br>
+                <strong>기록은 당신의 커피 생활을 '비용'에서 '자산'으로 바꿉니다.</strong>
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="ui-preview">
+    <div class="container">
+        <div class="section-header reveal">
+            <h2>Crafted for Precision</h2>
+            <p style="color: var(--ink-ghost);">바쁜 아침, 1초 만에 완료되는 압도적인 기록 경험</p>
+        </div>
+        
+        <div class="features-container">
+            <div class="ui-grid">
+                <div class="ui-card reveal">
+                    <h3>Tactile Control</h3>
+                    <p>바리스타 전용 <b>슬라이더 UI</b>로 0.1g, 0.5초 단위의 미세한 수치를 1초 만에 기록하세요. 타이핑의 번거로움을 완전히 제거했습니다.</p>
+                </div>
+                <div class="ui-card reveal">
+                    <h3>Environment Sync</h3>
+                    <p>위치 권한 하나로 현재 위치의 <b>기온과 습도</b>를 자동 매칭합니다. 습도가 변할 때 레시피를 어떻게 보정해야 할지 데이터가 답해줍니다.</p>
+                </div>
+                <div class="ui-card reveal">
+                    <h3>Dual Mode Console</h3>
+                    <p>에스프레소와 핸드드립, 각 추출 특성에 맞춘 <b>전용 콘솔</b>을 제공합니다. 당신이 사용하는 모든 도구의 데이터를 한 곳에서 관리하세요.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pricing">
+    <div class="container">
+        <div class="section-header reveal">
+            <h2>Investment in Taste</h2>
+            <p style="color: var(--ink-ghost);">원두 한 봉지 가격으로 얻는 완벽한 일관성</p>
+        </div>
+        
+        <div class="price-wrapper">
+            <div class="price-card reveal">
+                <h4>BASIC</h4>
+                <div class="cost">FREE</div>
+                <ul>
+                    <li>무제한 추출 기록 저장</li>
+                    <li>에스프레소 / 핸드드립 모드</li>
+                    <li>원두 재구매 링크 연동</li>
+                </ul>
+            </div>
+
+            <div class="price-card featured reveal">
+                <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; padding: 5px 20px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">MOST POPULAR</div>
+                <h4>PREMIUM</h4>
+                <div class="cost">₩8,900 <small style="font-size: 1rem; color: #555;">/ mo</small></div>
+                <ul>
+                    <li><b>실시간 날씨 및 습도 자동 기록</b></li>
+                    <li><b>AI 추출 교정 가이드 (Beta)</b></li>
+                    <li><b>원두 숙성도 추적 알림</b></li>
+                    <li>무제한 고화질 이미지 보관</li>
+                </ul>
+                <button class="btn-premium btn-get-started-alt" style="padding: 12px 30px; font-size: 0.9rem; width: 100%;">14일 무료 체험 시작</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <p>NOTE MY COFFEE | PROFESSIONAL BREWING ARCHIVE</p>
+        <p style="margin-top: 10px; color: var(--gold);">PRESERVE YOUR PERFECT CUP</p>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+</script>
+<script type="module" src="landing.js"></script>
+<script>
+    // Scroll Reveal Logic
+    const observerOptions = {
+        threshold: 0.15
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Hero Entry Animation
+    window.addEventListener('load', () => {
+        document.getElementById('hero-content').classList.add('visible');
+    });
+
+    // Secondary CTA
+    document.querySelectorAll('.btn-get-started-alt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('btn-get-started').click();
+        });
+    });
+</script>
 </body>
 </html>
