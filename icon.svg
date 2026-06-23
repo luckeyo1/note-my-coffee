@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="gold-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDF3DC" />
+      <stop offset="60%" stop-color="#D4A017" />
+      <stop offset="100%" stop-color="#B8860B" />
+    </radialGradient>
+    <linearGradient id="cup-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FAF8F4" />
+      <stop offset="100%" stop-color="#C4B8B0" />
+    </linearGradient>
+    <linearGradient id="dark-bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1A1614" />
+      <stop offset="100%" stop-color="#0D0B0A" />
+    </linearGradient>
+    <filter id="glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Circular gold outline -->
+  <circle cx="256" cy="256" r="230" fill="none" stroke="url(#gold-grad)" stroke-width="8" filter="url(#glow)" />
+  <circle cx="256" cy="256" r="220" fill="none" stroke="url(#gold-grad)" stroke-width="2" opacity="0.6" />
+
+  <!-- Steam lines rising elegantly -->
+  <path d="M210,180 C210,140 230,120 230,90" fill="none" stroke="url(#gold-grad)" stroke-width="4" stroke-linecap="round" opacity="0.7" />
+  <path d="M256,170 C256,130 276,110 276,80" fill="none" stroke="url(#gold-grad)" stroke-width="5" stroke-linecap="round" filter="url(#glow)" />
+  <path d="M302,180 C302,140 282,120 282,90" fill="none" stroke="url(#gold-grad)" stroke-width="4" stroke-linecap="round" opacity="0.7" />
+
+  <!-- The Coffee Cup Body (Barista style) -->
+  <path d="M150,220 L362,220 C362,220 350,330 256,330 C162,330 150,220 150,220 Z" fill="url(#cup-grad)" filter="url(#glow)" />
+  
+  <!-- Cup Handle -->
+  <path d="M360,240 C395,240 405,280 355,295" fill="none" stroke="url(#cup-grad)" stroke-width="12" stroke-linecap="round" />
+
+  <!-- Cup Rim Accent (Inner Gold Ring) -->
+  <ellipse cx="256" cy="220" rx="106" ry="12" fill="#1A1614" stroke="url(#gold-grad)" stroke-width="2" />
+  
+  <!-- Coffee Liquid surface inside cup -->
+  <ellipse cx="256" cy="223" rx="100" ry="9" fill="#3D3530" />
+  <!-- Elegant latte art swirl -->
+  <path d="M220,223 C240,228 270,218 290,223 C270,225 250,220 230,225 Z" fill="url(#gold-grad)" opacity="0.8" />
+
+  <!-- Coffee Drip / Science Grid representation -->
+  <line x1="256" y1="340" x2="256" y2="400" stroke="url(#gold-grad)" stroke-width="3" stroke-dasharray="6,4" />
+  <circle cx="256" cy="410" r="6" fill="url(#gold-grad)" filter="url(#glow)" />
+  
+  <!-- "N C" minimalist text under the cup -->
+  <text x="256" y="465" font-family="'Cormorant Garamond', serif" font-size="28" font-weight="bold" fill="url(#gold-grad)" text-anchor="middle" letter-spacing="4">NOTE MY COFFEE</text>
+</svg>
