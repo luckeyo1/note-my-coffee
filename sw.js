@@ -1,4 +1,4 @@
-const CACHE_NAME = 'note-my-coffee-v2';
+const CACHE_NAME = 'note-my-coffee-v3';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
@@ -25,9 +25,11 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(names.map((n) => n !== CACHE_NAME && caches.delete(n)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((names) => Promise.all(
+        names.map((n) => n !== CACHE_NAME && caches.delete(n))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -36,7 +38,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // Pass through Firebase/Google auth and extensions
+  // Pass through: Firebase/Google auth, extensions, cross-origin CDN auth
   if (
     url.origin.includes('googleapis.com') ||
     url.origin.includes('firebase') ||
@@ -46,35 +48,51 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // ── Navigation requests (HTML page loads) ────────────────────────────
+  // Use redirect:'follow' so server-side redirects (cleanUrls, Cloudflare)
+  // are followed transparently. DO NOT serve stale cache for navigation —
+  // let the network decide the canonical URL, then fall back to cache offline.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(new Request(event.request, { redirect: 'follow' }))
+        .then((res) => {
+          // Cache a fresh copy for offline use
+          if (res.ok) {
+            caches.open(CACHE_NAME).then((cache) =>
+              cache.put(event.request, res.clone())
+            );
+          }
+          return res;
+        })
+        .catch(() => {
+          // Offline: serve the closest cached HTML page
+          return caches.open(CACHE_NAME).then((cache) => {
+            const p = url.pathname;
+            if (p.includes('logbook')) return cache.match('logbook.html');
+            if (p.includes('app'))     return cache.match('app.html');
+            return cache.match('index.html');
+          });
+        })
+    );
+    return;
+  }
+
+  // ── Static assets: stale-while-revalidate ────────────────────────────
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cached) => {
-        const network = fetch(event.request)
-          .then((res) => {
-            if (
-              res.status === 200 &&
-              (url.origin === self.location.origin ||
-               url.origin.includes('unpkg.com') ||
-               url.origin.includes('fonts.googleapis.com') ||
-               url.origin.includes('fonts.gstatic.com'))
-            ) {
-              cache.put(event.request, res.clone());
-            }
-            return res;
-          })
-          .catch(() => {
-            // Offline navigation fallback — matches both /app.html and /app (cleanUrls)
-            if (event.request.mode === 'navigate') {
-              const p = url.pathname;
-              if (p.includes('app') && !p.includes('logbook')) {
-                return cache.match('app.html');
-              } else if (p.includes('logbook')) {
-                return cache.match('logbook.html');
-              }
-              return cache.match('index.html');
-            }
-          });
-
+        const network = fetch(event.request).then((res) => {
+          if (
+            res.status === 200 &&
+            (url.origin === self.location.origin ||
+             url.origin.includes('unpkg.com') ||
+             url.origin.includes('fonts.googleapis.com') ||
+             url.origin.includes('fonts.gstatic.com'))
+          ) {
+            cache.put(event.request, res.clone());
+          }
+          return res;
+        });
         return cached || network;
       });
     })
