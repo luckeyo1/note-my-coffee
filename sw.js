@@ -1,4 +1,4 @@
-const CACHE_NAME = 'note-my-coffee-v3';
+const CACHE_NAME = 'note-my-coffee-v4';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
@@ -38,7 +38,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // Pass through: Firebase/Google auth, extensions, cross-origin CDN auth
+  // Pass through: Firebase/Google auth, extensions
   if (
     url.origin.includes('googleapis.com') ||
     url.origin.includes('firebase') ||
@@ -48,39 +48,40 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── Navigation requests (HTML page loads) ────────────────────────────
-  // Use redirect:'follow' so server-side redirects (cleanUrls, Cloudflare)
-  // are followed transparently. DO NOT serve stale cache for navigation —
-  // let the network decide the canonical URL, then fall back to cache offline.
+  // ── Navigation requests ───────────────────────────────────────────────
+  // IMPORTANT: Do NOT clone or wrap event.request for navigate mode.
+  // Browsers ignore redirect:'follow' overrides on navigate-mode Requests,
+  // causing opaqueredirect responses that SW cannot use (the error:
+  // "a redirected response was used for a request whose redirect mode is not follow").
+  //
+  // Fix: fetch using only the URL string → creates a plain GET request
+  // with redirect:'follow' by default, avoiding navigate-mode constraints.
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(new Request(event.request, { redirect: 'follow' }))
+      fetch(event.request.url)              // plain URL string, not the Request object
         .then((res) => {
-          // Cache a fresh copy for offline use
           if (res.ok) {
-            caches.open(CACHE_NAME).then((cache) =>
-              cache.put(event.request, res.clone())
-            );
+            caches.open(CACHE_NAME)
+              .then((c) => c.put(event.request, res.clone()));
           }
           return res;
         })
-        .catch(() => {
-          // Offline: serve the closest cached HTML page
-          return caches.open(CACHE_NAME).then((cache) => {
+        .catch(() =>
+          caches.open(CACHE_NAME).then((cache) => {
             const p = url.pathname;
             if (p.includes('logbook')) return cache.match('logbook.html');
             if (p.includes('app'))     return cache.match('app.html');
             return cache.match('index.html');
-          });
-        })
+          })
+        )
     );
     return;
   }
 
   // ── Static assets: stale-while-revalidate ────────────────────────────
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((cached) => {
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
         const network = fetch(event.request).then((res) => {
           if (
             res.status === 200 &&
@@ -94,7 +95,7 @@ self.addEventListener('fetch', (event) => {
           return res;
         });
         return cached || network;
-      });
-    })
+      })
+    )
   );
 });
