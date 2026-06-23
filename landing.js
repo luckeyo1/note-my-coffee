@@ -8,17 +8,13 @@ import {
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Auth Check ---
+    const updateCtaText = (text) => {
+        const span = document.querySelector('#btn-get-started span:first-child');
+        if (span) span.textContent = text;
+    };
+
     onAuthStateChanged(auth, (user) => {
-        const btnText = document.querySelector('#btn-get-started span') || document.getElementById('btn-get-started');
-        if (user) {
-            // Logged in: Change button text but don't force redirect
-            if (btnText) btnText.textContent = '콘솔로 이동하기';
-            document.querySelectorAll('.btn-get-started-alt').forEach(btn => {
-                btn.textContent = '지금 바로 시작하기';
-            });
-        } else {
-            if (btnText) btnText.textContent = '지금 무료로 시작하기';
-        }
+        updateCtaText(user ? '콘솔로 이동하기' : '지금 무료로 저장하기');
     });
 
     const btnGetStarted = document.getElementById('btn-get-started');
@@ -27,14 +23,15 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'app.html';
             return;
         }
-        
+
         try {
             await signInWithPopup(auth, googleProvider);
             window.location.href = 'app.html';
         } catch (error) {
             console.error("Login failed", error);
+            // 팝업을 사용자가 직접 닫은 경우 제외하고 게스트로 앱 진입
             if (error.code !== 'auth/popup-closed-by-user') {
-                alert("로그인에 실패했습니다. 다시 시도하거나 게스트로 탐색해 주세요.");
+                window.location.href = 'app.html';
             }
         }
     });
