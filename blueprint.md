@@ -9,7 +9,6 @@ This project is a coffee brewing recipe logger that uses Firebase for authentica
 - `main.js` and `logbook.js` handle authentication state changes.
 - `storage.js` implements a dual-storage strategy: Firestore for logged-in users and localStorage for guests.
 - **Landing Page:** A basic functional landing page exists but needs UI/UX sophistication (Modern CSS, 3D graphics, responsiveness).
-- **PWA Capabilities:** Initial setup of manifest.json, Service Worker for asset caching/offline support, and deep offline synchronization is being added.
 
 ## Planned Changes
 1.  **Landing Page Enhancement (High Priority):**
@@ -24,11 +23,8 @@ This project is a coffee brewing recipe logger that uses Firebase for authentica
     - Ensure the landing page and app shell share a unified token system.
 4.  **Storage & Performance Optimization:**
     - Implement client-side image compression in `main.js` to prevent quota issues.
-5.  **Progressive Web App (PWA) Implementation:**
-    - Design and integrate `manifest.json` with an elegant gold-and-ink themed SVG icon.
-    - Implement a robust Service Worker (`sw.js`) utilizing a Stale-While-Revalidate strategy to cache static and CDN assets.
-    - Add real-time online/offline indicators to notify the user when they are working offline.
-    - Create a custom, premium "Add to Home Screen" banner or promotion for an app-like feel.
+5.  **Remove Progressive Web App (PWA) Features:**
+    - Clean up all PWA-related code and files, including Service Worker, manifest link, and iOS home screen meta tags.
 
 ## Action Steps
 1.  [x] Fix `style.css` variables.
@@ -39,12 +35,10 @@ This project is a coffee brewing recipe logger that uses Firebase for authentica
     - [x] Apply Modern CSS features.
 4.  [ ] Implement client-side image compression in `main.js`.
 5.  [ ] Reduce maximum photo size limit in `main.js`.
-6.  [ ] **Implement PWA Features:**
-    - [ ] Create `manifest.json`.
-    - [ ] Create `icon.svg` and `icon-maskable.svg` for icons.
-    - [ ] Create `sw.js` for Service Worker caching & offline capabilities.
-    - [ ] Register Service Worker in `index.html`, `app.html`, and `logbook.html`.
-    - [ ] Add offline indicators to UI in `app.html` and `logbook.html`.
-    - [ ] Integrate Firestore offline persistence.
-    - [ ] Add custom App Install prompt flow.
+6.  [x] **Remove PWA Features:**
+    - [x] Delete `manifest.json`.
+    - [x] Delete `icon.svg` and `icon-maskable.svg`.
+    - [x] Delete `sw.js` for Service Worker caching.
+    - [x] Remove Service Worker registration script in `index.html`, `app.html`, and `logbook.html`.
+    - [x] Remove manifest, apple-touch-icon, and PWA-related meta tags in `index.html`, `app.html`, and `logbook.html`.
 
