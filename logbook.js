@@ -500,10 +500,15 @@ document.addEventListener('DOMContentLoaded', () => {
             preview.dataset.style = style;
             spinner.style.display = 'flex';
             imgEl.style.opacity = '0.25';
-            currentCanvas = await renderShareCanvas(recipe, style);
-            imgEl.src = currentCanvas.toDataURL('image/png');
-            imgEl.style.opacity = '1';
-            spinner.style.display = 'none';
+            try {
+                currentCanvas = await renderShareCanvas(recipe, style);
+                imgEl.src = currentCanvas.toDataURL('image/png');
+                imgEl.style.opacity = '1';
+                spinner.style.display = 'none';
+            } catch (err) {
+                console.error('Share card render failed:', err);
+                spinner.textContent = '이미지를 만들 수 없습니다';
+            }
         }
         render(defaultStyle);
 
@@ -526,10 +531,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!action || !currentCanvas) return;
 
             if (action === 'download') {
-                const a = document.createElement('a');
-                a.href     = currentCanvas.toDataURL('image/png');
-                a.download = `${recipe.beanName || 'coffee'}-${currentStyle}.png`;
-                a.click();
+                // Download via a Blob object URL, not a data: URL. A photo-
+                // background PNG is several MB as a data: URL, which mobile
+                // browsers refuse to download through <a download>; a blob URL
+                // is a small reference that saves reliably regardless of size.
+                currentCanvas.toBlob((blob) => {
+                    if (!blob) return;
+                    const objUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href     = objUrl;
+                    a.download = `${recipe.beanName || 'coffee'}-${currentStyle}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+                }, 'image/png');
             } else if (action === 'share') {
                 try {
                     const blob = await new Promise(res => currentCanvas.toBlob(res, 'image/png'));
