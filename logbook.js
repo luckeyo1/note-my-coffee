@@ -301,65 +301,247 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function _trunc(s, max) { return s.length > max ? s.slice(0, max) + '…' : s; }
 
-    async function shareRecipe(recipe) {
-        const url    = buildShareUrl(buildShareData(recipe));
-        const canvas = drawShareCard(recipe);
-
-        // Try Web Share API with image file
-        if (navigator.share) {
-            try {
-                const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-                const file = new File([blob], 'coffee-recipe.png', { type: 'image/png' });
-                const sharePayload = { url, files: [file] };
-                if (navigator.canShare && navigator.canShare(sharePayload)) {
-                    await navigator.share(sharePayload);
-                    return;
-                }
-                // Image not supported — try URL-only
-                await navigator.share({ url, title: recipe.beanName || 'Coffee Recipe' });
-                return;
-            } catch (e) {
-                if (e.name === 'AbortError') return; // user cancelled
-            }
-        }
-        // Fallback: show modal
-        showShareModal(recipe, canvas, url);
+    function _loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload  = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
     }
 
-    function showShareModal(recipe, canvas, url) {
+    // Draw an image cover-fit (fill box, center-crop the overflow).
+    function _drawCover(ctx, img, W, H) {
+        const ir = img.width / img.height, cr = W / H;
+        let dw, dh, dx, dy;
+        if (ir > cr) { dh = H; dw = H * ir; dx = (W - dw) / 2; dy = 0; }
+        else         { dw = W; dh = W / ir; dx = 0; dy = (H - dh) / 2; }
+        ctx.drawImage(img, dx, dy, dw, dh);
+    }
+
+    // Instagram-friendly 4:5 story card: the recipe photo as background,
+    // recipe text laid over a legibility scrim. Returns a Promise<canvas>.
+    async function drawStoryCard(recipe) {
+        const W = 1080, H = 1350;
+        const c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        const ctx = c.getContext('2d');
+
+        const GOLD = '#C8A96E', TEXT = '#F5F0E8', SUB = '#D8CFC4', MUTED = '#A89E92';
+
+        // ── Background: photo (cover-fit) or gradient fallback ──────────
+        let hasPhoto = false;
+        if (recipe.imageUrl) {
+            try { _drawCover(ctx, await _loadImage(recipe.imageUrl), W, H); hasPhoto = true; }
+            catch (e) { /* fall through to gradient */ }
+        }
+        if (!hasPhoto) {
+            const g = ctx.createLinearGradient(0, 0, W, H);
+            g.addColorStop(0, '#2A2320'); g.addColorStop(1, '#0F0D0C');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        }
+
+        // ── Legibility scrims (top + heavy bottom) ──────────────────────
+        const topG = ctx.createLinearGradient(0, 0, 0, 320);
+        topG.addColorStop(0, 'rgba(0,0,0,0.55)'); topG.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = topG; ctx.fillRect(0, 0, W, 320);
+
+        const botG = ctx.createLinearGradient(0, H - 760, 0, H);
+        botG.addColorStop(0, 'rgba(0,0,0,0)');
+        botG.addColorStop(0.45, 'rgba(0,0,0,0.55)');
+        botG.addColorStop(1, 'rgba(10,8,7,0.94)');
+        ctx.fillStyle = botG; ctx.fillRect(0, H - 760, W, 760);
+
+        const shadowOn  = () => { ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 2; };
+        const shadowOff = () => { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; };
+
+        // ── Brand (top-left) ────────────────────────────────────────────
+        shadowOn();
+        ctx.fillStyle = GOLD;
+        ctx.font = '500 30px monospace';
+        ctx.fillText('☕  NOTE MY COFFEE', 64, 84);
+
+        // Mode badge (top-right)
+        const mode  = (recipe.mode || 'espresso').toUpperCase();
+        ctx.font    = 'bold 22px monospace';
+        const modeW = ctx.measureText(mode).width + 44;
+        shadowOff();
+        ctx.fillStyle = 'rgba(200,169,110,0.18)';
+        _rrect(ctx, W - 64 - modeW, 56, modeW, 44, 8); ctx.fill();
+        ctx.fillStyle = GOLD;
+        ctx.fillText(mode, W - 64 - modeW + 22, 86);
+
+        // ── Bean name + origin (bottom block) ───────────────────────────
+        shadowOn();
+        ctx.fillStyle = TEXT;
+        ctx.font = 'bold 72px Georgia, serif';
+        ctx.fillText(_trunc(recipe.beanName || 'Unknown Bean', 22), 64, 870);
+
+        const sub = [mode, recipe.origin].filter(Boolean).join('  ·  ');
+        ctx.fillStyle = SUB;
+        ctx.font = '30px monospace';
+        ctx.fillText(_trunc(sub, 42), 64, 916);
+        shadowOff();
+
+        _line(ctx, 64, W - 64, 958, 'rgba(255,255,255,0.16)');
+
+        // ── Params row ──────────────────────────────────────────────────
+        const isEsp = (recipe.mode || 'espresso') === 'espresso';
+        const tStr  = isEsp
+            ? `${recipe.time || 0}s`
+            : `${Math.floor((recipe.time || 0) / 60)}:${((recipe.time || 0) % 60).toString().padStart(2, '0')}`;
+        const params = [
+            { k: 'DOSING', v: `${recipe.dosing || 0}g` },
+            { k: 'TEMP',   v: `${recipe.temp || 0}°C` },
+            { k: 'TIME',   v: tStr },
+            { k: 'YIELD',  v: `${recipe.yield || 0}g` },
+        ];
+        const colW = (W - 128) / 4;
+        shadowOn();
+        params.forEach(({ k, v }, i) => {
+            const x = 64 + i * colW;
+            ctx.fillStyle = GOLD;
+            ctx.font = 'bold 52px monospace';
+            ctx.fillText(v, x, 1052);
+            ctx.fillStyle = MUTED;
+            ctx.font = '22px monospace';
+            ctx.fillText(k, x, 1088);
+        });
+        shadowOff();
+
+        _line(ctx, 64, W - 64, 1128, 'rgba(255,255,255,0.16)');
+
+        // ── Taste notes ─────────────────────────────────────────────────
+        if (recipe.tasteNotes) {
+            shadowOn();
+            ctx.fillStyle = SUB;
+            ctx.font = '32px sans-serif';
+            ctx.fillText('✦  ' + _trunc(recipe.tasteNotes, 40), 64, 1190);
+            shadowOff();
+        }
+
+        // ── Stars (left) + result badge (right) ─────────────────────────
+        const rat = parseInt(recipe.overallRating) || 0;
+        shadowOn();
+        ctx.fillStyle = GOLD;
+        ctx.font = '44px serif';
+        ctx.fillText('★'.repeat(rat) + '☆'.repeat(5 - rat), 64, 1262);
+        shadowOff();
+
+        const ok    = !!recipe.success;
+        const bText = ok ? '✓  SUCCESS' : '✗  FAIL';
+        ctx.font    = 'bold 24px monospace';
+        const bW    = ctx.measureText(bText).width + 40;
+        ctx.fillStyle = ok ? 'rgba(74,222,128,0.16)' : 'rgba(248,113,113,0.16)';
+        _rrect(ctx, W - 64 - bW, 1232, bW, 44, 8); ctx.fill();
+        ctx.fillStyle = ok ? '#4ADE80' : '#F87171';
+        ctx.fillText(bText, W - 64 - bW + 20, 1262);
+
+        // ── Footer ──────────────────────────────────────────────────────
+        ctx.fillStyle = MUTED;
+        ctx.font = '24px monospace';
+        ctx.fillText('note-my-coffee.web.app', 64, 1318);
+        const ds = new Date().toLocaleDateString('ko-KR');
+        ctx.fillText(ds, W - 64 - ctx.measureText(ds).width, 1318);
+
+        return c;
+    }
+
+    // Build the canvas for a given style ('card' = compact, 'story' = photo bg).
+    function renderShareCanvas(recipe, style) {
+        return style === 'story'
+            ? drawStoryCard(recipe)              // async → Promise<canvas>
+            : Promise.resolve(drawShareCard(recipe));
+    }
+
+    async function shareRecipe(recipe) {
+        const url = buildShareUrl(buildShareData(recipe));
+        showShareModal(recipe, url);
+    }
+
+    function showShareModal(recipe, url) {
         _removeModal('share-modal');
         const overlay = document.createElement('div');
         overlay.id    = 'share-modal';
         overlay.className = 'recipe-share-overlay';
-
-        const imgSrc = canvas.toDataURL('image/png');
+        // Default to the photo-background style when a cover photo exists.
+        const defaultStyle = recipe.imageUrl ? 'story' : 'card';
         overlay.innerHTML = `
             <div class="recipe-share-box">
                 <div class="recipe-share-header">
                     <span>레시피 공유</span>
                     <button class="recipe-share-close" data-close>✕</button>
                 </div>
-                <img src="${imgSrc}" alt="Recipe Card" class="recipe-share-img">
+                <div class="recipe-share-tabs">
+                    <button class="recipe-share-tab${defaultStyle === 'card' ? ' is-active' : ''}" data-style="card">🗂️ 카드</button>
+                    <button class="recipe-share-tab${defaultStyle === 'story' ? ' is-active' : ''}" data-style="story">🖼️ 사진 배경</button>
+                </div>
+                <div class="recipe-share-preview" data-style="${defaultStyle}">
+                    <img class="recipe-share-img" alt="Recipe Card">
+                    <div class="recipe-share-spinner">생성 중…</div>
+                </div>
                 <div class="recipe-share-actions">
                     <button class="recipe-share-btn" data-action="download">↓ 이미지 저장</button>
+                    ${navigator.share ? '<button class="recipe-share-btn" data-action="share">↗ 공유</button>' : ''}
                     <button class="recipe-share-btn recipe-share-btn--gold" data-action="copy">🔗 링크 복사</button>
                 </div>
             </div>
         `;
         document.body.appendChild(overlay);
 
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay || e.target.dataset.close !== undefined) {
-                _removeModal('share-modal');
-            } else if (e.target.dataset.action === 'download') {
+        const imgEl   = overlay.querySelector('.recipe-share-img');
+        const preview = overlay.querySelector('.recipe-share-preview');
+        const spinner = overlay.querySelector('.recipe-share-spinner');
+        let currentStyle  = defaultStyle;
+        let currentCanvas = null;
+
+        async function render(style) {
+            currentStyle = style;
+            preview.dataset.style = style;
+            spinner.style.display = 'flex';
+            imgEl.style.opacity = '0.25';
+            currentCanvas = await renderShareCanvas(recipe, style);
+            imgEl.src = currentCanvas.toDataURL('image/png');
+            imgEl.style.opacity = '1';
+            spinner.style.display = 'none';
+        }
+        render(defaultStyle);
+
+        overlay.addEventListener('click', async (e) => {
+            const target = e.target.closest('[data-style], [data-action], [data-close]') || e.target;
+
+            if (target === overlay || target.dataset.close !== undefined) {
+                _removeModal('share-modal'); return;
+            }
+
+            if (target.dataset.style) {
+                if (target.dataset.style === currentStyle) return;
+                overlay.querySelectorAll('.recipe-share-tab')
+                    .forEach(b => b.classList.toggle('is-active', b === target));
+                await render(target.dataset.style);
+                return;
+            }
+
+            const action = target.dataset.action;
+            if (!action || !currentCanvas) return;
+
+            if (action === 'download') {
                 const a = document.createElement('a');
-                a.href     = imgSrc;
-                a.download = `${recipe.beanName || 'coffee'}-recipe.png`;
+                a.href     = currentCanvas.toDataURL('image/png');
+                a.download = `${recipe.beanName || 'coffee'}-${currentStyle}.png`;
                 a.click();
-            } else if (e.target.dataset.action === 'copy') {
+            } else if (action === 'share') {
+                try {
+                    const blob = await new Promise(res => currentCanvas.toBlob(res, 'image/png'));
+                    const file = new File([blob], 'coffee-recipe.png', { type: 'image/png' });
+                    const payload = { url, files: [file], title: recipe.beanName || 'Coffee Recipe' };
+                    if (navigator.canShare && navigator.canShare(payload)) await navigator.share(payload);
+                    else await navigator.share({ url, title: recipe.beanName || 'Coffee Recipe' });
+                } catch (err) { if (err.name !== 'AbortError') console.error(err); }
+            } else if (action === 'copy') {
                 navigator.clipboard.writeText(url).then(() => {
-                    e.target.textContent = '✓ 복사됨';
-                    setTimeout(() => { e.target.textContent = '🔗 링크 복사'; }, 2000);
+                    target.textContent = '✓ 복사됨';
+                    setTimeout(() => { target.textContent = '🔗 링크 복사'; }, 2000);
                 }).catch(() => { prompt('링크를 복사하세요:', url); });
             }
         });

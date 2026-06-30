@@ -779,12 +779,66 @@ input[type=range]::-webkit-slider-thumb:hover {
 }
 .recipe-share-close:hover { color: #EBE5DC; }
 
+/* Style tabs (card vs. photo background) */
+.recipe-share-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px 0;
+}
+.recipe-share-tab {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #9B9087;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.recipe-share-tab:hover { color: #EBE5DC; }
+.recipe-share-tab.is-active {
+    background: rgba(200,169,110,0.14);
+    border-color: rgba(200,169,110,0.45);
+    color: #C8A96E;
+}
+
+/* Preview frame — keeps the modal from jumping between aspect ratios */
+.recipe-share-preview {
+    position: relative;
+    margin: 14px 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0F0D0C;
+    border: 1px solid rgba(255,255,255,0.07);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.recipe-share-preview[data-style="story"] { aspect-ratio: 4 / 5; }
+.recipe-share-preview[data-style="card"]  { aspect-ratio: 600 / 380; }
+
 /* Generated card image */
 .recipe-share-img {
     display: block;
     width: 100%;
-    height: auto;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    height: 100%;
+    object-fit: contain;
+    transition: opacity 0.2s;
+}
+
+.recipe-share-spinner {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: #9B9087;
+    pointer-events: none;
 }
 
 /* Action buttons row */
