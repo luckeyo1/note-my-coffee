@@ -43,8 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ── Auth ──────────────────────────────────────────────────────────────
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         CoffeeNotesStorage.setCurrentUser(user);
+        if (user) await CoffeeNotesStorage.migrateLocalToCloud(); // carry trial recipe into the account
         renderRecipeCards();
     });
 

@@ -48,6 +48,55 @@ const CoffeeNotesStorage = {
         }
     },
 
+    // How many recipes the (not-logged-in) visitor has stored on this device.
+    // Used to gate the free guest trial before requiring login.
+    getLocalRecipeCount() {
+        try {
+            const recipesString = localStorage.getItem(this.KEY);
+            const recipes = recipesString ? JSON.parse(recipesString) : [];
+            return Array.isArray(recipes) ? recipes.length : 0;
+        } catch (e) {
+            return 0;
+        }
+    },
+
+    // Move any recipes saved as a guest (localStorage) into the now-logged-in
+    // user's cloud account, then clear local. Lets a trial recipe follow the
+    // customer into their account on sign-up. Idempotent: a no-op once local
+    // is empty, and guarded against concurrent runs from multiple auth events.
+    async migrateLocalToCloud() {
+        if (!this.currentUser || this._migrating) return 0;
+        this._migrating = true;
+        try {
+            let local = [];
+            try {
+                const s = localStorage.getItem(this.KEY);
+                local = s ? JSON.parse(s) : [];
+            } catch (e) { local = []; }
+            if (!Array.isArray(local) || local.length === 0) return 0;
+
+            let migrated = 0;
+            for (const r of local) {
+                try {
+                    const data = { ...r, userId: this.currentUser.uid, updatedAt: new Date().toISOString() };
+                    delete data.id; // Firestore assigns its own id
+                    await addDoc(collection(db, "recipes"), data);
+                    migrated++;
+                } catch (e) {
+                    console.error("Error migrating local recipe to cloud", e);
+                }
+            }
+            // Only clear local once every recipe moved, so a partial failure
+            // never loses the customer's data.
+            if (migrated === local.length) {
+                try { localStorage.removeItem(this.KEY); } catch (e) { /* ignore */ }
+            }
+            return migrated;
+        } finally {
+            this._migrating = false;
+        }
+    },
+
     async saveRecipe(recipe) {
         // If logged in, save to Firestore
         if (this.currentUser) {

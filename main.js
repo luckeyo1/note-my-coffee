@@ -255,13 +255,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Auth Logic ---
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
             el.btnLogin.style.display = 'none';
             el.userProfile.style.display = 'flex';
             el.userPhoto.src = user.photoURL || '';
             el.userName.textContent = user.displayName || 'User';
             CoffeeNotesStorage.setCurrentUser(user);
+            await CoffeeNotesStorage.migrateLocalToCloud(); // carry any trial recipe into the account
         } else {
             el.btnLogin.style.display = 'flex';
             el.userProfile.style.display = 'none';
@@ -761,18 +762,32 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const bean = el.modalBeanName.value.trim(); if (!bean) return el.modalBeanName.focus();
 
-            // Login Nudge
+            // ── Guest trial gate ────────────────────────────────────────
+            // First-time visitors may save ONE recipe locally to try the app.
+            // Saving a second requires a Google login, which moves their data
+            // to the cloud (Firestore) where we manage it across devices.
+            let guestFirstSave = false;
             if (!auth.currentUser) {
-                const wantLogin = confirm(currentLang === 'ko' 
-                    ? "로그인하지 않고 저장하면 이 기기에만 저장됩니다. 구글 로그인으로 모든 기기에서 레시피를 동기화하시겠습니까?" 
-                    : "Saving as guest will only store data on this device. Would you like to login with Google to sync across all devices?");
-                if (wantLogin) {
+                if (CoffeeNotesStorage.getLocalRecipeCount() >= 1) {
+                    const wantLogin = confirm(currentLang === 'ko'
+                        ? "무료 체험은 레시피 1개까지 저장할 수 있어요.\n레시피를 더 기록하고 모든 기기에서 동기화하려면 구글 로그인이 필요합니다. 지금 로그인할까요?"
+                        : "The free trial lets you save 1 recipe.\nLog in with Google to save more and sync across all your devices. Log in now?");
+                    if (!wantLogin) return; // declined → don't save the 2nd recipe
                     try {
                         await signInWithPopup(auth, googleProvider);
-                        // After successful login, the onAuthStateChanged will trigger and update the storage user
                     } catch (error) {
-                        console.error("Login nudge failed", error);
+                        console.error("Login failed", error);
+                        alert(currentLang === 'ko' ? '로그인에 실패했어요. 다시 시도해 주세요.' : 'Login failed. Please try again.');
+                        return;
                     }
+                    if (!auth.currentUser) return; // popup closed without signing in
+                    // Point storage at the cloud now so this save lands in Firestore
+                    // (don't wait on the async onAuthStateChanged callback), and
+                    // carry the trial recipe into the account before saving this one.
+                    CoffeeNotesStorage.setCurrentUser(auth.currentUser);
+                    await CoffeeNotesStorage.migrateLocalToCloud();
+                } else {
+                    guestFirstSave = true; // first free recipe → save locally
                 }
             }
 
@@ -800,7 +815,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const saved = await CoffeeNotesStorage.saveRecipe(recipe);
             if (saved) {
-                alert(i18n[currentLang].recipeSavedSuccess);
+                if (guestFirstSave) {
+                    alert(currentLang === 'ko'
+                        ? "체험 레시피가 저장됐어요! ☕\n레시피를 더 기록하려면 구글 로그인만 하면 됩니다."
+                        : "Your trial recipe is saved! ☕\nJust log in with Google to record more.");
+                } else {
+                    alert(i18n[currentLang].recipeSavedSuccess);
+                }
                 window.location.href = 'logbook.html';
             } else {
                 alert(i18n[currentLang].recipeSavedFail);
