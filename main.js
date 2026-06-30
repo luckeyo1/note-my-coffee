@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let uploadedImageData = ''; // Base64 image string
     let audioCtx = null;
 
-    const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.6) => {
+    const compressImage = (file, maxWidth = 1600, maxHeight = 1600, quality = 0.72) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -811,8 +811,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    el.modalImageFile.addEventListener('change', (e) => {
-        const f = e.target.files[0]; if (f) { el.fileNameDisplay.innerText = f.name; const r = new FileReader(); r.onload = (ev) => { uploadedImageData = ev.target.result; el.btnImageUpload.innerText = i18n[currentLang].photoSelected; }; r.readAsDataURL(f); }
+    el.modalImageFile.addEventListener('change', async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        el.fileNameDisplay.innerText = f.name;
+        el.btnImageUpload.innerText = currentLang === 'ko' ? '사진 처리 중…' : 'Processing…';
+        try {
+            // Downscale + JPEG-compress so a full-size phone photo (several MB)
+            // fits Firestore's 1MB per-document limit instead of being rejected.
+            // Step the size/quality down until it comfortably fits the budget.
+            const BUDGET = 950 * 1024; // base64 chars; margin under the 1MB doc cap
+            const attempts = [[1600, 1600, 0.72], [1280, 1280, 0.7], [1024, 1024, 0.62], [800, 800, 0.55]];
+            let dataUrl = '';
+            for (const [w, h, q] of attempts) {
+                dataUrl = await compressImage(f, w, h, q);
+                if (dataUrl.length <= BUDGET) break;
+            }
+            uploadedImageData = dataUrl;
+            el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
+        } catch (err) {
+            console.error('Image processing failed:', err);
+            uploadedImageData = '';
+            el.fileNameDisplay.innerText = '';
+            el.btnImageUpload.innerText = i18n[currentLang].selectPhoto;
+            alert(currentLang === 'ko' ? '이미지를 처리할 수 없습니다. 다른 사진을 선택해 주세요.' : 'Could not process this image. Please choose another photo.');
+        }
     });
 
     initRulers(); setMode('espresso'); setLang(currentLang); fetchWeather(); updateLogbookBadge();
