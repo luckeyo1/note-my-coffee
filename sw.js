@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -63,6 +63,24 @@ function isPassthrough(req, url) {
   );
 }
 
+// A redirected response cannot be handed back to a navigation request: the
+// browser fails the navigation with ERR_FAILED. Firebase `cleanUrls` 301s the
+// `*.html` links used for in-app navigation (logbook.html → /logbook, etc.),
+// so re-wrap any redirected response into a fresh, non-redirected one. The
+// body the SW sees is already decoded, so drop content-encoding/length to
+// avoid a double-decode (ERR_CONTENT_DECODING_FAILED).
+function undoRedirect(res) {
+  if (!res || !res.redirected) return res;
+  const headers = new Headers(res.headers);
+  headers.delete('content-encoding');
+  headers.delete('content-length');
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers
+  });
+}
+
 // ── Fetch: network-first with cache fallback ───────────────────────────
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -76,12 +94,14 @@ self.addEventListener('fetch', (event) => {
 
 async function networkFirst(req, url) {
   const cache = await caches.open(CACHE_NAME);
+  const isNav = req.mode === 'navigate';
 
   try {
     // For navigations, fetch the URL string (not the Request object): a
     // navigate-mode Request ignores redirect:'follow', producing an
     // opaqueredirect response the SW cannot use behind Firebase/CDN redirects.
-    const res = req.mode === 'navigate' ? await fetch(req.url) : await fetch(req);
+    let res = isNav ? await fetch(req.url) : await fetch(req);
+    if (isNav) res = undoRedirect(res); // never return a redirected nav response
 
     if (res && res.status === 200 && isCacheable(url)) {
       cache.put(req, res.clone());
@@ -89,13 +109,13 @@ async function networkFirst(req, url) {
     return res;
   } catch (err) {
     const cached = await cache.match(req);
-    if (cached) return cached;
+    if (cached) return isNav ? undoRedirect(cached) : cached;
 
-    if (req.mode === 'navigate') {
+    if (isNav) {
       const p = url.pathname;
-      if (p.includes('logbook')) return cache.match('logbook.html');
-      if (p.includes('app')) return cache.match('app.html');
-      return cache.match('index.html');
+      if (p.includes('logbook')) return undoRedirect(await cache.match('logbook.html'));
+      if (p.includes('app')) return undoRedirect(await cache.match('app.html'));
+      return undoRedirect(await cache.match('index.html'));
     }
     throw err;
   }
