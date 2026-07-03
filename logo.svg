@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="90 30 332 438">
+  <!-- Note My Coffee — mark C: cream bookmark, dark cup + note lines, gold smile -->
+  <path d="M150 46 H362 Q406 46 406 90 L406 452 L256 379 L106 452 L106 90 Q106 46 150 46 Z"
+        fill="#F0E5D5" stroke="#F0E5D5" stroke-width="16" stroke-linejoin="round"/>
+  <g fill="#17110C">
+    <rect x="142" y="86" width="168" height="15" rx="7.5"/>
+    <path d="M152 101 L152 128 A74 70 0 0 0 300 128 L300 101 Z"/>
+  </g>
+  <circle cx="316" cy="130" r="26" fill="none" stroke="#17110C" stroke-width="14"/>
+  <g stroke="#17110C" stroke-width="14" stroke-linecap="round">
+    <line x1="178" y1="233" x2="283" y2="233"/>
+    <line x1="178" y1="261" x2="258" y2="261"/>
+  </g>
+  <path d="M169 286 Q256 336 343 286" fill="none" stroke="#B78C4F" stroke-width="18" stroke-linecap="round"/>
+</svg>

@@ -108,7 +108,8 @@ body {
     align-items: center;
     gap: 10px;
 }
-.brand-mark { font-size: 24px; }
+.brand-mark { font-size: 24px; display: flex; align-items: center; }
+.brand-mark img { height: 34px; width: auto; display: block; }
 .brand-text { display: flex; flex-direction: column; }
 .brand-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; line-height: 1.1; }
 .brand-tagline { font-size: 11px; color: var(--ink-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }

@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -15,7 +15,10 @@ const PRECACHE_ASSETS = [
   'logbook.js',
   'landing.js',
   'storage.js',
-  'firebase-config.js'
+  'firebase-config.js',
+  'logo.svg',
+  'logo-dark.svg',
+  'favicon.svg'
 ];
 
 // ── Install: warm the cache, then take over immediately ────────────────

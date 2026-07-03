@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Note My Coffee — 당신의 커피 레시피를 기록하세요</title>
     <meta name="theme-color" content="#080604">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="boot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,12 +61,16 @@
         }
 
         .nav-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
             font-family: 'Cormorant Garamond', Georgia, serif;
             font-size: 17px;
             font-weight: 600;
             color: var(--gold);
             letter-spacing: 0.02em;
         }
+        .nav-logo img { height: 22px; width: auto; display: block; }
 
         .nav-btn {
             background: none;
@@ -318,7 +323,7 @@
 
     <!-- NAV -->
     <nav class="nav">
-        <span class="nav-logo">☕ Note My Coffee</span>
+        <span class="nav-logo"><img src="logo.svg" alt=""> Note My Coffee</span>
         <button class="nav-btn" id="btn-nav-cta">시작하기</button>
     </nav>
 
