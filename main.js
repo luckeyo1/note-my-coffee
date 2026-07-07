@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // IMPORTANT: Replace 'YOUR_WEATHERAPI_KEY' with your actual WeatherAPI.com API key.
-    const WEATHERAPI_KEY = '549486968354490e95c131115262003';
+    // 레시피 저장 시 함께 기록되는 날씨 문자열 (HTML이 아닌 순수 텍스트).
+    let lastWeatherText = '';
 
     const i18n = {
         en: {
@@ -556,38 +556,100 @@ document.addEventListener('DOMContentLoaded', () => {
         syncRuler(id, input.value);
     };
 
-    const fetchWeather = () => {
+    // --- Weather ---
+    // 데이터: Open-Meteo (한국은 기상청 KMA 모델 등 지역별 최적 수치예보 모델을 자동 사용, 키 불필요)
+    // 지명: BigDataCloud 역지오코딩 (한국어 행정구역명 지원, 키 불필요)
+    // 위치: GPS(고정밀) → IP 추정 → 서울 순으로 폴백하되, 수치는 항상 실제 데이터만 표시한다.
+    const wmoEmoji = (code, isDay) => {
+        if (code === 0) return isDay ? '☀️' : '🌙';
+        if (code === 1) return isDay ? '🌤️' : '🌙';
+        if (code === 2) return '⛅';
+        if (code === 3) return '☁️';
+        if (code === 45 || code === 48) return '🌫️';
+        if (code >= 51 && code <= 57) return '🌦️';
+        if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return '🌧️';
+        if ((code >= 71 && code <= 77) || code === 85 || code === 86) return '🌨️';
+        if (code >= 95) return '⛈️';
+        return '🌡️';
+    };
+
+    const fetchJson = async (url, ms = 8000) => {
+        const res = await fetch(url, { signal: AbortSignal.timeout(ms) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    };
+
+    const locateByGps = () => new Promise((resolve, reject) => {
+        if (!('geolocation' in navigator)) return reject(new Error('geolocation unsupported'));
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, approx: false }),
+            reject,
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 5 * 60 * 1000 }
+        );
+    });
+
+    const locateByIp = async () => {
+        const d = await fetchJson('https://ipapi.co/json/');
+        if (typeof d.latitude !== 'number' || typeof d.longitude !== 'number') throw new Error('no ip location');
+        return { lat: d.latitude, lon: d.longitude, city: d.city, approx: true };
+    };
+
+    const reverseGeocode = async (lat, lon) => {
+        const d = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${currentLang === 'ko' ? 'ko' : 'en'}`);
+        return d.city || d.locality || d.principalSubdivision || '';
+    };
+
+    let weatherBusy = false;
+    const fetchWeather = async () => {
+        if (weatherBusy) return;
+        weatherBusy = true;
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
-        const setFallback = (msg) => { 
-            const defaultWeather = currentLang === 'ko' ? "📍 서울 · ☀️ 18.0°C · 💧 45%" : "📍 SEOUL · ☀️ 18.0°C · 💧 45%";
-            if (infoSpan) infoSpan.innerHTML = `${defaultWeather} <br><small style="font-size:0.7em; opacity:0.6;">(${msg})</small>`; 
-        };
+        el.weatherInfo.title = currentLang === 'ko' ? '클릭하면 새로고침' : 'Click to refresh';
+        if (infoSpan) infoSpan.textContent = i18n[currentLang].weather;
+        try {
+            let loc;
+            try { loc = await locateByGps(); }
+            catch (gpsErr) {
+                try { loc = await locateByIp(); }
+                catch (ipErr) { loc = { lat: 37.5665, lon: 126.9780, city: currentLang === 'ko' ? '서울' : 'Seoul', approx: true }; }
+            }
 
-        if (infoSpan) infoSpan.innerHTML = i18n[currentLang].weather;
+            const wx = await fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,weather_code,is_day&timezone=auto`);
+            const cur = wx.current;
 
-        if (!WEATHERAPI_KEY) return setFallback(currentLang === 'ko' ? "API 키 필요" : "API Key Required");
+            let city = '';
+            if (!loc.approx) { try { city = await reverseGeocode(loc.lat, loc.lon); } catch (geoErr) { /* 지명 없이 진행 */ } }
+            if (!city) city = loc.city || (currentLang === 'ko' ? '내 위치' : 'My location');
 
-        if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { latitude: lat, longitude: lon } = pos.coords;
-                const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}&aqi=no&lang=${currentLang === 'ko' ? 'ko' : 'en'}`;
-                try {
-                    const res = await fetch(url); const data = await res.json();
-                    const city = data.location.name; const temp = data.current.temp_c; const hum = data.current.humidity; const icon = data.current.condition.icon;
-                    if (infoSpan) infoSpan.innerHTML = `📍 ${city} · <img src="${icon}" style="vertical-align:middle;height:16px;"> ${temp.toFixed(1)}°C · 💧 ${hum}%`;
-                    if (hum > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${hum}% — try slightly coarser grind`;
-                    else if (hum < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 추출 강도 +0.5g 권장` : `Humidity ${hum}% — consider +0.5g dosing`;
-                    else el.envHint.textContent = currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
-                } catch (e) { setFallback(currentLang === 'ko' ? "데이터 오류" : "API Error"); }
-            }, (err) => {
-                let msg = currentLang === 'ko' ? "위치 권한 필요" : "Location Denied";
-                if (err.code === 1) msg = currentLang === 'ko' ? "위치 차단됨" : "Location Blocked";
-                setFallback(msg);
-            }, { timeout: 10000 });
-        } else {
-            setFallback(currentLang === 'ko' ? "지원 안 함" : "Not Supported");
+            const temp = cur.temperature_2m; const hum = cur.relative_humidity_2m;
+            lastWeatherText = `📍 ${city} · ${wmoEmoji(cur.weather_code, cur.is_day === 1)} ${temp.toFixed(1)}°C · 💧 ${hum}%`;
+            if (infoSpan) {
+                // 도시명이 외부 API 응답이므로 innerHTML 대신 textContent로 렌더링한다.
+                infoSpan.textContent = lastWeatherText;
+                if (loc.approx) {
+                    const s = document.createElement('small');
+                    s.style.cssText = 'opacity:0.6;font-size:0.75em;margin-left:4px;';
+                    s.textContent = currentLang === 'ko' ? '(추정 위치)' : '(approx.)';
+                    infoSpan.appendChild(s);
+                }
+            }
+
+            if (hum > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${hum}% — try slightly coarser grind`;
+            else if (hum < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 추출 강도 +0.5g 권장` : `Humidity ${hum}% — consider +0.5g dosing`;
+            else if (temp <= 5) el.envHint.textContent = currentLang === 'ko' ? `기온 ${temp.toFixed(0)}°C — 잔과 장비를 충분히 예열하세요` : `${temp.toFixed(0)}°C — preheat your cup and gear`;
+            else el.envHint.textContent = currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
+        } catch (e) {
+            lastWeatherText = '';
+            if (infoSpan) infoSpan.textContent = i18n[currentLang].weatherError;
+        } finally {
+            weatherBusy = false;
         }
     };
+
+    // 날씨 스트립 클릭으로 수동 새로고침 + 15분마다 자동 갱신 (탭을 켜둬도 최신 유지)
+    el.weatherInfo.style.cursor = 'pointer';
+    el.weatherInfo.addEventListener('click', () => fetchWeather());
+    setInterval(fetchWeather, 15 * 60 * 1000);
 
     const updateBrewRatio = () => {
         const d = parseFloat(el.rDosing.value); const y = parseFloat(el.rYield.value); const r = y / d;
@@ -792,8 +854,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const ratingInput = el.modalOverallRatingContainer.querySelector('input[name="overallRating"]:checked');
-            const weatherSpan = el.weatherInfo ? el.weatherInfo.querySelector('span:last-child') : null;
-            const weatherValue = weatherSpan ? weatherSpan.innerHTML : (currentLang === 'ko' ? '날씨 정보 없음' : 'Weather unavailable');
+            const weatherValue = lastWeatherText || (currentLang === 'ko' ? '날씨 정보 없음' : 'Weather unavailable');
 
             // Limit to 1MB (Firestore document limit)
             if (uploadedImageData && uploadedImageData.length > 1 * 1024 * 1024) {
