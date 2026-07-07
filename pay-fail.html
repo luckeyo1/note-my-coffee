@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 실패 (테스트) — Note My Coffee</title>
+    <meta name="theme-color" content="#080604">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="boot.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold: #C8A96E;
+            --gold-border: rgba(200,169,110,0.25);
+            --bg: #080604;
+            --text: #EBE5DC;
+            --sub: #9B9087;
+            --muted: #5A544E;
+            --border: rgba(255,255,255,0.07);
+            --red: #D4766A;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            min-height: 100svh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 520px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: clamp(32px, 6vw, 48px);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .badge {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--red);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: clamp(30px, 5vw, 40px);
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+        h1 em { color: var(--red); font-style: italic; }
+
+        .desc {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--sub);
+            margin-bottom: 28px;
+        }
+
+        .rows {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 28px;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .row:last-child { border-bottom: none; }
+
+        .row-key {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+        .row-val {
+            font-size: 13px;
+            color: var(--text);
+            word-break: break-all;
+            text-align: right;
+        }
+
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--gold);
+            color: #080604;
+            border: none;
+            padding: 13px 24px;
+            border-radius: 3px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.18s;
+        }
+        .btn-primary:hover { opacity: 0.86; }
+
+        .note {
+            margin-top: 22px;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="badge">Toss Payments · Sandbox</div>
+        <h1>결제 <em>실패</em></h1>
+        <p class="desc">
+            테스트 결제가 완료되지 않았습니다.
+            아래 코드와 메시지를 확인해주세요 — 테스트 모드라 실제 피해는 없습니다.
+        </p>
+
+        <div class="rows">
+            <div class="row">
+                <span class="row-key">Code</span>
+                <span class="row-val" id="val-code">—</span>
+            </div>
+            <div class="row">
+                <span class="row-key">Message</span>
+                <span class="row-val" id="val-message">—</span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn-primary" href="index.html#support">다시 시도하기</a>
+        </div>
+
+        <p class="note">
+            에러 코드의 의미는 토스페이먼츠 개발자센터의 에러 코드 문서에서 확인할 수 있습니다.
+        </p>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        document.getElementById('val-code').textContent = params.get('code') || '—';
+        document.getElementById('val-message').textContent = params.get('message') || '—';
+    </script>
+</body>
+</html>

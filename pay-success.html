@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 성공 (테스트) — Note My Coffee</title>
+    <meta name="theme-color" content="#080604">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="boot.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold: #C8A96E;
+            --gold-border: rgba(200,169,110,0.25);
+            --bg: #080604;
+            --text: #EBE5DC;
+            --sub: #9B9087;
+            --muted: #5A544E;
+            --border: rgba(255,255,255,0.07);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', system-ui, sans-serif;
+            min-height: 100svh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 520px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: clamp(32px, 6vw, 48px);
+            background: rgba(255,255,255,0.02);
+        }
+
+        .badge {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: clamp(30px, 5vw, 40px);
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+        h1 em { color: var(--gold); font-style: italic; }
+
+        .desc {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--sub);
+            margin-bottom: 28px;
+        }
+
+        .rows {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 28px;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .row:last-child { border-bottom: none; }
+
+        .row-key {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+        .row-val {
+            font-size: 13px;
+            color: var(--gold);
+            word-break: break-all;
+            text-align: right;
+        }
+
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--gold);
+            color: #080604;
+            border: none;
+            padding: 13px 24px;
+            border-radius: 3px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.18s;
+        }
+        .btn-primary:hover { opacity: 0.86; }
+
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            background: none;
+            border: 1px solid var(--gold-border);
+            color: var(--gold);
+            padding: 13px 24px;
+            border-radius: 3px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.18s, color 0.18s;
+        }
+        .btn-ghost:hover { background: var(--gold); color: var(--bg); }
+
+        .note {
+            margin-top: 22px;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="badge">Toss Payments · Sandbox</div>
+        <h1>테스트 결제 <em>성공</em> ☕</h1>
+        <p class="desc">
+            토스페이먼츠 샌드박스 결제 요청이 정상적으로 완료됐습니다.
+            테스트 모드라서 실제 결제는 발생하지 않았어요.
+        </p>
+
+        <div class="rows">
+            <div class="row">
+                <span class="row-key">Amount</span>
+                <span class="row-val" id="val-amount">—</span>
+            </div>
+            <div class="row">
+                <span class="row-key">Order ID</span>
+                <span class="row-val" id="val-order-id">—</span>
+            </div>
+            <div class="row">
+                <span class="row-key">Payment Key</span>
+                <span class="row-val" id="val-payment-key">—</span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn-primary" href="index.html">랜딩으로 돌아가기</a>
+            <a class="btn-ghost" href="app.html">앱 열기</a>
+        </div>
+
+        <p class="note">
+            실 연동에서는 이 페이지에서 받은 paymentKey · orderId · amount를
+            서버로 보내 결제 승인(confirm) API를 호출해야 결제가 확정됩니다.
+        </p>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+
+        const amount = Number(params.get('amount'));
+        document.getElementById('val-amount').textContent =
+            Number.isFinite(amount) && amount > 0 ? amount.toLocaleString('ko-KR') + '원' : '—';
+        document.getElementById('val-order-id').textContent = params.get('orderId') || '—';
+        document.getElementById('val-payment-key').textContent = params.get('paymentKey') || '—';
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v7';
+const VERSION = 'v8';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -14,6 +14,9 @@ const PRECACHE_ASSETS = [
   'main.js',
   'logbook.js',
   'landing.js',
+  'pay.js',
+  'pay-success.html',
+  'pay-fail.html',
   'storage.js',
   'firebase-config.js',
   'logo.svg',
@@ -62,6 +65,7 @@ function isPassthrough(req, url) {
     url.hostname.includes('firebase') ||
     url.hostname.includes('identitytoolkit') ||
     url.hostname.includes('securetoken') ||
+    url.hostname.endsWith('tosspayments.com') ||
     (url.hostname.endsWith('googleapis.com') && url.hostname !== 'fonts.googleapis.com')
   );
 }
