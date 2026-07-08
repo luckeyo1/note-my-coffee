@@ -2,3 +2,4 @@ node_modules/
 firebase-debug.log
 *.log
 .firebase/
+생성된 이미지*.png

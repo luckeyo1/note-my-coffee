@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v8';
+const VERSION = 'v9';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -21,7 +21,12 @@ const PRECACHE_ASSETS = [
   'firebase-config.js',
   'logo.svg',
   'logo-dark.svg',
-  'favicon.svg'
+  'favicon.svg',
+  'manifest.json',
+  'icon-192.png',
+  'icon-512.png',
+  'icon-maskable-512.png',
+  'apple-touch-icon.png'
 ];
 
 // ── Install: warm the cache, then take over immediately ────────────────
