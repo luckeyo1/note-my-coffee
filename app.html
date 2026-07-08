@@ -97,8 +97,12 @@
         <div class="control-group">
             <div class="control-header">
                 <div class="control-meta">
-                    <span class="control-label" id="lbl-dosing">DOSING</span>
+                    <div class="control-label-row">
+                        <span class="control-label" id="lbl-dosing">DOSING</span>
+                        <button type="button" class="info-btn" data-info="dosing" aria-expanded="false" aria-label="SCA guide">i</button>
+                    </div>
                     <span class="control-pro-hint" id="hint-dosing">Pro range: 18.0–21.0g</span>
+                    <div class="sca-popover" id="pop-dosing" role="tooltip"></div>
                 </div>
                 <div class="control-value">
                     <span id="v-dosing">18.0</span>
@@ -126,8 +130,12 @@
         <div class="control-group">
             <div class="control-header">
                 <div class="control-meta">
-                    <span class="control-label" id="lbl-temp">WATER TEMP</span>
+                    <div class="control-label-row">
+                        <span class="control-label" id="lbl-temp">WATER TEMP</span>
+                        <button type="button" class="info-btn" data-info="temp" aria-expanded="false" aria-label="SCA guide">i</button>
+                    </div>
                     <span class="control-pro-hint" id="hint-temp">Pro range: 90.0–96.0°C</span>
+                    <div class="sca-popover" id="pop-temp" role="tooltip"></div>
                 </div>
                 <div class="control-value">
                     <span id="v-temp">92.0</span>
@@ -155,8 +163,12 @@
         <div class="control-group">
             <div class="control-header">
                 <div class="control-meta">
-                    <span class="control-label" id="lbl-time">EXTRACTION TIME</span>
+                    <div class="control-label-row">
+                        <span class="control-label" id="lbl-time">EXTRACTION TIME</span>
+                        <button type="button" class="info-btn" data-info="time" aria-expanded="false" aria-label="SCA guide">i</button>
+                    </div>
                     <span class="control-pro-hint" id="hint-time">Pro range: 25.0–35.0sec</span>
+                    <div class="sca-popover" id="pop-time" role="tooltip"></div>
                 </div>
                 <div class="control-value">
                     <span id="v-time">28.5</span>
@@ -213,8 +225,12 @@
         <div class="control-group">
             <div class="control-header">
                 <div class="control-meta">
-                    <span class="control-label" id="lbl-yield">YIELD</span>
+                    <div class="control-label-row">
+                        <span class="control-label" id="lbl-yield">YIELD</span>
+                        <button type="button" class="info-btn" data-info="yield" aria-expanded="false" aria-label="SCA guide">i</button>
+                    </div>
                     <span class="control-pro-hint" id="hint-yield">Brew ratio: 1:2.0</span>
+                    <div class="sca-popover" id="pop-yield" role="tooltip"></div>
                 </div>
                 <div class="control-value">
                     <span id="v-yield">36.0</span>

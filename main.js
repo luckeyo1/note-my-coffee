@@ -97,6 +97,56 @@ document.addEventListener('DOMContentLoaded', () => {
             swHintIdeal: "✓ {sec}s — within SCA range",
             swApplied: "{sec}s applied to extraction time",
             swBtnOpen: "⏱ OPEN STOPWATCH", swBtnClose: "⏱ CLOSE STOPWATCH",
+            scaTitle: "SCA BREWING GUIDE",
+            scaGuide: {
+                espresso: {
+                    dosing: {
+                        std: "Pro standard: 18–21g in a double basket",
+                        up: { l: "More", t: "stronger, heavier body — but same grind & time can under-extract, turning sour." },
+                        down: { l: "Less", t: "lighter body, faster flow — extraction climbs and can turn bitter." },
+                        note: "Adjust in 0.5g steps and keep your brew ratio in mind."
+                    },
+                    temp: {
+                        std: "SCA standard: 90.5–96.1°C (195–205°F)",
+                        up: { l: "Hotter", t: "faster extraction — more bitterness and roasty notes. Suits light roasts." },
+                        down: { l: "Cooler", t: "slower extraction — brighter but can taste sour and thin. Suits dark roasts." }
+                    },
+                    time: {
+                        std: "Typical espresso shot: 25–30 sec",
+                        up: { l: "Longer", t: "over-extraction — bitter, astringent, dry finish." },
+                        down: { l: "Shorter", t: "under-extraction — sour, salty, weak sweetness." },
+                        note: "Time follows grind size — adjust the grind first, not the clock."
+                    },
+                    yield: {
+                        std: "Industry norm: 1:2 ratio (18g in → 36g out)",
+                        up: { l: "More (lungo)", t: "higher extraction, lighter body — sweetness first, then bitterness." },
+                        down: { l: "Less (ristretto)", t: "syrupy and intense, acidity-forward — less total extraction." }
+                    }
+                },
+                drip: {
+                    dosing: {
+                        std: "SCA Golden Cup: 55g/L ±10% (≈1:15–1:18)",
+                        up: { l: "More", t: "stronger, heavier cup — the ratio tightens and can taste dense, under-extracted." },
+                        down: { l: "Less", t: "lighter, tea-like cup — easier to over-extract into bitterness." }
+                    },
+                    temp: {
+                        std: "SCA standard: 90.5–96.1°C (195–205°F)",
+                        up: { l: "Hotter", t: "faster extraction — more bitterness and roasty notes. Suits light roasts." },
+                        down: { l: "Cooler", t: "slower extraction — brighter but can taste sour and weak. Suits dark roasts." }
+                    },
+                    time: {
+                        std: "SCA total brew time: 2–4 min (pour-over)",
+                        up: { l: "Longer", t: "more contact — bitterness and astringency build up." },
+                        down: { l: "Shorter", t: "under-developed — sour, weak, low sweetness." },
+                        note: "Grind size is the main lever: finer = slower, coarser = faster."
+                    },
+                    yield: {
+                        std: "SCA Golden Cup ratio: 1:15–1:18",
+                        up: { l: "More water", t: "weaker, thinner cup — flavors get diluted." },
+                        down: { l: "Less water", t: "stronger cup, but extraction can end uneven — heavy and muddled." }
+                    }
+                }
+            },
             originTags: ["Ethiopia", "Colombia", "Brazil", "Kenya", "Guatemala", "Indonesia", "Costa Rica", "Panama"],
             tasteTags: ["Floral", "Fruity", "Nutty", "Chocolaty", "Sweet", "Acidic", "Bitter", "Spicy"]
         },
@@ -141,6 +191,56 @@ document.addEventListener('DOMContentLoaded', () => {
             swHintIdeal: "✓ {sec}초 — SCA 권장 범위 내",
             swApplied: "{sec}초가 추출 시간에 반영되었습니다",
             swBtnOpen: "⏱ 스톱워치 열기", swBtnClose: "⏱ 스톱워치 닫기",
+            scaTitle: "SCA 추출 가이드",
+            scaGuide: {
+                espresso: {
+                    dosing: {
+                        std: "프로 기준: 더블 바스켓 18–21g",
+                        up: { l: "늘리면", t: "바디가 진하고 무거워집니다. 분쇄도·시간이 그대로면 과소추출로 신맛이 날 수 있어요." },
+                        down: { l: "줄이면", t: "바디가 가벼워지고 흐름이 빨라져 과다추출(쓴맛) 위험이 커집니다." },
+                        note: "0.5g 단위로 조정하고 브루 비율을 함께 확인하세요."
+                    },
+                    temp: {
+                        std: "SCA 표준: 90.5–96.1°C (195–205°F)",
+                        up: { l: "높이면", t: "추출이 빨라져 쓴맛과 로스팅 향이 강해집니다. 라이트 로스트에 적합해요." },
+                        down: { l: "낮추면", t: "추출이 느려져 산미는 살지만 시고 밍밍해질 수 있어요. 다크 로스트에 적합해요." }
+                    },
+                    time: {
+                        std: "일반적인 에스프레소 샷: 25–30초",
+                        up: { l: "길어지면", t: "과다추출 — 쓰고 떫으며 피니시가 건조해집니다." },
+                        down: { l: "짧아지면", t: "과소추출 — 시고 짜며 단맛이 부족해집니다." },
+                        note: "추출 시간은 분쇄도의 결과입니다. 시계보다 분쇄도를 먼저 조정하세요."
+                    },
+                    yield: {
+                        std: "업계 표준 비율: 1:2 (원두 18g → 36g 추출)",
+                        up: { l: "늘리면 (룽고)", t: "추출률이 올라가고 바디는 가벼워져, 단맛 뒤로 쓴맛이 따라옵니다." },
+                        down: { l: "줄이면 (리스트레토)", t: "시럽처럼 진하고 산미가 도드라지며, 전체 추출률은 낮아집니다." }
+                    }
+                },
+                drip: {
+                    dosing: {
+                        std: "SCA 골든컵: 물 1L당 55g ±10% (≈1:15–1:18)",
+                        up: { l: "늘리면", t: "진하고 묵직한 컵 — 비율이 좁아져 텁텁하고 과소추출된 맛이 날 수 있어요." },
+                        down: { l: "줄이면", t: "가볍고 차 같은 컵 — 과다추출로 쓴맛이 나기 쉬워집니다." }
+                    },
+                    temp: {
+                        std: "SCA 표준: 90.5–96.1°C (195–205°F)",
+                        up: { l: "높이면", t: "추출이 빨라져 쓴맛과 로스팅 향이 강해집니다. 라이트 로스트에 적합해요." },
+                        down: { l: "낮추면", t: "추출이 느려져 산미는 살지만 싱겁고 신맛이 날 수 있어요. 다크 로스트에 적합해요." }
+                    },
+                    time: {
+                        std: "SCA 총 추출 시간: 2–4분 (푸어오버)",
+                        up: { l: "길어지면", t: "접촉 시간이 늘어 쓴맛과 떫은맛이 쌓입니다." },
+                        down: { l: "짧아지면", t: "덜 우러나 시고 싱거우며 단맛이 부족합니다." },
+                        note: "핵심 변수는 분쇄도입니다. 곱게 = 느리게, 굵게 = 빠르게."
+                    },
+                    yield: {
+                        std: "SCA 골든컵 비율: 1:15–1:18",
+                        up: { l: "물을 늘리면", t: "싱겁고 얇은 컵 — 향미가 희석됩니다." },
+                        down: { l: "물을 줄이면", t: "진해지지만 추출이 고르지 못해 무겁고 탁해질 수 있어요." }
+                    }
+                }
+            },
             originTags: ["에티오피아", "콜롬비아", "브라질", "케냐", "과테말라", "인도네시아", "코스타리카", "파나마"],
             tasteTags: ["플로럴", "프루티", "고소한", "초콜릿", "달콤한", "산미있는", "쌉쌀한", "스파이시"]
         }
@@ -538,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sync ruler positions
         ['dosing', 'temp', 'time', 'yield'].forEach(id => syncRuler(id, el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`].value, false));
 
-        updateBrewRatio(); updateProHints();
+        updateBrewRatio(); updateProHints(); refreshScaPopover();
         if (el.stopwatchPanel.classList.contains('open')) swReset();
     };
 
@@ -703,6 +803,71 @@ document.addEventListener('DOMContentLoaded', () => {
         el.ratioLabel.textContent = t.ratioLabel;
     };
 
+    // --- SCA Guide Popovers ---
+    // 각 변수 라벨 옆 ⓘ 버튼: 데스크톱은 호버, 모바일은 탭으로 열린다.
+    // 콘텐츠는 i18n.scaGuide[모드][변수]에서 가져오므로 언어/모드 전환 시 함께 바뀐다.
+    const scaPop = { openId: null, pinned: false };
+
+    const renderScaPopover = (id) => {
+        const pop = document.getElementById(`pop-${id}`);
+        if (!pop) return;
+        const t = i18n[currentLang];
+        const g = t.scaGuide[currentMode][id];
+        if (!g) return;
+        const noteHtml = g.note ? `<div class="sca-pop-note">${g.note}</div>` : '';
+        pop.innerHTML = `
+            <div class="sca-pop-card">
+                <div class="sca-pop-title">${t.scaTitle}</div>
+                <div class="sca-pop-std">${g.std}</div>
+                <div class="sca-pop-row"><span class="sca-dir up">▲</span><div><strong>${g.up.l}</strong> — ${g.up.t}</div></div>
+                <div class="sca-pop-row"><span class="sca-dir down">▼</span><div><strong>${g.down.l}</strong> — ${g.down.t}</div></div>
+                ${noteHtml}
+            </div>`;
+    };
+
+    const closeScaPopovers = () => {
+        scaPop.openId = null; scaPop.pinned = false;
+        document.querySelectorAll('.sca-popover.open').forEach(p => p.classList.remove('open'));
+        document.querySelectorAll('.info-btn[aria-expanded="true"]').forEach(b => {
+            b.setAttribute('aria-expanded', 'false');
+            b.classList.remove('active');
+        });
+    };
+
+    const openScaPopover = (id, pin) => {
+        if (scaPop.openId && scaPop.openId !== id) closeScaPopovers();
+        renderScaPopover(id);
+        const pop = document.getElementById(`pop-${id}`);
+        const btn = document.querySelector(`.info-btn[data-info="${id}"]`);
+        if (!pop || !btn) return;
+        pop.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        btn.classList.add('active');
+        scaPop.openId = id;
+        scaPop.pinned = pin || scaPop.pinned;
+    };
+
+    // 열린 상태에서 언어·모드가 바뀌면 내용만 다시 그린다
+    const refreshScaPopover = () => { if (scaPop.openId) renderScaPopover(scaPop.openId); };
+
+    document.querySelectorAll('.info-btn').forEach(btn => {
+        const id = btn.getAttribute('data-info');
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (scaPop.openId === id && scaPop.pinned) closeScaPopovers();
+            else openScaPopover(id, true);
+        });
+        btn.addEventListener('mouseenter', () => { if (!scaPop.pinned) openScaPopover(id, false); });
+        // 버튼과 팝오버를 감싸는 control-meta를 벗어나면 닫기 (고정된 경우 제외)
+        const meta = btn.closest('.control-meta');
+        if (meta) meta.addEventListener('mouseleave', () => { if (!scaPop.pinned) closeScaPopovers(); });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (scaPop.openId && !e.target.closest('.sca-popover') && !e.target.closest('.info-btn')) closeScaPopovers();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeScaPopovers(); });
+
     const renderTagCloud = (container, tags, inputEl) => {
         if (!container || !inputEl) return;
 
@@ -765,7 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTagCloud(el.originTagCloud, t.originTags, el.modalOrigin);
         renderTagCloud(el.tasteTagCloud, t.tasteTags, el.modalTasteNotes);
 
-        updateProHints(); updateProgress(); updateBrewRatio(); fetchWeather();
+        updateProHints(); updateProgress(); updateBrewRatio(); refreshScaPopover(); fetchWeather();
     };
 
     // --- Events ---
