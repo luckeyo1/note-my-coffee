@@ -421,7 +421,17 @@ document.addEventListener('DOMContentLoaded', () => {
         el.btnStatusOpen.classList.toggle('active', status === 'open');
 
         if (status === 'open') {
-            const recentBeans = await CoffeeNotesStorage.getRecentBeans();
+            // 원두별 가장 최근 레시피를 함께 확보해 두면, 칩 선택 시
+            // 원산지·구매처·노트·사진까지 이전 기록 그대로 채울 수 있다.
+            const recipes = await CoffeeNotesStorage.getRecipes();
+            // 게스트(localStorage) 경로는 정렬 없이 반환되므로 여기서 최신순으로 정렬
+            const sorted = (Array.isArray(recipes) ? recipes.slice() : [])
+                .sort((a, b) => new Date(b && b.date) - new Date(a && a.date));
+            const latestByBean = new Map(); // 최신순이므로 첫 항목이 그 원두의 최근 기록
+            sorted.forEach(r => {
+                if (r && r.beanName && !latestByBean.has(r.beanName)) latestByBean.set(r.beanName, r);
+            });
+            const recentBeans = [...latestByBean.keys()].slice(0, 10);
             if (recentBeans.length > 0) {
                 el.openedBeansContainer.innerHTML = recentBeans
                     .map(bean => `<span class="taste-tag" data-bean="${bean}">${bean}</span>`)
@@ -432,6 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.openedBeansContainer.querySelectorAll('.taste-tag').forEach(chip => {
                     chip.addEventListener('click', () => {
                         el.modalBeanName.value = chip.getAttribute('data-bean');
+                        prefillFromRecipe(latestByBean.get(chip.getAttribute('data-bean')));
                         updateProgress();
                     });
                 });
@@ -440,6 +451,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             el.openedBeansContainer.style.display = 'none';
+        }
+    };
+
+    // 개봉 중인 원두를 고르면 그 원두의 마지막 기록에서 원두 정보를 이어받는다.
+    // (평점·성공 여부는 이번 추출의 결과이므로 채우지 않음)
+    const prefillFromRecipe = (r) => {
+        if (!r) return;
+        if (r.origin) el.modalOrigin.value = r.origin;
+        if (r.purchaseUrl) el.modalPurchaseUrl.value = r.purchaseUrl;
+        if (r.tasteNotes) el.modalTasteNotes.value = r.tasteNotes;
+        // 태그 클라우드 활성 상태를 입력값과 동기화
+        el.modalOrigin.dispatchEvent(new Event('input', { bubbles: true }));
+        el.modalTasteNotes.dispatchEvent(new Event('input', { bubbles: true }));
+        if (r.imageUrl) {
+            uploadedImageData = r.imageUrl;
+            el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
+            el.fileNameDisplay.innerText = currentLang === 'ko' ? '이전 기록의 사진' : 'From last log';
         }
     };
 
