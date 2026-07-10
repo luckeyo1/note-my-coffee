@@ -148,7 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             originTags: ["Ethiopia", "Colombia", "Brazil", "Kenya", "Guatemala", "Indonesia", "Costa Rica", "Panama"],
-            tasteTags: ["Floral", "Fruity", "Nutty", "Chocolaty", "Sweet", "Acidic", "Bitter", "Spicy"]
+            tasteTags: ["Floral", "Fruity", "Nutty", "Chocolaty", "Sweet", "Acidic", "Bitter", "Spicy"],
+            obSteps: [
+                { icon: "⚡", title: "Pick Your Brew Mode", desc: "Start with Espresso or Hand Drip — pro ranges and guides adapt to your method." },
+                { icon: "🎚️", title: "Dial In the Variables", desc: "Set dosing, water temp, time and yield with the sliders. Tap ⓘ for the SCA guide, or time your shot with the built-in stopwatch." },
+                { icon: "✦", title: "Log the Recipe", desc: "Hit LOG THIS RECIPE and add bean info & tasting notes. Your first cup logs without an account — sign in with Google to keep every brew in the cloud." },
+                { icon: "📖", title: "Review & Share", desc: "Revisit every brew in your LOG BOOK and share recipes as cards. You can reopen this guide anytime with the ? button up top." }
+            ],
+            obSkip: "Skip",
+            obNext: "Next →",
+            obDone: "Start Brewing ☕"
         },
         ko: {
             dosing: "도징량", temp: "물 온도", time: "추출 시간", yield: "추출 량",
@@ -242,7 +251,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             originTags: ["에티오피아", "콜롬비아", "브라질", "케냐", "과테말라", "인도네시아", "코스타리카", "파나마"],
-            tasteTags: ["플로럴", "프루티", "고소한", "초콜릿", "달콤한", "산미있는", "쌉쌀한", "스파이시"]
+            tasteTags: ["플로럴", "프루티", "고소한", "초콜릿", "달콤한", "산미있는", "쌉쌀한", "스파이시"],
+            obSteps: [
+                { icon: "⚡", title: "추출 방식 선택", desc: "에스프레소와 핸드드립 중 오늘의 추출 방식을 고르세요. 프로 범위와 가이드가 방식에 맞춰 바뀝니다." },
+                { icon: "🎚️", title: "변수 조절", desc: "도징·물 온도·추출 시간·추출량을 슬라이더로 맞추세요. ⓘ 버튼에서 SCA 가이드를 보고, 내장 스톱워치로 추출 시간을 잴 수 있어요." },
+                { icon: "✦", title: "레시피 기록", desc: "'레시피 기록하기'를 누르고 원두 정보와 테이스팅 노트를 더하세요. 첫 잔은 로그인 없이 기록되고, 구글 로그인하면 모든 기록이 클라우드에 보관됩니다." },
+                { icon: "📖", title: "로그북 & 공유", desc: "기록한 레시피는 로그북에서 다시 보고 카드로 공유할 수 있어요. 이 안내는 상단 ? 버튼으로 언제든 다시 볼 수 있습니다." }
+            ],
+            obSkip: "건너뛰기",
+            obNext: "다음 →",
+            obDone: "시작하기 ☕"
         }
     };
 
@@ -330,6 +348,15 @@ document.addEventListener('DOMContentLoaded', () => {
         modalBeanStatus: document.getElementById('modal-bean-status'),
         openedBeansContainer: document.getElementById('opened-beans-container'),
         lblModalBeanStatus: document.getElementById('lbl-modal-bean-status'),
+        // Onboarding
+        btnHelp: document.getElementById('btn-help'),
+        onboardingModal: document.getElementById('onboarding-modal'),
+        obDots: document.getElementById('ob-dots'),
+        obIcon: document.getElementById('ob-icon'),
+        obTitle: document.getElementById('ob-title'),
+        obDesc: document.getElementById('ob-desc'),
+        obSkip: document.getElementById('ob-skip'),
+        obNext: document.getElementById('ob-next'),
         // Stopwatch
         btnStopwatch: document.getElementById('btn-stopwatch'),
         lblStopwatch: document.getElementById('lbl-stopwatch'),
@@ -866,7 +893,45 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
         if (scaPop.openId && !e.target.closest('.sca-popover') && !e.target.closest('.info-btn')) closeScaPopovers();
     });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeScaPopovers(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        closeScaPopovers();
+        if (el.onboardingModal.classList.contains('active')) closeOnboarding();
+    });
+
+    // --- Onboarding Tour ---
+    // 첫 방문(첫 설치·첫 로그인 포함)에만 자동으로 열리고,
+    // 이후에는 헤더의 ? 버튼으로만 다시 볼 수 있다.
+    const OB_SEEN_KEY = 'nmcGuideSeenV1';
+    const ob = { step: 0 };
+
+    const renderObStep = () => {
+        const t = i18n[currentLang];
+        const s = t.obSteps[ob.step];
+        el.obIcon.textContent = s.icon;
+        el.obTitle.textContent = s.title;
+        el.obDesc.textContent = s.desc;
+        el.obSkip.textContent = t.obSkip;
+        el.obNext.textContent = ob.step === t.obSteps.length - 1 ? t.obDone : t.obNext;
+        el.obDots.innerHTML = t.obSteps.map((_, i) =>
+            `<button type="button" class="ob-dot${i === ob.step ? ' active' : i < ob.step ? ' done' : ''}" data-step="${i}" aria-label="Step ${i + 1}"></button>`).join('');
+        el.obDots.querySelectorAll('.ob-dot').forEach(d =>
+            d.addEventListener('click', () => { ob.step = parseInt(d.dataset.step, 10); renderObStep(); }));
+    };
+
+    const openOnboarding = () => { ob.step = 0; renderObStep(); el.onboardingModal.classList.add('active'); };
+    const closeOnboarding = () => {
+        el.onboardingModal.classList.remove('active');
+        try { localStorage.setItem(OB_SEEN_KEY, '1'); } catch (e) { /* private mode 등 저장 불가 시 무시 */ }
+    };
+
+    el.btnHelp.addEventListener('click', openOnboarding);
+    el.obSkip.addEventListener('click', closeOnboarding);
+    el.obNext.addEventListener('click', () => {
+        if (ob.step >= i18n[currentLang].obSteps.length - 1) closeOnboarding();
+        else { ob.step++; renderObStep(); }
+    });
+    el.onboardingModal.querySelector('.modal-backdrop').addEventListener('click', closeOnboarding);
 
     const renderTagCloud = (container, tags, inputEl) => {
         if (!container || !inputEl) return;
@@ -931,6 +996,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTagCloud(el.tasteTagCloud, t.tasteTags, el.modalTasteNotes);
 
         updateProHints(); updateProgress(); updateBrewRatio(); refreshScaPopover(); fetchWeather();
+        if (el.onboardingModal.classList.contains('active')) renderObStep();
     };
 
     // --- Events ---
@@ -1086,5 +1152,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initRulers(); setMode('espresso'); setLang(currentLang); fetchWeather(); updateLogbookBadge();
+
+    // 첫 방문에만 서비스 안내를 자동으로 연다 (닫으면 다시 뜨지 않음)
+    let obSeen = true;
+    try { obSeen = !!localStorage.getItem(OB_SEEN_KEY); } catch (e) { /* 저장소 접근 불가 시 표시 생략 */ }
+    if (!obSeen) setTimeout(openOnboarding, 600);
 });
 
