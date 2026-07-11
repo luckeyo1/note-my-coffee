@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             proHintDosing: "Pro range: {min}–{max}g",
             proHintTemp: "Pro range: {min}–{max}°C",
             proHintTime: "Pro range: {min}–{max}sec",
+            proHintTimeDrip: "Pro range: {min}–{max}",
             proHintYield: "Brew ratio: 1:{ratio}",
             ratioLabel: "BREW RATIO",
             ratioIdeal: "✓ SCA recommended",
@@ -85,17 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
             savingNudge: "Unsaved recipes are lost forever",
             modalTitle: "Complete Your Recipe",
             modalSubtitle: "Adding bean info lets you recreate this cup perfectly",
-            trustRecipes: "recipes logged today",
+            trustPrefix: "Pro Barista Edition · ",
+            trustSuffix: " recipes logged today",
             selectPhoto: "📷 Choose Photo",
             photoSelected: "✓ Photo Selected",
-            swStart: "START", swStop: "STOP", swRestart: "RESTART", swApply: "APPLY",
+            swStart: "START", swStop: "STOP", swRestart: "RESTART", swApply: "APPLY", swReset: "RESET",
             swStatusReady: "READY", swStatusRunning: "RUNNING", swStatusDone: "DONE",
             swHintReady: "Press START to begin extraction",
             swHintRunning: "Extracting… press STOP to record",
-            swHintUnder: "⚡ {sec}s — possible under-extraction",
-            swHintOver: "⚡ {sec}s — possible over-extraction",
-            swHintIdeal: "✓ {sec}s — within SCA range",
-            swApplied: "{sec}s applied to extraction time",
+            swHintUnder: "⚡ {time} — possible under-extraction",
+            swHintOver: "⚡ {time} — possible over-extraction",
+            swHintIdeal: "✓ {time} — within SCA range",
+            swApplied: "✓ {time} — applied to extraction time",
             swBtnOpen: "⏱ OPEN STOPWATCH", swBtnClose: "⏱ CLOSE STOPWATCH",
             scaTitle: "SCA BREWING GUIDE",
             scaGuide: {
@@ -180,7 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
             progressHint: "원두 이름을 기록하면 완성됩니다",
             proHintDosing: "프로 범위: {min}–{max}g",
             proHintTemp: "프로 범위: {min}–{max}°C",
-            proHintTime: "프로 범위: {min}–{max}sec",
+            proHintTime: "프로 범위: {min}–{max}초",
+            proHintTimeDrip: "프로 범위: {min}–{max}",
             proHintYield: "브루 비율: 1:{ratio}",
             ratioLabel: "브루 레이시오",
             ratioIdeal: "✓ SCA 권장 범위",
@@ -188,17 +191,18 @@ document.addEventListener('DOMContentLoaded', () => {
             savingNudge: "지금 기록하지 않으면 이 레시피는 사라집니다",
             modalTitle: "레시피 완성하기",
             modalSubtitle: "원두 정보를 추가하면 나중에 재현할 수 있습니다",
-            trustRecipes: "개의 레시피가 오늘 기록됨",
+            trustPrefix: "Pro Barista Edition · 오늘 ",
+            trustSuffix: "개의 레시피가 기록되었습니다",
             selectPhoto: "📷 사진 선택하기",
             photoSelected: "✓ 사진 선택됨",
-            swStart: "시작", swStop: "정지", swRestart: "재시작", swApply: "적용",
+            swStart: "시작", swStop: "정지", swRestart: "재시작", swApply: "적용", swReset: "리셋",
             swStatusReady: "준비", swStatusRunning: "추출 중", swStatusDone: "완료",
             swHintReady: "시작을 누르고 추출을 시작하세요",
             swHintRunning: "추출 중... 정지를 누르면 기록됩니다",
-            swHintUnder: "⚡ {sec}초 — 과소추출 가능성",
-            swHintOver: "⚡ {sec}초 — 과다추출 가능성",
-            swHintIdeal: "✓ {sec}초 — SCA 권장 범위 내",
-            swApplied: "{sec}초가 추출 시간에 반영되었습니다",
+            swHintUnder: "⚡ {time} — 과소추출 가능성",
+            swHintOver: "⚡ {time} — 과다추출 가능성",
+            swHintIdeal: "✓ {time} — SCA 권장 범위 내",
+            swApplied: "✓ {time} — 추출 시간에 반영되었습니다",
             swBtnOpen: "⏱ 스톱워치 열기", swBtnClose: "⏱ 스톱워치 닫기",
             scaTitle: "SCA 추출 가이드",
             scaGuide: {
@@ -271,6 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLangEn: document.getElementById('l-en'),
         btnLangKo: document.getElementById('l-ko'),
         btnViewLogbook: document.getElementById('btn-view-logbook'),
+        lblLogbook: document.getElementById('lbl-logbook'),
+        trustPrefix: document.getElementById('trust-prefix'),
+        trustSuffix: document.getElementById('trust-suffix'),
         lblDosing: document.getElementById('lbl-dosing'),
         lblTemp: document.getElementById('lbl-temp'),
         lblTime: document.getElementById('lbl-time'),
@@ -433,19 +440,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const recentBeans = [...latestByBean.keys()].slice(0, 10);
             if (recentBeans.length > 0) {
-                el.openedBeansContainer.innerHTML = recentBeans
-                    .map(bean => `<span class="taste-tag" data-bean="${bean}">${bean}</span>`)
-                    .join('');
-                el.openedBeansContainer.style.display = 'flex';
-
-                // Add click events to chips
-                el.openedBeansContainer.querySelectorAll('.taste-tag').forEach(chip => {
+                // 원두명은 사용자 입력값이므로 innerHTML 대신 DOM API로 렌더링 (마크업 주입 방지)
+                el.openedBeansContainer.innerHTML = '';
+                recentBeans.forEach(bean => {
+                    const chip = document.createElement('span');
+                    chip.className = 'taste-tag';
+                    chip.textContent = bean;
                     chip.addEventListener('click', () => {
-                        el.modalBeanName.value = chip.getAttribute('data-bean');
-                        prefillFromRecipe(latestByBean.get(chip.getAttribute('data-bean')));
+                        el.modalBeanName.value = bean;
+                        prefillFromRecipe(latestByBean.get(bean));
                         updateProgress();
                     });
+                    el.openedBeansContainer.appendChild(chip);
                 });
+                el.openedBeansContainer.style.display = 'flex';
             } else {
                 el.openedBeansContainer.style.display = 'none';
             }
@@ -487,6 +495,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return min > 0 ? `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${tenth}` : `${String(sec).padStart(2,'0')}.${tenth}`;
     };
 
+    // 초 단위 값을 모드에 맞는 표기로: 드립 60초 이상은 m:ss, 그 외는 소수 1자리 + 단위
+    const fmtBrewClock = (secs) => {
+        if (currentMode === 'drip' && secs >= 60) {
+            const total = Math.round(secs);
+            return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+        }
+        return `${secs.toFixed(1)}${currentLang === 'ko' ? '초' : 's'}`;
+    };
+
     const swUpdateRing = (elapsed) => {
         const pct = Math.min(elapsed / (swGetMax() * 1000), 1);
         el.swRingProgress.style.strokeDashoffset = RING_CIRC * (1 - pct);
@@ -526,14 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const proH = qr.idealHigh;
         let k = 'swHintIdeal';
         if (secs < proL) k = 'swHintUnder'; else if (secs > proH) k = 'swHintOver';
-
-        let displaySecs;
-        if (currentMode === 'drip' && secs >= 60) {
-            displaySecs = `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
-        } else {
-            displaySecs = secs.toFixed(1);
-        }
-        el.swHint.textContent = i18n[currentLang][k].replace('{sec}', displaySecs);
+        el.swHint.textContent = i18n[currentLang][k].replace('{time}', fmtBrewClock(secs));
     };
 
     const swReset = () => {
@@ -551,10 +561,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sw.elapsed === 0) return;
         const snapped = Math.floor((sw.elapsed / 1000) * 10) / 10;
         el.rTime.value = snapped.toFixed(1);
-        updateVal('time', snapped);
-        syncRuler('time', snapped);
-        el.swBtnApply.textContent = '✓';
-        el.swHint.textContent = i18n[currentLang].swApplied.replace('{sec}', snapped.toFixed(1));
+        // 슬라이더 max를 넘는 기록은 브라우저가 클램프하므로, 실제 반영된 값으로 표시·안내한다
+        const applied = parseFloat(el.rTime.value);
+        updateVal('time', applied);
+        syncRuler('time', applied);
+        // 버튼 자체가 아닌 내부 라벨(span)만 바꿔야 이후 라벨 복원이 동작한다
+        el.lblSwApply.textContent = '✓';
+        el.swHint.textContent = i18n[currentLang].swApplied.replace('{time}', fmtBrewClock(applied));
         setTimeout(() => {
             el.lblSwApply.textContent = i18n[currentLang].swApply;
             el.stopwatchPanel.classList.remove('open');
@@ -637,12 +650,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateVal = (id, val) => {
         let dv = parseFloat(val);
         let ds = '';
-        if (id === 'time' && currentMode === 'drip' && dv >= 60) {
-            const m = Math.floor(dv / 60); const s = (dv % 60).toFixed(1);
-            ds = `${m}:${s < 10 ? '0' + s : s}`;
+        const timeAsClock = id === 'time' && currentMode === 'drip' && dv >= 60;
+        if (timeAsClock) {
+            const total = Math.round(dv);
+            ds = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
         } else {
             ds = dv.toFixed(1);
         }
+        if (id === 'time' && el.uTime) el.uTime.textContent = timeAsClock ? 'min' : 'sec';
         const vEl = el[`v${id.charAt(0).toUpperCase() + id.slice(1)}`];
         if (vEl && vEl.textContent !== ds) {
             vEl.textContent = ds;
@@ -667,7 +682,21 @@ document.addEventListener('DOMContentLoaded', () => {
         drip: { dosing: { low: 10, idealLow: 15, idealHigh: 25, high: 35 }, temp: { low: 85, idealLow: 90, idealHigh: 96, high: 99 }, time: { low: 90, idealLow: 120, idealHigh: 240, high: 280 }, yield: { low: 100, idealLow: 225, idealHigh: 450, high: 550 } }
     };
 
+    // 모드별로 마지막 설정값을 기억한다. 드립 기본값이 없으면 에스프레소 값(28.5초 등)이
+    // 그대로 남아 모든 배지가 OFF로 시작하므로, SCA 권장 범위 안의 값으로 시작시킨다.
+    const modeValues = {
+        espresso: { dosing: 18.0, temp: 92.0, time: 28.5, yield: 36.0 },
+        drip:     { dosing: 20.0, temp: 93.0, time: 180.0, yield: 320.0 }
+    };
+    const VAR_IDS = ['dosing', 'temp', 'time', 'yield'];
+
     const setMode = (mode) => {
+        if (mode !== currentMode) {
+            // 떠나는 모드의 현재 값을 저장해 두었다가 돌아오면 복원
+            VAR_IDS.forEach(id => {
+                modeValues[currentMode][id] = parseFloat(el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`].value);
+            });
+        }
         currentMode = mode;
         el.btnEspresso.classList.toggle('active', mode === 'espresso');
         el.btnDrip.classList.toggle('active', mode === 'drip');
@@ -677,7 +706,12 @@ document.addEventListener('DOMContentLoaded', () => {
         el.rTime.max = timeMax;
         el.rYield.max = yieldMax;
 
-        if (el.zTimeMax) el.zTimeMax.textContent = `${timeMax}s`;
+        // max 설정 이후에 값을 복원해야 드립 시간(60초 초과)이 잘리지 않는다
+        VAR_IDS.forEach(id => {
+            el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`].value = modeValues[mode][id];
+        });
+
+        if (el.zTimeMax) el.zTimeMax.textContent = mode === 'drip' ? '5:00' : `${timeMax}s`;
         if (el.zYieldMax) el.zYieldMax.textContent = `${yieldMax}g`;
 
         // Update track widths
@@ -839,17 +873,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Temp
         el.hintTemp.textContent = t.proHintTemp.replace('{min}', qr.temp.idealLow.toFixed(1)).replace('{max}', qr.temp.idealHigh.toFixed(1));
 
-        // Time
+        // Time — 드립은 m:ss 표기이므로 "sec" 단위가 붙지 않는 전용 템플릿을 쓴다
         let tMin = qr.time.idealLow, tMax = qr.time.idealHigh;
-        let tMinStr, tMaxStr;
         if (currentMode === 'drip') {
-            tMinStr = `${Math.floor(tMin / 60)}:${String(tMin % 60).padStart(2, '0')}`;
-            tMaxStr = `${Math.floor(tMax / 60)}:${String(tMax % 60).padStart(2, '0')}`;
+            const tMinStr = `${Math.floor(tMin / 60)}:${String(tMin % 60).padStart(2, '0')}`;
+            const tMaxStr = `${Math.floor(tMax / 60)}:${String(tMax % 60).padStart(2, '0')}`;
+            el.hintTime.textContent = t.proHintTimeDrip.replace('{min}', tMinStr).replace('{max}', tMaxStr);
         } else {
-            tMinStr = tMin.toFixed(1);
-            tMaxStr = tMax.toFixed(1);
+            el.hintTime.textContent = t.proHintTime.replace('{min}', tMin.toFixed(1)).replace('{max}', tMax.toFixed(1));
         }
-        el.hintTime.textContent = t.proHintTime.replace('{min}', tMinStr).replace('{max}', tMaxStr);
 
         // Yield (Ratio)
         let ratioStr = currentMode === 'espresso' ? "1:2.0" : "1:15–1:18";
@@ -1016,8 +1048,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.btnStatusNew) el.btnStatusNew.textContent = t.statusNew;
         if (el.btnStatusOpen) el.btnStatusOpen.textContent = t.statusOpen;
         if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
+        if (el.lblLogbook) el.lblLogbook.textContent = t.viewLogbook;
+        if (el.trustPrefix) el.trustPrefix.textContent = t.trustPrefix;
+        if (el.trustSuffix) el.trustSuffix.textContent = t.trustSuffix;
         el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
         el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
+        el.lblSwReset.textContent = t.swReset;
+        el.lblSwApply.textContent = t.swApply;
         el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
 
         renderTagCloud(el.originTagCloud, t.originTags, el.modalOrigin);

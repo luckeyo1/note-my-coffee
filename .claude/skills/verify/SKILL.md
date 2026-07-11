@@ -35,3 +35,4 @@ System Chromium lives at `/nix/store/lpdrfl6n16q5zdf8acp4bni7yczzcx3h-idx-builti
 - `innerText` reads back as `''` in the font-less sandbox even right after being set — read `textContent` instead.
 - `page.reload()` intermittently crashes the headless renderer. Seed localStorage via `context.addInitScript` + a single `goto` instead of set-then-reload.
 - Buttons with looping CSS animations (e.g. `#btn-save`) never pass Playwright's "stable" actionability check — click via `page.evaluate(() => el.click())`.
+- Stopwatch buttons inside `#stopwatch-panel` (max-height transition) also misfire with `page.click` — a click can silently land without triggering the handler. Use `page.evaluate` clicks for everything in that panel.

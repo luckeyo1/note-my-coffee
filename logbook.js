@@ -61,6 +61,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const _stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
+    // 사용자 입력·공유 링크에서 온 값을 innerHTML에 넣기 전 이스케이프 (XSS 방지)
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
+        (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    // 링크는 http(s)만 허용 (javascript: 등 차단)
+    const safeUrl = (u) => /^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
+
+    // 추출 시간 표기: 에스프레소는 "28.5s", 드립은 "3:00".
+    // time % 60을 그대로 문자열화하면 부동소수점 오차("2:34.29999…")가 노출되므로 반올림해서 조립한다.
+    const fmtBrewTime = (recipe) => {
+        const t = Number(recipe.time) || 0;
+        if ((recipe.mode || 'espresso') === 'espresso') return `${Math.round(t * 10) / 10}s`;
+        const total = Math.round(t);
+        return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+    };
+
+    const modeLabel = (m) => (m === 'drip' ? 'HAND DRIP' : String(m || 'espresso').toUpperCase());
+
     const renderRecipeCards = async () => {
         elements.recipeCardsGrid.innerHTML = '<div class="loading">Loading recipes...</div>';
         const recipes = await CoffeeNotesStorage.getRecipes();
@@ -78,27 +95,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'recipe-card';
 
-            const safeMode  = recipe.mode ? recipe.mode.toUpperCase() : 'UNKNOWN';
-            const safeRat   = parseInt(recipe.overallRating, 10) || 0;
+            const safeMode  = recipe.mode ? modeLabel(recipe.mode) : 'UNKNOWN';
+            const safeRat   = Math.max(0, Math.min(5, parseInt(recipe.overallRating, 10) || 0));
             const safeWeather = recipe.weather || (currentLang === 'ko' ? '정보 없음' : 'No info');
-            const isEsp     = (recipe.mode || 'espresso') === 'espresso';
-            const timeStr   = isEsp
-                ? `${recipe.time || 0}sec`
-                : `${Math.floor((recipe.time || 0) / 60)}:${((recipe.time || 0) % 60).toString().padStart(2, '0')}min`;
+            const timeStr   = fmtBrewTime(recipe);
+            const purchase  = safeUrl(recipe.purchaseUrl);
 
             card.innerHTML = `
-                ${recipe.imageUrl ? `<img src="${recipe.imageUrl}" alt="${recipe.beanName || 'Coffee'}" class="recipe-card-image">` : ''}
+                ${recipe.imageUrl ? `<img src="${esc(recipe.imageUrl)}" alt="${esc(recipe.beanName || 'Coffee')}" class="recipe-card-image">` : ''}
                 <div class="recipe-card-content">
-                    <h4>${recipe.beanName || (currentLang === 'ko' ? '원두명 미상' : 'Unknown Bean')}</h4>
-                    <p><span class="label">${i18n[currentLang].mode}</span> ${safeMode}</p>
-                    <p><span class="label">${i18n[currentLang].dosing}</span> ${recipe.dosing || 0}g</p>
-                    <p><span class="label">${i18n[currentLang].temp}</span> ${recipe.temp || 0}°C</p>
+                    <h4>${esc(recipe.beanName) || (currentLang === 'ko' ? '원두명 미상' : 'Unknown Bean')}</h4>
+                    <p><span class="label">${i18n[currentLang].mode}</span> ${esc(safeMode)}</p>
+                    <p><span class="label">${i18n[currentLang].dosing}</span> ${Number(recipe.dosing) || 0}g</p>
+                    <p><span class="label">${i18n[currentLang].temp}</span> ${Number(recipe.temp) || 0}°C</p>
                     <p><span class="label">${i18n[currentLang].time}</span> ${timeStr}</p>
-                    <p><span class="label">${i18n[currentLang].yield}</span> ${recipe.yield || 0}g</p>
-                    <p><span class="label">${i18n[currentLang].tasteNotes}</span> ${recipe.tasteNotes || '-'}</p>
+                    <p><span class="label">${i18n[currentLang].yield}</span> ${Number(recipe.yield) || 0}g</p>
+                    <p><span class="label">${i18n[currentLang].tasteNotes}</span> ${esc(recipe.tasteNotes) || '-'}</p>
                     <p class="recipe-card-rating">${_stars(safeRat)}</p>
-                    ${recipe.purchaseUrl ? `<p><a href="${recipe.purchaseUrl}" target="_blank" rel="noopener">${i18n[currentLang].purchaseLink}</a></p>` : ''}
-                    <p><span class="label">${i18n[currentLang].weather}</span> ${safeWeather}</p>
+                    ${purchase ? `<p><a href="${esc(purchase)}" target="_blank" rel="noopener">${i18n[currentLang].purchaseLink}</a></p>` : ''}
+                    <p><span class="label">${i18n[currentLang].weather}</span> ${esc(safeWeather)}</p>
                     <p><span class="label">Date:</span> ${recipe.date ? new Date(recipe.date).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US') : '-'}</p>
                     ${recipe.sharedFrom ? '<p class="shared-badge">📨 공유받은 레시피</p>' : ''}
                 </div>
@@ -107,8 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${recipe.success ? i18n[currentLang].success : i18n[currentLang].fail}
                     </span>
                     <div class="recipe-card-actions">
-                        <button class="share-btn" data-id="${recipe.id}">${i18n[currentLang].share}</button>
-                        <button class="delete-btn" data-id="${recipe.id}">${i18n[currentLang].delete}</button>
+                        <button class="share-btn" data-id="${esc(recipe.id)}">${i18n[currentLang].share}</button>
+                        <button class="delete-btn" data-id="${esc(recipe.id)}">${i18n[currentLang].delete}</button>
                     </div>
                 </div>
             `;
@@ -161,14 +176,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const b64  = btoa(unescape(encodeURIComponent(json)));
         // Use current page URL (works locally with .html and on Firebase with cleanUrls)
         const base = window.location.href.split('?')[0];
-        return `${base}?share=${b64}`;
+        // base64의 +/= 는 쿼리스트링에서 깨지므로(+는 공백으로 복원됨) 반드시 인코딩한다
+        return `${base}?share=${encodeURIComponent(b64)}`;
     }
 
     function parseShareParam() {
         const raw = new URLSearchParams(window.location.search).get('share');
         if (!raw) return null;
         try {
-            const d = JSON.parse(decodeURIComponent(escape(atob(raw))));
+            // 과거에 인코딩 없이 만들어진 링크는 +가 공백으로 도착하므로 되돌린다
+            const d = JSON.parse(decodeURIComponent(escape(atob(raw.replace(/ /g, '+')))));
             return { beanName: d.n, mode: d.m, origin: d.o, dosing: d.d,
                      temp: d.t, time: d.e, yield: d.y, tasteNotes: d.k,
                      overallRating: d.r, success: d.s };
@@ -200,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillText('☕  NOTE MY COFFEE', 22, 30);
 
         // Mode badge
-        const mode  = (recipe.mode || 'espresso').toUpperCase();
+        const mode  = modeLabel(recipe.mode);
         ctx.font    = 'bold 9px monospace';
         const modeW = ctx.measureText(mode).width + 20;
         ctx.fillStyle = 'rgba(200,169,110,0.14)';
@@ -224,15 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
         _line(ctx, 22, W - 22, 128, BDR);
 
         // Params
-        const isEsp  = (recipe.mode || 'espresso') === 'espresso';
-        const tStr   = isEsp
-            ? `${recipe.time || 0}s`
-            : `${Math.floor((recipe.time || 0) / 60)}:${((recipe.time || 0) % 60).toString().padStart(2, '0')}`;
         const params = [
-            { k: 'DOSING', v: `${recipe.dosing || 0}g` },
-            { k: 'TEMP',   v: `${recipe.temp || 0}°C` },
-            { k: 'TIME',   v: tStr },
-            { k: 'YIELD',  v: `${recipe.yield || 0}g` },
+            { k: 'DOSING', v: `${Number(recipe.dosing) || 0}g` },
+            { k: 'TEMP',   v: `${Number(recipe.temp) || 0}°C` },
+            { k: 'TIME',   v: fmtBrewTime(recipe) },
+            { k: 'YIELD',  v: `${Number(recipe.yield) || 0}g` },
         ];
         const colW = (W - 44) / 4;
         params.forEach(({ k, v }, i) => {
@@ -363,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillText('☕  NOTE MY COFFEE', 64, 84);
 
         // Mode badge (top-right)
-        const mode  = (recipe.mode || 'espresso').toUpperCase();
+        const mode  = modeLabel(recipe.mode);
         ctx.font    = 'bold 22px monospace';
         const modeW = ctx.measureText(mode).width + 44;
         shadowOff();
@@ -387,15 +400,11 @@ document.addEventListener('DOMContentLoaded', () => {
         _line(ctx, 64, W - 64, 958, 'rgba(255,255,255,0.16)');
 
         // ── Params row ──────────────────────────────────────────────────
-        const isEsp = (recipe.mode || 'espresso') === 'espresso';
-        const tStr  = isEsp
-            ? `${recipe.time || 0}s`
-            : `${Math.floor((recipe.time || 0) / 60)}:${((recipe.time || 0) % 60).toString().padStart(2, '0')}`;
         const params = [
-            { k: 'DOSING', v: `${recipe.dosing || 0}g` },
-            { k: 'TEMP',   v: `${recipe.temp || 0}°C` },
-            { k: 'TIME',   v: tStr },
-            { k: 'YIELD',  v: `${recipe.yield || 0}g` },
+            { k: 'DOSING', v: `${Number(recipe.dosing) || 0}g` },
+            { k: 'TEMP',   v: `${Number(recipe.temp) || 0}°C` },
+            { k: 'TIME',   v: fmtBrewTime(recipe) },
+            { k: 'YIELD',  v: `${Number(recipe.yield) || 0}g` },
         ];
         const colW = (W - 128) / 4;
         shadowOn();
@@ -571,11 +580,9 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.id    = 'import-modal';
         overlay.className = 'recipe-share-overlay';
 
-        const isEsp  = (recipe.mode || 'espresso') === 'espresso';
-        const tStr   = isEsp
-            ? `${recipe.time || 0}sec`
-            : `${Math.floor((recipe.time || 0) / 60)}:${((recipe.time || 0) % 60).toString().padStart(2, '0')}`;
-        const rat    = parseInt(recipe.overallRating) || 0;
+        // 공유 URL에서 파싱된 값은 신뢰할 수 없으므로 전부 이스케이프한다
+        const tStr = fmtBrewTime(recipe);
+        const rat  = Math.max(0, Math.min(5, parseInt(recipe.overallRating) || 0));
 
         overlay.innerHTML = `
             <div class="recipe-share-box">
@@ -584,15 +591,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="recipe-share-close" data-close>✕</button>
                 </div>
                 <div class="import-preview">
-                    <h3 class="import-bean">${recipe.beanName || '알 수 없는 원두'}</h3>
-                    <p class="import-sub">${(recipe.mode || 'ESPRESSO').toUpperCase()}${recipe.origin ? ' · ' + recipe.origin : ''}</p>
+                    <h3 class="import-bean">${esc(recipe.beanName) || '알 수 없는 원두'}</h3>
+                    <p class="import-sub">${esc(modeLabel(recipe.mode))}${recipe.origin ? ' · ' + esc(recipe.origin) : ''}</p>
                     <div class="import-params">
-                        <div class="import-param"><span class="ip-v">${recipe.dosing || 0}g</span><span class="ip-k">DOSING</span></div>
-                        <div class="import-param"><span class="ip-v">${recipe.temp || 0}°C</span><span class="ip-k">TEMP</span></div>
+                        <div class="import-param"><span class="ip-v">${Number(recipe.dosing) || 0}g</span><span class="ip-k">DOSING</span></div>
+                        <div class="import-param"><span class="ip-v">${Number(recipe.temp) || 0}°C</span><span class="ip-k">TEMP</span></div>
                         <div class="import-param"><span class="ip-v">${tStr}</span><span class="ip-k">TIME</span></div>
-                        <div class="import-param"><span class="ip-v">${recipe.yield || 0}g</span><span class="ip-k">YIELD</span></div>
+                        <div class="import-param"><span class="ip-v">${Number(recipe.yield) || 0}g</span><span class="ip-k">YIELD</span></div>
                     </div>
-                    ${recipe.tasteNotes ? `<p class="import-notes">✦ ${recipe.tasteNotes}</p>` : ''}
+                    ${recipe.tasteNotes ? `<p class="import-notes">✦ ${esc(recipe.tasteNotes)}</p>` : ''}
                     <p class="import-stars">${'★'.repeat(rat) + '☆'.repeat(5 - rat)}</p>
                     <span class="status-indicator ${recipe.success ? 'status-success' : 'status-fail'}">
                         ${recipe.success ? '✓ SUCCESS' : '✗ FAIL'}
