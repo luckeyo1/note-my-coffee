@@ -270,6 +270,175 @@
             color: var(--sub);
         }
 
+        /* ── DEMO: 실제 화면 15초 데모 ── */
+        .demo-layout {
+            display: grid;
+            grid-template-columns: minmax(300px, 1fr) auto;
+            gap: clamp(36px, 6vw, 80px);
+            align-items: center;
+            margin-top: 48px;
+            max-width: 1000px;
+        }
+
+        .demo-steps { display: flex; flex-direction: column; gap: 10px; }
+
+        .demo-step {
+            position: relative;
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 18px 20px;
+            color: inherit;
+            font-family: inherit;
+            cursor: pointer;
+            overflow: hidden;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .demo-step:hover { border-color: var(--gold-border); }
+        .demo-step.is-active { border-color: var(--gold-border); background: var(--gold-dim); }
+
+        .demo-step-track { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.06); }
+        .demo-step-fill { display: block; width: 0; height: 100%; background: var(--gold); }
+
+        .demo-step-num { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--gold); }
+        .demo-step-title { font-size: 14px; font-weight: 500; color: var(--text); margin: 7px 0 6px; }
+        .demo-step-desc { font-size: 13px; line-height: 1.75; color: var(--sub); }
+
+        .demo-open { display: inline-block; margin-top: 18px; font-size: 13px; color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold-border); padding-bottom: 2px; transition: border-color 0.2s; }
+        .demo-open:hover { border-bottom-color: var(--gold); }
+
+        .demo-phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; justify-self: center; }
+
+        .demo-phone {
+            width: 300px; height: 620px;
+            background: #17110B;
+            border: 1px solid rgba(200,169,110,0.3);
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 70px rgba(200,169,110,0.06);
+        }
+        .demo-caption { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: var(--muted); }
+
+        /* 폰 내부: 실제 앱(라이트 테마, style.css 토큰)의 축소 재현 */
+        .demo-screen {
+            position: relative; width: 100%; height: 100%;
+            border-radius: 30px; overflow: hidden;
+            background: #FAF8F4;
+            color: #1A1614;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            text-align: left;
+        }
+
+        .pd-scene {
+            position: absolute; inset: 0;
+            padding: 18px 16px;
+            display: flex; flex-direction: column;
+            opacity: 0; transform: translateY(8px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+            pointer-events: none;
+        }
+        .pd-scene.is-on { opacity: 1; transform: none; }
+
+        .pd-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .pd-brand-name { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 16px; font-weight: 600; display: block; line-height: 1.1; }
+        .pd-brand-tag { font-size: 7px; letter-spacing: 0.08em; color: #8C7E76; text-transform: uppercase; }
+        .pd-logbook { position: relative; font-size: 9px; font-weight: 500; color: #3D3530; background: #fff; border: 1px solid rgba(0,0,0,0.15); border-radius: 999px; padding: 5px 9px; }
+        .pd-logbook-badge { position: absolute; top: -6px; right: -6px; width: 14px; height: 14px; border-radius: 50%; background: #B8860B; color: #fff; font-size: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+
+        .pd-env { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #3D3530; margin-bottom: 10px; }
+        .pd-env-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #2D6A4F; margin-right: 4px; }
+        .pd-env-hint { color: #B8860B; font-weight: 500; }
+
+        .pd-modes { display: flex; gap: 6px; margin-bottom: 12px; }
+        .pd-mode { flex: 1; text-align: center; font-size: 9.5px; font-weight: 500; color: #8C7E76; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 8px 0; }
+        .pd-mode.is-active { background: #1A1614; color: #fff; border-color: #1A1614; }
+
+        .pd-progress { margin-bottom: 12px; }
+        .pd-progress-label { display: flex; justify-content: space-between; font-size: 8.5px; margin-bottom: 5px; }
+        .pd-progress-label span:first-child { color: #8C7E76; letter-spacing: 0.04em; }
+        .pd-progress-pct { font-family: 'DM Mono', monospace; color: #B8860B; }
+        .pd-progress-track { height: 3px; background: #F0EDE6; border-radius: 999px; overflow: hidden; }
+        .pd-progress-fill { display: block; width: 40%; height: 100%; background: linear-gradient(90deg, #B8860B, #D4A017); }
+
+        .pd-panel { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); flex: 1; display: flex; flex-direction: column; }
+
+        .pd-control { padding: 4px 0 12px; }
+        .pd-control-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
+        .pd-label { font-size: 8.5px; font-weight: 600; letter-spacing: 0.05em; color: #8C7E76; }
+        .pd-hint { font-size: 8.5px; color: #C4B8B0; margin-top: 2px; }
+        .pd-value { display: flex; align-items: baseline; gap: 2px; }
+        .pd-value > span:first-child { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 27px; font-weight: 600; line-height: 1; }
+        .pd-unit { font-size: 10px; color: #C4B8B0; }
+        .pd-badge { font-size: 7px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: #E8F5EE; color: #2D6A4F; margin-left: 5px; align-self: center; opacity: 0; transform: scale(0.6); transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .pd-badge.is-on { opacity: 1; transform: none; }
+
+        .pd-vis { height: 5px; background: #F0EDE6; border-radius: 999px; overflow: hidden; margin-bottom: 9px; }
+        .pd-vis-fill { display: block; height: 100%; width: 24%; background: linear-gradient(90deg, #B8860B, #D4A017); border-radius: 999px; }
+
+        .pd-slider { position: relative; height: 14px; }
+        .pd-slider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 4px; transform: translateY(-50%); background: #F0EDE6; border-radius: 999px; }
+        .pd-slider-fill { position: absolute; top: 50%; left: 0; height: 4px; transform: translateY(-50%); background: #1A1614; border-radius: 999px; width: 24%; }
+        .pd-slider-thumb { position: absolute; top: 50%; left: 24%; width: 14px; height: 14px; transform: translate(-50%, -50%); background: #fff; border: 2px solid #1A1614; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+
+        .pd-div { height: 1px; background: rgba(0,0,0,0.08); margin: 2px 0 6px; }
+
+        .pd-ratio { background: #FAF8F4; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; padding: 10px 12px; margin: 6px 0 12px; }
+        .pd-ratio-bars { display: flex; gap: 2px; height: 7px; border-radius: 999px; overflow: hidden; margin-bottom: 7px; }
+        .pd-ratio-coffee { background: #1A1614; width: 38%; }
+        .pd-ratio-water { background: #EAF2FB; flex: 1; }
+        .pd-ratio-nums { display: flex; justify-content: space-between; align-items: center; }
+        .pd-ratio-num { font-family: 'DM Mono', monospace; font-size: 10px; color: #3D3530; }
+        .pd-ratio-status { font-size: 8.5px; font-weight: 500; color: #2D6A4F; opacity: 0; transition: opacity 0.3s; }
+        .pd-ratio-status.is-on { opacity: 1; }
+
+        .pd-save { margin-top: auto; background: #1A1614; color: #fff; text-align: center; font-size: 10.5px; font-weight: 500; letter-spacing: 0.04em; border-radius: 10px; padding: 12px 0; }
+
+        /* Scene 2: 스톱워치 */
+        .pd-sw-card { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 16px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); flex: 1; display: flex; flex-direction: column; }
+        .pd-ring-wrap { position: relative; width: 132px; height: 132px; margin: 16px auto 10px; }
+        .pd-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .pd-ring-bg { fill: none; stroke: #F0EDE6; stroke-width: 6; }
+        .pd-ring-fg { fill: none; stroke: #2C5F8A; stroke-width: 6; stroke-linecap: round; }
+        .pd-sw-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .pd-sw-time { font-family: 'DM Mono', monospace; font-size: 28px; color: #1A1614; line-height: 1; }
+        .pd-sw-time.running { color: #2C5F8A; }
+        .pd-sw-time.done { color: #2D6A4F; }
+        .pd-sw-status { font-size: 7.5px; font-weight: 700; letter-spacing: 0.1em; color: #C4B8B0; margin-top: 5px; }
+        .pd-sw-btns { display: flex; gap: 6px; justify-content: center; margin: 12px 0 8px; }
+        .pd-sw-btn { font-size: 8.5px; font-weight: 600; padding: 8px 13px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15); background: #fff; color: #3D3530; opacity: 0.4; }
+        .pd-sw-btn.start { background: #1A1614; color: #fff; border-color: #1A1614; opacity: 1; }
+        .pd-sw-btn.apply.is-ready { opacity: 1; background: #2D6A4F; color: #fff; border-color: #2D6A4F; animation: pd-pulse 1s ease-in-out infinite; }
+        @keyframes pd-pulse { 50% { box-shadow: 0 0 0 5px rgba(45,106,79,0.18); } }
+        .pd-sw-hint { text-align: center; font-size: 8.5px; color: #8C7E76; }
+        .pd-applied { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid rgba(0,0,0,0.08); margin-top: auto; padding-top: 12px; opacity: 0.35; transition: opacity 0.3s; }
+        .pd-applied.is-on { opacity: 1; }
+
+        /* Scene 3: 로그북 */
+        .pd-lb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .pd-lb-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 17px; font-weight: 600; }
+        .pd-lb-new { font-size: 8.5px; font-weight: 600; background: #1A1614; color: #fff; border-radius: 8px; padding: 6px 10px; }
+        .pd-card { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.07); opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.16,1,0.3,1); }
+        .pd-card.is-in { opacity: 1; transform: none; }
+        .pd-card-cover { height: 88px; background: linear-gradient(135deg, #4A3524 0%, #2A1E14 55%, #1A1208 100%); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .pd-card-body { padding: 13px 15px 6px; }
+        .pd-card-body h4 { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 17px; font-weight: 600; border-bottom: 1px solid #FDF3DC; padding-bottom: 7px; margin-bottom: 9px; }
+        .pd-card-body p { display: flex; justify-content: space-between; font-size: 9.5px; color: #3D3530; margin-bottom: 4px; }
+        .pd-card-body p span { font-size: 8px; font-weight: 600; color: #8C7E76; letter-spacing: 0.05em; }
+        .pd-stars { color: #B8860B; font-size: 13px; letter-spacing: 2px; margin: 8px 0 6px; }
+        .pd-card-foot { display: flex; justify-content: space-between; align-items: center; background: #F0EDE6; border-top: 1px solid rgba(0,0,0,0.08); padding: 9px 15px; }
+        .pd-success { font-size: 8px; font-weight: 700; background: #E8F5EE; color: #2D6A4F; border-radius: 4px; padding: 3px 7px; opacity: 0; transform: scale(0.6); transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .pd-success.is-on { opacity: 1; transform: none; }
+        .pd-card-actions { font-size: 8.5px; color: #8C7E76; }
+        .pd-card-ghost { margin-top: 12px; height: 52px; border-radius: 14px 14px 0 0; border: 1px solid rgba(0,0,0,0.08); border-bottom: none; background: linear-gradient(135deg, #3B4A35 0%, #1E2A18 100%); opacity: 0.4; display: flex; align-items: flex-end; padding: 8px 15px; color: rgba(255,255,255,0.85); font-family: 'Cormorant Garamond', Georgia, serif; font-size: 14px; }
+
+        @media (max-width: 920px) {
+            .demo-layout { grid-template-columns: 1fr; justify-items: center; }
+            .demo-steps { width: 100%; max-width: 480px; }
+        }
+
         /* ── PAY (토스페이먼츠 샌드박스) ── */
         .pay-amounts {
             display: flex;
@@ -509,6 +678,192 @@
 
     <div class="rule"></div>
 
+    <!-- DEMO: 실제 화면 15초 데모 -->
+    <section class="story-section dark-section reveal" id="demo">
+        <div class="section-tag">04 — 실제 화면</div>
+        <h2 class="section-title" style="max-width:600px;">말보다, <em>15초</em> 데모.</h2>
+
+        <div class="demo-layout">
+            <div class="demo-steps">
+                <button type="button" class="demo-step is-active" data-scene="0">
+                    <span class="demo-step-track"><span class="demo-step-fill"></span></span>
+                    <span class="demo-step-num">01 · 기록</span>
+                    <div class="demo-step-title">슬라이더 네 번이면 끝</div>
+                    <div class="demo-step-desc">도징·온도·시간·수율을 맞추는 동안 SCA 기준 품질 배지와 추출 비율이 실시간으로 계산됩니다.</div>
+                </button>
+                <button type="button" class="demo-step" data-scene="1">
+                    <span class="demo-step-track"><span class="demo-step-fill"></span></span>
+                    <span class="demo-step-num">02 · 추출</span>
+                    <div class="demo-step-title">내장 스톱워치</div>
+                    <div class="demo-step-desc">추출과 동시에 시간을 재고, APPLY 한 번이면 측정값이 레시피에 그대로 들어갑니다.</div>
+                </button>
+                <button type="button" class="demo-step" data-scene="2">
+                    <span class="demo-step-track"><span class="demo-step-fill"></span></span>
+                    <span class="demo-step-num">03 · 로그북</span>
+                    <div class="demo-step-title">레시피 카드로 쌓인다</div>
+                    <div class="demo-step-desc">저장한 레시피는 카드로 모입니다. 원두가 바뀌는 날, 지난 성공 세팅이 다이얼링의 출발점이 됩니다.</div>
+                </button>
+                <a class="demo-open" href="app.html">설치 없이 브라우저에서 바로 — 앱 열어보기 →</a>
+            </div>
+
+            <div class="demo-phone-wrap">
+                <div class="demo-phone" aria-hidden="true">
+                    <div class="demo-screen">
+
+                        <!-- Scene 1: 기록 콘솔 -->
+                        <div class="pd-scene is-on">
+                            <div class="pd-header">
+                                <div>
+                                    <span class="pd-brand-name">Note My Coffee</span>
+                                    <span class="pd-brand-tag">Turn extraction into science</span>
+                                </div>
+                                <span class="pd-logbook">LOG BOOK<span class="pd-logbook-badge">12</span></span>
+                            </div>
+                            <div class="pd-env">
+                                <span><span class="pd-env-dot"></span>📍 서울 · 24°C 맑음</span>
+                                <span class="pd-env-hint">Ideal extraction conditions</span>
+                            </div>
+                            <div class="pd-modes">
+                                <span class="pd-mode is-active">⚡ ESPRESSO</span>
+                                <span class="pd-mode">🌿 HAND DRIP</span>
+                            </div>
+                            <div class="pd-progress">
+                                <div class="pd-progress-label">
+                                    <span>RECIPE COMPLETENESS</span>
+                                    <span class="pd-progress-pct" id="pd-prog-pct">40%</span>
+                                </div>
+                                <div class="pd-progress-track"><span class="pd-progress-fill" id="pd-prog-fill"></span></div>
+                            </div>
+                            <div class="pd-panel">
+                                <div class="pd-control">
+                                    <div class="pd-control-head">
+                                        <div>
+                                            <div class="pd-label">DOSING</div>
+                                            <div class="pd-hint">Pro range: 18.0–21.0g</div>
+                                        </div>
+                                        <div class="pd-value">
+                                            <span id="pd-dosing-val">15.0</span><span class="pd-unit">g</span>
+                                            <span class="pd-badge" id="pd-dosing-badge">IDEAL</span>
+                                        </div>
+                                    </div>
+                                    <div class="pd-vis"><span class="pd-vis-fill" id="pd-dosing-vis"></span></div>
+                                    <div class="pd-slider">
+                                        <span class="pd-slider-fill" id="pd-dosing-fill"></span>
+                                        <span class="pd-slider-thumb" id="pd-dosing-thumb"></span>
+                                    </div>
+                                </div>
+                                <div class="pd-div"></div>
+                                <div class="pd-control">
+                                    <div class="pd-control-head">
+                                        <div>
+                                            <div class="pd-label">WATER TEMP</div>
+                                            <div class="pd-hint">Pro range: 90.0–96.0°C</div>
+                                        </div>
+                                        <div class="pd-value">
+                                            <span>92.0</span><span class="pd-unit">°C</span>
+                                            <span class="pd-badge is-on">IDEAL</span>
+                                        </div>
+                                    </div>
+                                    <div class="pd-slider">
+                                        <span class="pd-slider-fill" style="width:60%"></span>
+                                        <span class="pd-slider-thumb" style="left:60%"></span>
+                                    </div>
+                                </div>
+                                <div class="pd-ratio">
+                                    <div class="pd-label" style="margin-bottom:8px;">BREW RATIO</div>
+                                    <div class="pd-ratio-bars">
+                                        <span class="pd-ratio-coffee" id="pd-ratio-coffee"></span>
+                                        <span class="pd-ratio-water"></span>
+                                    </div>
+                                    <div class="pd-ratio-nums">
+                                        <span class="pd-ratio-num" id="pd-ratio-num">1 : 1.6</span>
+                                        <span class="pd-ratio-status" id="pd-ratio-status">✓ SCA recommended</span>
+                                    </div>
+                                </div>
+                                <div class="pd-save">✦ &nbsp;LOG THIS RECIPE&nbsp; →</div>
+                            </div>
+                        </div>
+
+                        <!-- Scene 2: 스톱워치 -->
+                        <div class="pd-scene">
+                            <div class="pd-header">
+                                <div>
+                                    <span class="pd-brand-name">Note My Coffee</span>
+                                    <span class="pd-brand-tag">Turn extraction into science</span>
+                                </div>
+                                <span class="pd-logbook">LOG BOOK<span class="pd-logbook-badge">12</span></span>
+                            </div>
+                            <div class="pd-control-head" style="margin-bottom:10px;">
+                                <div>
+                                    <div class="pd-label">EXTRACTION TIME</div>
+                                    <div class="pd-hint">Pro range: 25.0–35.0sec</div>
+                                </div>
+                            </div>
+                            <div class="pd-sw-card">
+                                <div class="pd-ring-wrap">
+                                    <svg class="pd-ring" viewBox="0 0 120 120">
+                                        <circle class="pd-ring-bg" cx="60" cy="60" r="52"></circle>
+                                        <circle class="pd-ring-fg" id="pd-sw-ring" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
+                                    </svg>
+                                    <div class="pd-sw-overlay">
+                                        <div class="pd-sw-time" id="pd-sw-time">00.0</div>
+                                        <div class="pd-sw-status" id="pd-sw-status">READY</div>
+                                    </div>
+                                </div>
+                                <div class="pd-sw-btns">
+                                    <span class="pd-sw-btn">RESET</span>
+                                    <span class="pd-sw-btn start" id="pd-sw-start">START</span>
+                                    <span class="pd-sw-btn apply" id="pd-sw-apply">APPLY</span>
+                                </div>
+                                <p class="pd-sw-hint" id="pd-sw-hint">추출과 동시에 시간 측정</p>
+                                <div class="pd-applied" id="pd-applied">
+                                    <div>
+                                        <div class="pd-label">EXTRACTION TIME</div>
+                                        <div class="pd-hint">스톱워치 값 자동 입력</div>
+                                    </div>
+                                    <div class="pd-value">
+                                        <span id="pd-applied-val">—</span><span class="pd-unit">sec</span>
+                                        <span class="pd-badge" id="pd-applied-badge">IDEAL</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scene 3: 로그북 카드 -->
+                        <div class="pd-scene">
+                            <div class="pd-lb-head">
+                                <span class="pd-lb-title">MY RECIPE LOGBOOK</span>
+                                <span class="pd-lb-new">NEW RECIPE</span>
+                            </div>
+                            <div class="pd-card" id="pd-card">
+                                <div class="pd-card-cover">☕</div>
+                                <div class="pd-card-body">
+                                    <h4>Ethiopia Yirgacheffe</h4>
+                                    <p><span>MODE</span> ESPRESSO</p>
+                                    <p><span>DOSING</span> 18.0g</p>
+                                    <p><span>TEMP</span> 92°C</p>
+                                    <p><span>TIME</span> 28.5s</p>
+                                    <p><span>YIELD</span> 36g</p>
+                                    <p><span>NOTES</span> Floral · Peach · Bright</p>
+                                    <div class="pd-stars" id="pd-stars">☆☆☆☆☆</div>
+                                </div>
+                                <div class="pd-card-foot">
+                                    <span class="pd-success" id="pd-success">✓ SUCCESS</span>
+                                    <span class="pd-card-actions">공유 · 삭제</span>
+                                </div>
+                            </div>
+                            <div class="pd-card-ghost">Colombia Huila</div>
+                        </div>
+
+                    </div>
+                </div>
+                <span class="demo-caption">실제 서비스 화면 · 자동 재생</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="rule"></div>
+
     <!-- FEATURES -->
     <section class="story-section dark-section reveal">
         <div class="section-tag">기능</div>
@@ -610,6 +965,125 @@
         const el = document.getElementById(id);
         if (el) el.addEventListener('click', () => document.getElementById('btn-get-started').click());
     });
+
+    // ── 15초 제품 데모: 씬 3개(기록→스톱워치→로그북)를 rAF 클록으로 순환 ──
+    (() => {
+        const root = document.getElementById('demo');
+        if (!root) return;
+
+        const $ = (id) => document.getElementById(id);
+        const scenes = [...root.querySelectorAll('.pd-scene')];
+        const steps  = [...root.querySelectorAll('.demo-step')];
+        const fills  = [...root.querySelectorAll('.demo-step-fill')];
+        const DUR    = [5200, 4800, 5000];
+        const CIRC   = 326.7;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const clamp01 = (v) => Math.max(0, Math.min(1, v));
+        // seg: 구간 [a,b]ms 진행률을 easeOutCubic으로 반환 — 렌더러는 경과시간의 순수 함수라 씬 점프가 안전하다
+        const seg = (t, a, b) => { const p = clamp01((t - a) / (b - a)); return 1 - Math.pow(1 - p, 3); };
+
+        const el = {
+            dv: $('pd-dosing-val'),   dBadge: $('pd-dosing-badge'), dVis: $('pd-dosing-vis'),
+            dFill: $('pd-dosing-fill'), dThumb: $('pd-dosing-thumb'),
+            pFill: $('pd-prog-fill'), pPct: $('pd-prog-pct'),
+            rNum: $('pd-ratio-num'),  rCoffee: $('pd-ratio-coffee'), rStatus: $('pd-ratio-status'),
+            swTime: $('pd-sw-time'),  swStatus: $('pd-sw-status'),   swRing: $('pd-sw-ring'),
+            swStart: $('pd-sw-start'), swApply: $('pd-sw-apply'),    swHint: $('pd-sw-hint'),
+            applied: $('pd-applied'), appliedVal: $('pd-applied-val'), appliedBadge: $('pd-applied-badge'),
+            card: $('pd-card'),       stars: $('pd-stars'),          success: $('pd-success'),
+        };
+
+        const renderers = [
+            (t) => { // 기록: 도징 15→18g, 완성도 40→75%, 비율 1:1.6→1:2.0
+                const d = 15 + 3 * seg(t, 300, 1900);
+                el.dv.textContent = d.toFixed(1);
+                const pct = ((d - 7) / 33) * 100;
+                el.dFill.style.width = pct + '%';
+                el.dThumb.style.left = pct + '%';
+                el.dVis.style.width = pct + '%';
+                el.dBadge.classList.toggle('is-on', t > 1950);
+
+                const prog = 40 + 35 * seg(t, 1200, 2600);
+                el.pFill.style.width = prog + '%';
+                el.pPct.textContent = Math.round(prog) + '%';
+
+                const r = 1.6 + 0.4 * seg(t, 2400, 3800);
+                el.rNum.textContent = '1 : ' + r.toFixed(1);
+                el.rCoffee.style.width = (100 / (1 + r)).toFixed(1) + '%';
+                el.rStatus.classList.toggle('is-on', t > 3850);
+            },
+            (t) => { // 스톱워치: 0→28.5초(압축 재생), DONE 후 APPLY → 레시피 반영
+                const lin = clamp01((t - 500) / 3000);
+                const s = 28.5 * lin;
+                el.swTime.textContent = s.toFixed(1).padStart(4, '0');
+                el.swRing.style.strokeDashoffset = (CIRC * (1 - lin)).toFixed(1);
+                const done = t >= 3500, running = t >= 500 && !done;
+                el.swTime.classList.toggle('running', running);
+                el.swTime.classList.toggle('done', done);
+                el.swStatus.textContent = t < 500 ? 'READY' : (done ? 'DONE' : 'RUNNING');
+                el.swStart.textContent = running ? 'STOP' : 'START';
+                el.swApply.classList.toggle('is-ready', done);
+                el.swHint.textContent = done ? 'APPLY를 누르면 레시피에 바로 입력' : '추출과 동시에 시간 측정';
+                const applied = t >= 4200;
+                el.applied.classList.toggle('is-on', applied);
+                el.appliedVal.textContent = applied ? '28.5' : '—';
+                el.appliedBadge.classList.toggle('is-on', applied);
+            },
+            (t) => { // 로그북: 카드 슬라이드인, 별점, SUCCESS 배지
+                el.card.classList.toggle('is-in', t > 150);
+                const n = Math.round(4 * seg(t, 600, 1500));
+                el.stars.textContent = '★'.repeat(n) + '☆'.repeat(5 - n);
+                el.success.classList.toggle('is-on', t > 1900);
+            },
+        ];
+
+        let idx = 0, t0 = 0, raf = 0, playing = false;
+
+        function setScene(i) {
+            idx = i;
+            t0 = performance.now();
+            scenes.forEach((s, k) => s.classList.toggle('is-on', k === i));
+            steps.forEach((s, k) => s.classList.toggle('is-active', k === i));
+            if (reduced) { // 모션 최소화: 자동재생 없이 각 씬의 완료 상태만 표시
+                renderers[i](DUR[i]);
+                fills.forEach((f, k) => f.style.width = k <= i ? '100%' : '0');
+            }
+        }
+
+        function frame(now) {
+            if (!playing) return;
+            const t = now - t0;
+            if (t >= DUR[idx]) {
+                setScene((idx + 1) % scenes.length);
+            } else {
+                renderers[idx](t);
+                fills.forEach((f, k) =>
+                    f.style.width = k < idx ? '100%' : (k === idx ? (t / DUR[idx] * 100) + '%' : '0'));
+            }
+            raf = requestAnimationFrame(frame);
+        }
+
+        function play() {
+            if (playing || reduced) return;
+            playing = true;
+            t0 = performance.now();
+            raf = requestAnimationFrame(frame);
+        }
+        function stop() {
+            playing = false;
+            cancelAnimationFrame(raf);
+        }
+
+        steps.forEach((s, i) => s.addEventListener('click', () => { setScene(i); play(); }));
+
+        new IntersectionObserver(
+            (entries) => entries.forEach(e => e.isIntersecting ? play() : stop()),
+            { threshold: 0.35 }
+        ).observe(root.querySelector('.demo-phone'));
+
+        setScene(0);
+    })();
 </script>
 
 <script src="pay.js" defer></script>
