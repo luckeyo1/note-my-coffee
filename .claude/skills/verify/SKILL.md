@@ -29,7 +29,6 @@ System Chromium lives at `/nix/store/lpdrfl6n16q5zdf8acp4bni7yczzcx3h-idx-builti
 ## Gotchas
 
 - Sandbox has zero fonts (`fc-list` empty) → screenshots render blank glyphs. Assert on DOM `textContent`, not pixels.
-- Pre-existing 404 in console on every page: `https://grainy-gradients.vercel.app/noise.svg` (CSS texture). Ignore.
 - Firestore/auth flows need real Google login — verify guest/local paths instead (`localStorage` via storage.js).
 - The sandbox's egress IP geolocates to Taipei — IP-fallback tests will show Taipei, not Seoul.
 - `innerText` reads back as `''` in the font-less sandbox even right after being set — read `textContent` instead.

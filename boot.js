@@ -83,7 +83,7 @@
     installPill.style.cssText =
       'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9000;' +
       'display:flex;align-items:center;gap:4px;padding:6px 6px 6px 16px;' +
-      'background:#1A1614;color:#F0E5D5;border:1px solid rgba(200,169,110,0.35);' +
+      'background:#1C1410;color:#F0E5D5;border:1px solid rgba(200,169,110,0.35);' +
       'border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,0.35);' +
       'font-family:"DM Sans",system-ui,sans-serif;font-size:13px;font-weight:500;';
 
