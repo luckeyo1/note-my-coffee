@@ -236,6 +236,19 @@
             pointer-events: none;
         }
 
+        /* ── SCANNABLE TAG CHIPS (dense specs → visual break) ── */
+        .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0; }
+        .tag-pill {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            color: var(--gold);
+            border: 1px solid var(--gold-border);
+            border-radius: 999px;
+            padding: 6px 14px;
+            background: var(--gold-dim);
+        }
+
         /* ── PARAMS TABLE ── */
         .params {
             display: flex;
@@ -848,10 +861,14 @@
             <div class="section-tag">03 — 해결</div>
             <h2 class="section-title"><em>그래서</em> 만들었다.</h2>
             <div class="story-text">
-                <p>
-                    추출할 때마다 30초면 기록이 완료된다.
-                    도징, 온도, 시간, 수율 — 네 가지 변수를 슬라이더로 맞추고 저장하면 끝이다.
-                </p>
+                <p>추출할 때마다 <strong>30초</strong>면 기록이 완료된다.</p>
+                <div class="tag-row">
+                    <span class="tag-pill">도징</span>
+                    <span class="tag-pill">온도</span>
+                    <span class="tag-pill">시간</span>
+                    <span class="tag-pill">수율</span>
+                </div>
+                <p>네 가지 변수를 슬라이더로 맞추고 저장하면 끝이다.</p>
                 <p>
                     원두 이름, 산지, 테이스팅 노트도 함께 남길 수 있다.
                     원두가 바뀌는 날, 지난 기록을 꺼내면 다이얼링 출발점이 생긴다.
@@ -1062,22 +1079,22 @@
             <div class="feat-card">
                 <div class="feat-icon">⚡</div>
                 <div class="feat-title">에스프레소 / 핸드드립</div>
-                <div class="feat-desc">도징·온도·시간·수율을 슬라이더로 빠르게 설정. SCA 기준 품질 피드백을 실시간으로 표시.</div>
+                <div class="feat-desc">감이 아니라 숫자로. SCA 기준 실시간 피드백이 다이얼링을 도와줍니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">⏱</div>
                 <div class="feat-title">내장 스톱워치</div>
-                <div class="feat-desc">추출 시간을 재고 버튼 하나로 바로 적용. 기기를 따로 꺼낼 필요 없다.</div>
+                <div class="feat-desc">폰 스톱워치를 따로 켤 필요 없이, 추출과 동시에 시간이 기록됩니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">📋</div>
                 <div class="feat-title">레시피 로그북</div>
-                <div class="feat-desc">저장된 레시피를 카드로 모아볼 수 있다. 원두별, 날짜별로 추출 히스토리가 쌓인다.</div>
+                <div class="feat-desc">원두별·날짜별로 쌓이는 히스토리가 다음 다이얼링의 출발점이 됩니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">☁️</div>
                 <div class="feat-title">어디서든 접속</div>
-                <div class="feat-desc">PWA로 만들어져 설치 없이 모든 기기에서 쓸 수 있다. 구글 로그인 시 클라우드 동기화.</div>
+                <div class="feat-desc">설치 없이 모든 기기에서. 로그인하면 카페 PC에서도 그대로 이어집니다.</div>
             </div>
         </div>
     </section>
@@ -1091,8 +1108,8 @@
             <h2 class="section-title">30초 취향 검사,<br>당신의 <em>원두</em>를 찾아드립니다.</h2>
             <div class="story-text">
                 <p>
-                    네 가지 질문에 답하면 커피 취향 프로필과 함께,
-                    지금 바로 구매할 수 있는 원두를 추천해드립니다.
+                    질문 네 개, 30초. 답하는 즉시 커피 취향 프로필과 함께
+                    지금 바로 구매할 수 있는 원두를 <strong>무료로</strong> 추천해드립니다.
                 </p>
             </div>
 
@@ -1105,13 +1122,16 @@
     <!-- SUPPORT / 토스페이먼츠 테스트 결제 -->
     <section class="story-section reveal" id="support">
         <div class="story-inner">
-            <div class="section-tag">후원 — 토스페이먼츠 테스트</div>
+            <div class="section-tag">후원</div>
             <h2 class="section-title">개발자에게 <em>커피 한 잔</em>.</h2>
             <div class="story-text">
                 <p>
-                    Note My Coffee는 계속 무료입니다.
-                    아래는 토스페이먼츠 <strong>샌드박스(테스트 모드)</strong> 결제 데모입니다.
-                    실제 결제창이 뜨지만 <strong>돈은 한 푼도 빠져나가지 않아요</strong>.
+                    Note My Coffee는 지금까지 무료였고, 앞으로도 무료입니다.
+                    그래도 마음이 생기셨다면, 커피 한 잔 값으로 응원해주세요.
+                </p>
+                <p>
+                    아래 결제창은 토스페이먼츠 <strong>샌드박스(테스트 모드)</strong> 데모라
+                    실제 결제창은 뜨지만 <strong>돈은 한 푼도 빠져나가지 않습니다</strong>.
                 </p>
             </div>
 
@@ -1144,7 +1164,7 @@
             오늘 아침 커피부터<br>
             <em>기록</em>해보세요.
         </h2>
-        <p class="final-sub">30초면 완료됩니다. 무료입니다.</p>
+        <p class="final-sub">30초면 충분합니다. 신용카드도, 설치도 필요 없습니다.</p>
         <button class="btn-primary" id="btn-final-cta" style="margin: 0 auto;">
             <span>무료로 시작하기</span>
             <span>→</span>
