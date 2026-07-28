@@ -6,8 +6,15 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
+      "firebase-debug.log",
+
       "GEMINI.md",
-      "firebase-debug.log"
+      "ADMIN.md",
+      "blueprint.md",
+      "*.docx",
+      "scripts/**",
+      "package.json",
+      "package-lock.json"
     ]
   }
 }
