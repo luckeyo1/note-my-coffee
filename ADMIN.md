@@ -1,0 +1,108 @@
+# 관리자 페이지 (`admin.html`)
+
+서비스 운영 지표를 보는 대시보드. 기록 추이, 사용자 수, 모드 분포, 평점 분포,
+인기 원두, 최근 기록을 한 화면에서 본다.
+
+## 열기
+
+| 목적 | 주소 |
+|---|---|
+| 실제 데이터 | `/admin.html` — 구글 로그인 후 조회 |
+| 디자인 확인 | `/admin.html?demo=1` — 가짜 데이터, 로그인·Firestore 불필요 |
+
+기간 필터(7 / 30 / 90일 / 전체)는 아래 모든 지표를 같은 구간으로 스코프한다.
+차트마다 `표로 보기`가 있어서 모든 값은 표로도 읽을 수 있다.
+
+## 접근 제어 — 여기가 핵심
+
+관리자는 `admin.js` 맨 위의 `ADMIN_EMAILS` 한 곳에서 정한다. 현재 등록된 계정은
+`qorlgh1994@gmail.com` **하나뿐**이고, 통과 조건은 세 가지를 모두 만족할 때다.
+
+- 구글(`google.com`) 계정으로 로그인했을 것
+- `emailVerified`가 참일 것
+- 이메일이 `ADMIN_EMAILS`에 있을 것
+
+구글 로그인을 요구하는 이유는, 이메일/비밀번호 계정은 같은 주소를 스스로 지어낼 수
+있기 때문이다. 그런 계정은 `emailVerified`가 거짓으로 남아 두 번째 조건에서 걸린다.
+
+다만 **이 검사는 화면을 가리는 용도일 뿐 보안 장치가 아니다.** 클라이언트 코드는
+누구나 읽고 고칠 수 있다. 실제 차단은 **Firestore 보안 규칙**이 한다.
+
+즉 두 곳을 모두 손봐야 한다.
+
+1. **`admin.js`의 `ADMIN_EMAILS`** — 화면 노출 제어 (이미 설정됨)
+2. **Firestore 규칙에 관리자 전체 읽기 허용** — 실제 권한 (콘솔에서 직접 해야 함)
+
+권한 없는 계정으로 로그인하면 현재 계정을 화면에 보여주고, `다른 계정으로 로그인`
+버튼으로 로그아웃 후 다시 시도할 수 있다.
+
+### 필요한 규칙
+
+현재 저장소에는 `firestore.rules` 파일이 없다(= 콘솔에서 직접 관리 중이라는 뜻).
+아래는 이 대시보드가 동작하기 위해 필요한 최소 형태이며, 클라이언트와 같은
+세 조건을 그대로 건다.
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email == 'qorlgh1994@gmail.com'
+          && request.auth.token.email_verified == true
+          && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    match /recipes/{recipeId} {
+      // 관리자는 전체 조회, 일반 사용자는 자기 것만
+      allow read: if isAdmin()
+                  || (request.auth != null && resource.data.userId == request.auth.uid);
+
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if request.auth != null
+                            && resource.data.userId == request.auth.uid;
+    }
+  }
+}
+```
+
+> **주의**: 규칙 배포는 기존 규칙을 통째로 대체한다. 지금 콘솔에 들어있는 규칙을
+> 먼저 확인하고 위 내용을 병합해서 올려야 한다. 그래서 이 저장소에는 `firestore.rules`를
+> 만들어두지 않았고 `firebase.json`에도 연결하지 않았다 — `firebase deploy`가 모르는 사이에
+> 규칙을 덮어쓰는 사고를 막기 위해서다.
+
+규칙이 관리자 전체 읽기를 허용하지 않으면 대시보드는 `permission-denied`로 실패하고,
+화면에 그 사실과 현재 UID를 띄운다.
+
+관리자를 추가하려면 `ADMIN_EMAILS` 배열과 위 규칙의 `isAdmin()` **양쪽 모두**에
+주소를 넣어야 한다. 한쪽만 고치면 화면은 열리는데 데이터가 안 나오거나(규칙 누락),
+데이터 권한은 있는데 화면이 막힌다(배열 누락).
+
+## 알아둘 한계
+
+- **전체 문서를 브라우저로 내려받아 집계한다.** `recipes` 컬렉션을 통째로 읽기
+  때문에 문서가 수천 건을 넘어가면 느려지고 읽기 비용도 그만큼 든다. 레시피에는
+  `imageUrl`이 base64로 최대 1MB까지 들어갈 수 있어서 실제 전송량은 문서 수보다
+  훨씬 크다. (내려받은 뒤 `imageUrl`은 바로 버려서 메모리에는 남기지 않지만,
+  **다운로드 자체를 피할 수는 없다** — 클라이언트 SDK에는 필드 선택 기능이 없다.)
+  기록이 쌓이면 Cloud Functions에서 일별 집계 문서를 만들어두고 대시보드는 그것만
+  읽는 구조로 옮기는 게 맞다.
+- **로그인 없이 저장된 레시피는 집계에 안 잡힌다.** 게스트 기록은 localStorage에만
+  있고 Firestore에 올라오지 않는다. 로그인 시 `migrateLocalToCloud()`로 넘어온
+  것만 보인다.
+- **`성공률`은 사용자가 직접 누른 성공/실패 버튼 기준**이다. 추출 품질의 객관적
+  지표가 아니라 자기 평가다.
+
+## 차트 규칙
+
+색은 눈대중으로 고르지 않았다. 시리즈 색·평점 램프 모두 대비/색각 검증을
+통과한 값이며 라이트·다크 각각 따로 검증했다.
+
+- 에스프레소 `#ac7c33` / 핸드드립 `#1d5f92`(다크 `#0476bf`) — 정체성을 나타내는 2색
+- 평점 1~5는 **순서가 있는** 값이라 한 색상의 명도 램프를 쓴다
+- 인기 원두는 **순서가 없는** 이름이라 전부 같은 색 — 크기는 막대 길이가 말한다
+
+색을 바꿀 일이 생기면 눈으로 판단하지 말고 검증기를 돌릴 것.
