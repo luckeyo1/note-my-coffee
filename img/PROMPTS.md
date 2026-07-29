@@ -1,6 +1,6 @@
 # 랜딩 이미지 생성 프롬프트 (GPT 이미지 생성용)
 
-이 폴더에 들어갈 7장의 이미지를 만드는 프롬프트입니다.
+이 폴더에 들어갈 이미지를 만드는 프롬프트입니다.
 톤은 **다크 무드 실사** — 랜딩의 "골드 & 잉크" 팔레트(`#080604` / `#C8A96E`)에 강제로 구속시킵니다.
 
 ## 파일명 규약
@@ -10,9 +10,9 @@ webp 변환과 압축은 코드 쪽에서 처리합니다.
 
 | 파일명 | 내용 | 요청 크기 | 상태 |
 |---|---|---|---|
-| `hero-plate.webp` | 히어로 배경 | 1536×1024 | **완료** (2026-07-29 · 40KB) |
+| `hero-plate.webp` | 히어로 배경 | 1536×1024 | **완료** (2026-07-29 · 72KB) |
 | `story-notebook.webp` | 01 스토리 | 1536×1024 | **완료** (2026-07-29 · 52KB) |
-| `mid-cta-plate.webp` | 중간 CTA 배너 배경 | 1536×1024 | **완료** (2026-07-29 · 11KB) |
+| `mid-cta-plate.webp` | 중간 CTA 배너 배경 | 3:1 가로 | **완료** (2026-07-29 · 18KB) |
 | `profile-a.png` | 취향 A 화사한 향미 탐험가 | **1024×1024 정사각** | 필요 |
 | `profile-b.png` | 취향 B 밸런스의 클래식 | **1024×1024 정사각** | 필요 |
 | `profile-c.png` | 취향 C 고소한 위로 한 잔 | **1024×1024 정사각** | 필요 |
@@ -22,16 +22,13 @@ webp 변환과 압축은 코드 쪽에서 처리합니다.
 받은 PNG는 제가 크롭 + webp 변환해서 넣습니다. **정사각 4장은 가로 이미지로 대체할 수 없습니다** —
 공유 카드 상단 밴드와 결과 화면 배너가 정사각 비율을 전제로 잘라 씁니다.
 
-**8장이 다 모이기 전에도 랜딩은 정상 동작합니다.** 이미지가 없으면 해당 자리는
-조용히 비워지고 기존 디자인 그대로 보입니다. 한 장씩 넣어도 됩니다.
-(파일이 없는 동안 브라우저 콘솔에 404가 3건 찍히는데, 의도된 동작이라 무해합니다.)
-
-PNG로 그대로 두고 쓰셔도 되고, 용량을 줄이려면 나중에 webp로 바꾸고 코드의
-확장자만 고치면 됩니다.
+**남은 4장이 없어도 랜딩은 정상 동작합니다.** 프로필 아트가 없으면 결과 화면
+배너는 요소째로 사라지고, 공유 카드는 아트 없는 레이아웃으로 그려집니다.
+한 장씩 넣어도 되고, 넣는 즉시 반영됩니다.
 
 ---
 
-## 반드시 알아야 할 3가지
+## 반드시 알아야 할 5가지
 
 1. **이미지 안에 한글 텍스트를 절대 요청하지 마세요.**
    현재 이미지 모델은 한글을 깨뜨립니다(자모가 뭉개지거나 없는 글자를 만듭니다).
@@ -68,8 +65,9 @@ PNG로 그대로 두고 쓰셔도 되고, 용량을 줄이려면 나중에 webp�
 
 ## 0. 공통 스타일 블록
 
-**7개 프롬프트 전부의 맨 앞에 이 블록을 붙이세요.** 이게 7장을 한 세트로 묶어줍니다.
+**§1·2·4·5 프롬프트의 맨 앞에 이 블록을 붙이세요.** 이게 전체를 한 세트로 묶어줍니다.
 빼먹으면 톤이 흩어져서 따로 만든 것처럼 보입니다.
+(§3 프로필 4종은 이미 블록이 포함된 완성형이라 따로 붙이지 않습니다.)
 
 ```
 Dark chiaroscuro still-life photography. A single warm light source from the
@@ -142,86 +140,134 @@ end-of-day mood.
 
 ---
 
-## 3. `profile-a~d.png` — 취향검사 프로필 아트 4종
+## 3. `profile-a~d.png` — 취향검사 프로필 아트 4종 (필요)
 
-**쓰이는 곳:** 취향검사 결과 화면 + **공유 카드 상단**. 프로필마다 확연히 달라야
-"내 결과"라는 감각이 생깁니다.
+**쓰이는 곳:** 취향검사 결과 화면 배너 + 공유 카드 상단 밴드.
+프로필마다 확연히 달라야 "내 결과"라는 감각이 생깁니다.
 
-**요청 크기:** 4장 모두 1024×1024 (정사각)
+**요청 크기:** 4장 모두 **1024×1024 정사각**. 가로 이미지로 대체할 수 없습니다.
 
-> ### ⚠️ 4장을 한 대화에서 연속으로 생성하세요
-> 첫 장(A)을 만든 뒤, 나머지 3장(B·C·D)에는 아래 **일관성 문장**을 덧붙이세요.
-> 따로따로 만들면 조명과 바닥 재질이 달라져서 세트로 안 보입니다.
+> ### 세로 가운데 띠만 보입니다
+> 두 쓰임새 모두 정사각을 가로로 길게 잘라 씁니다. 코드 기준 실제 노출 구간:
 >
-> ```
-> Match the previous image exactly: same lighting direction and intensity, same
-> camera angle, same dark slate surface, same palette and grain. Change only the
-> subject matter described below.
-> ```
+> | 쓰임새 | 보이는 세로 구간 |
+> |---|---|
+> | 공유 카드 상단 밴드 | 32% ~ 68% (그중 32~48%가 가장 선명, 아래는 페이드) |
+> | 결과 화면 배너 | 36% ~ 64% |
+>
+> **위 3분의 1과 아래 3분의 1은 잘려 나갑니다.** 그래서 아래 프롬프트에는
+> "피사체를 가운데 띠에 모으고 위아래는 빈 어두운 바닥으로 둘 것"이 들어가 있습니다.
+
+> ### 4장을 한 대화에서 연속으로 생성하세요
+> A → B → C → D 순서로, 같은 대화에서 이어서 만드세요. 따로 만들면 조명과
+> 바닥 재질이 달라져 세트로 안 보입니다. B·C·D 프롬프트에는 이미 "앞 이미지와
+> 똑같이 맞출 것"이 들어가 있습니다.
+
+아래 4개 블록은 **각각 그대로 복사해서 붙이면 되는 완성형**입니다.
+공통 스타일 블록을 따로 앞에 붙이지 않아도 됩니다.
 
 ### `profile-a.png` — A "화사한 향미 탐험가" (#Floral #Fruity #Acidic)
 
-> 세트에서 **가장 밝고 투명한** 한 장
-
 ```
-[공통 스타일 블록]
+Dark chiaroscuro still-life photography, square 1:1 format.
+A single warm light source from the upper left, hard falloff into near-black
+shadow — at least 65% of the frame is shadow. Background and shadows are almost
+pure black (hex #080604). The only bright accents are warm brass/amber
+(hex #C8A96E). Fully desaturated except for that warm highlight — absolutely no
+blue, teal, cyan or magenta tones. Matte finish, fine analog film grain, subtle
+lens vignette. 85mm lens at f/2, shallow depth of field, natural imperfect
+surfaces. Everything rests on the same dark slate surface.
 
-Still life at a 45-degree angle on dark slate: pale, light-roast coffee beans
-scattered loosely, a few small white jasmine blossoms with green stems, and two
-thin slices of dried peach. Beside them a clear glass brewing carafe holds
-bright amber-orange coffee that glows luminously where the key light passes
-through the glass. This is the LIGHTEST and most translucent image of a set of
-four — airy and delicate, though still deep-shadowed overall.
+COMPOSITION: arrange every subject across the horizontal middle band of the
+square, sitting slightly above the exact centre. The top third and the bottom
+third will be cropped away, so leave them as empty dark surface. Nothing
+important near the top or bottom edge.
+
+SUBJECT: pale, light-roast coffee beans scattered loosely, a few small white
+jasmine blossoms with green stems, and two thin slices of dried peach. Beside
+them a plain clear glass carafe holds bright amber-orange coffee that glows
+luminously where the key light passes through the glass. This is the LIGHTEST
+and most translucent image of a set of four — airy and delicate, though still
+deep-shadowed overall.
+
+FORBIDDEN: no text, letters, numbers, captions or watermarks. No logos, brand
+marks, monograms, initials or emblems on anything — every mug, cup, glass and
+carafe must be completely plain and unbranded. No phones, tablets, laptops,
+screens or app interfaces. No people, faces or hands. No coffee bags or
+packaging. Not a bright airy cafe, not a white background, not glossy
+commercial advertising lighting.
 ```
 
 ### `profile-b.png` — B "밸런스의 클래식" (#Sweet #Caramel #Balanced)
 
-> 세트의 **중간 기준점**
-
 ```
-[공통 스타일 블록]
-[일관성 문장]
+Same series as the previous image. Match it exactly: same lighting direction and
+intensity, same camera angle, same dark slate surface, same palette and grain.
+Square 1:1 format. Change only the subject matter.
 
-Still life on dark slate: evenly roasted medium-brown coffee beans, a single
-translucent amber shard of hard caramel catching the light, and one plain
-unbranded cream-colored ceramic cup of black coffee with a still, clean, mirror
-surface. Warm cinnamon-brown overall tone. This image is the balanced midpoint
-of the set — neither the brightest nor the darkest.
+COMPOSITION: arrange every subject across the horizontal middle band of the
+square, sitting slightly above the exact centre. The top third and the bottom
+third will be cropped away, so leave them as empty dark surface.
+
+SUBJECT: evenly roasted medium-brown coffee beans, a single translucent amber
+shard of hard caramel catching the light, and one plain unbranded cream-coloured
+ceramic cup of black coffee with a still, clean, mirror surface. Warm
+cinnamon-brown overall tone. This image is the balanced midpoint of the set —
+neither the brightest nor the darkest.
+
+FORBIDDEN: no text, letters, numbers or watermarks. No logos, brand marks,
+monograms, initials or emblems on anything — the cup must be completely plain
+and unbranded. No phones, tablets, screens or app interfaces. No people, faces
+or hands. No coffee bags or packaging.
 ```
 
 ### `profile-c.png` — C "고소한 위로 한 잔" (#Nutty #Chocolaty #Sweet)
 
-> 세트에서 **가장 부드럽고 따뜻한** 한 장
-
 ```
-[공통 스타일 블록]
-[일관성 문장]
+Same series as the previous images. Match them exactly: same lighting direction
+and intensity, same camera angle, same dark slate surface, same palette and
+grain. Square 1:1 format. Change only the subject matter.
 
-Still life on dark slate: medium-dark roasted coffee beans, whole hazelnuts and
-blanched almonds, two broken squares of milk chocolate with a matte fractured
-edge, and a thick unbranded stoneware mug of latte. The latte surface is soft
-cloudy microfoam — NO latte art, no poured pattern, no drawn shape, no heart,
-no rosetta. The light is softer and more diffused than the other images in the
-set: comforting and warm rather than dramatic.
+COMPOSITION: arrange every subject across the horizontal middle band of the
+square, sitting slightly above the exact centre. The top third and the bottom
+third will be cropped away, so leave them as empty dark surface.
+
+SUBJECT: medium-dark roasted coffee beans, whole hazelnuts and blanched almonds,
+two broken squares of milk chocolate with a matte fractured edge, and a thick
+plain stoneware mug of latte. The latte surface is soft cloudy microfoam — NO
+latte art, no poured pattern, no drawn shape, no heart, no rosetta, no fern.
+The light is softer and more diffused than the other images in the set:
+comforting and warm rather than dramatic.
+
+FORBIDDEN: no text, letters, numbers or watermarks. No logos, brand marks,
+monograms, initials or emblems on anything — the mug must be completely plain
+and unbranded. No phones, tablets, screens or app interfaces. No people, faces
+or hands. No coffee bags or packaging.
 ```
 
 ### `profile-d.png` — D "묵직한 바디 애호가" (#Bitter #DarkChoco #Heavy)
 
-> 세트에서 **가장 어둡고 대비가 센** 한 장
-
 ```
-[공통 스타일 블록]
-[일관성 문장]
+Same series as the previous images. Match them exactly: same lighting direction
+and intensity, same camera angle, same dark slate surface, same palette and
+grain. Square 1:1 format. Change only the subject matter.
 
-Still life on dark slate: very dark, oily coffee beans with a visible wet sheen
-on their surfaces, a roughly broken block of 85% dark chocolate, and a small
-unbranded white demitasse holding espresso with a thick, dense, tiger-striped
-crema. This is the DARKEST and highest-contrast image of the set — almost the
-entire frame is black, with a single hard amber rim light tracing the edge of
-the cup and the sheen of the beans. Heavy, dense, powerful.
+COMPOSITION: arrange every subject across the horizontal middle band of the
+square, sitting slightly above the exact centre. The top third and the bottom
+third will be cropped away, so leave them as empty dark surface.
+
+SUBJECT: very dark, oily coffee beans with a visible wet sheen on their
+surfaces, a roughly broken block of 85% dark chocolate, and a small plain white
+demitasse holding espresso with a thick, dense, tiger-striped crema. This is the
+DARKEST and highest-contrast image of the set — almost the entire frame is
+black, with a single hard amber rim light tracing the edge of the cup and the
+sheen of the beans. Heavy, dense, powerful.
+
+FORBIDDEN: no text, letters, numbers or watermarks. No logos, brand marks,
+monograms, initials or emblems on anything — the demitasse must be completely
+plain and unbranded. No phones, tablets, screens or app interfaces. No people,
+faces or hands. No coffee bags or packaging.
 ```
-
----
 
 ## 4. `mid-cta-plate.png` — 중간 CTA 배너 배경
 
