@@ -8,16 +8,19 @@
 생성한 이미지는 아래 이름으로 이 폴더(`img/`)에 넣어주세요. PNG로 받아도 됩니다 —
 webp 변환과 압축은 코드 쪽에서 처리합니다.
 
-| 파일명 | 내용 | 요청 크기 |
-|---|---|---|
-| `hero-plate.png` | 히어로 배경 (에스프레소 추출) | 1536×1024 |
-| `story-notebook.png` | 01 스토리 (빈 노트) | 1536×1024 |
-| `profile-a.png` | 취향 A 화사한 향미 탐험가 | 1024×1024 |
-| `profile-b.png` | 취향 B 밸런스의 클래식 | 1024×1024 |
-| `profile-c.png` | 취향 C 고소한 위로 한 잔 | 1024×1024 |
-| `profile-d.png` | 취향 D 묵직한 바디 애호가 | 1024×1024 |
-| `mid-cta-plate.png` | 중간 CTA 배너 배경 | 1536×1024 |
-| `og-plate.png` | OG 공유 카드 배경 | 1536×1024 |
+| 파일명 | 내용 | 요청 크기 | 상태 |
+|---|---|---|---|
+| `hero-plate.webp` | 히어로 배경 | 1536×1024 | **완료** (2026-07-29 · 40KB) |
+| `story-notebook.webp` | 01 스토리 | 1536×1024 | **완료** (2026-07-29 · 52KB) |
+| `mid-cta-plate.webp` | 중간 CTA 배너 배경 | 1536×1024 | **완료** (2026-07-29 · 11KB) |
+| `profile-a.png` | 취향 A 화사한 향미 탐험가 | **1024×1024 정사각** | 필요 |
+| `profile-b.png` | 취향 B 밸런스의 클래식 | **1024×1024 정사각** | 필요 |
+| `profile-c.png` | 취향 C 고소한 위로 한 잔 | **1024×1024 정사각** | 필요 |
+| `profile-d.png` | 취향 D 묵직한 바디 애호가 | **1024×1024 정사각** | 필요 |
+| `og-plate.png` | OG 공유 카드 배경 | 1536×1024 | 선택 (지금 og-image.png로 충분) |
+
+받은 PNG는 제가 크롭 + webp 변환해서 넣습니다. **정사각 4장은 가로 이미지로 대체할 수 없습니다** —
+공유 카드 상단 밴드와 결과 화면 배너가 정사각 비율을 전제로 잘라 씁니다.
 
 **8장이 다 모이기 전에도 랜딩은 정상 동작합니다.** 이미지가 없으면 해당 자리는
 조용히 비워지고 기존 디자인 그대로 보입니다. 한 장씩 넣어도 됩니다.
@@ -41,8 +44,25 @@ PNG로 그대로 두고 쓰셔도 되고, 용량을 줄이려면 나중에 webp�
    그래서 프로필 아트는 전부 원두·재료 정물이고, 프롬프트마다 `unbranded` /
    `no packaging`을 못박았습니다.
 
-3. **얼굴 없음.** 인물이 들어가면 (a) 스톡 사진 느낌이 나고 (b) 초상 문제가 생깁니다.
-   필요하면 손까지만.
+3. **인물 없음(얼굴도, 손도).** 인물이 들어가면 (a) 스톡 사진 느낌이 나고
+   (b) 초상 문제가 생깁니다. 특히 01 스토리 섹션은 "바리스타로 일하면서…"라는
+   1인칭 서사라, AI로 만든 얼굴을 두면 없는 사람을 창업자로 내세우는 셈이 됩니다.
+   본인 실제 사진이라면 물론 좋습니다.
+
+4. **화면이 켜진 폰·태블릿·모니터를 넣지 마세요.** 모델이 그리는 앱 UI는 항상
+   Note My Coffee가 아닌 다른 앱입니다(실제 앱은 크림색 라이트 테마 +
+   도징·온도·시간·수율 슬라이더인데, 모델은 다크 테마 + 테이스팅 노트 +
+   7각형 플레이버 휠을 그려냅니다). 없는 제품을 보여주는 셈이 됩니다.
+   실제 화면은 랜딩이 CSS로 직접 그리고 있으니 사진에는 필요 없습니다.
+
+5. **컵·노트·텀블러에 로고·모노그램을 넣지 마세요.** 모델이 금색 이니셜 마크를
+   만들어 붙이는데, Note My Coffee의 실제 로고는 `logo.svg`(북마크 형태)입니다.
+   없는 브랜드 굿즈와 없는 로고를 만들어내게 됩니다.
+
+> **1차 생성분(2026-07-29) 후기:** 톤·광원·팔레트·왼쪽 여백은 전부 훌륭했습니다.
+> 다만 5장 중 2장에 가짜 앱 화면이, 5장 전부에 가짜 모노그램이, 1장에 얼굴이
+> 들어와서 크롭으로 잘라내고 3장만 썼습니다. 위 4·5번을 프롬프트에 넣으면
+> 다음 번엔 잘라낼 필요가 없습니다.
 
 ---
 
@@ -60,8 +80,11 @@ that warm highlight — absolutely no blue, teal, cyan, green, or magenta tones.
 Matte finish, fine analog film grain, subtle lens vignette. Shot on an 85mm lens
 at f/2, shallow depth of field, natural imperfect surfaces.
 No text, no letters, no numbers, no captions, no watermarks.
-No logos, no brand marks, no packaging, no labels.
-No people, no faces. Not a bright airy cafe, not a white background,
+No logos, no brand marks, no monograms, no initials, no emblems on any object —
+mugs, tumblers, notebooks and cups must be completely plain and unbranded.
+No phones, no tablets, no laptops, no screens, no displays, no app interfaces
+of any kind.
+No people, no faces, no hands. Not a bright airy cafe, not a white background,
 not a flat-lay product shot, not glossy commercial advertising lighting.
 ```
 

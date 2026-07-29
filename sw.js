@@ -35,9 +35,9 @@ const PRECACHE_ASSETS = [
 // failures ignored. share-card.js is deliberately absent — it is lazily
 // imported and left to runtime caching.
 const OPTIONAL_ASSETS = [
-  'img/hero-plate.png',
-  'img/story-notebook.png',
-  'img/mid-cta-plate.png'
+  'img/hero-plate.webp',
+  'img/story-notebook.webp',
+  'img/mid-cta-plate.webp'
 ];
 
 // ── Install: warm the cache, then take over immediately ────────────────

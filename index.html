@@ -218,7 +218,7 @@
         }
         /* 히어로 사진 플레이트. 오른쪽 1/3에 피사체가 있는 이미지를 전제로, 왼쪽으로
            갈수록 배경색까지 지우는 마스크를 걸어 헤드라인 대비를 지킨다.
-           img/hero-plate.png가 없으면 이 층만 비고 나머지는 그대로다. */
+           img/hero-plate.webp가 없으면 이 층만 비고 나머지는 그대로다. */
         .hero::after {
             content: "";
             position: absolute;
@@ -226,7 +226,7 @@
             z-index: 0;
             pointer-events: none;
             opacity: 0.28;
-            background: url("img/hero-plate.png") center right / cover no-repeat;
+            background: url("img/hero-plate.webp") center right / cover no-repeat;
             -webkit-mask-image: linear-gradient(100deg, transparent 8%, rgba(0,0,0,0.35) 42%, #000 78%);
             mask-image: linear-gradient(100deg, transparent 8%, rgba(0,0,0,0.35) 42%, #000 78%);
         }
@@ -464,7 +464,7 @@
             position: relative;
             height: clamp(200px, 30vw, 340px);
             margin: 40px 0;
-            background: url("img/story-notebook.png") center 42% / cover no-repeat;
+            background: url("img/story-notebook.webp") center 42% / cover no-repeat;
         }
         /* 위아래를 배경색으로 녹여 본문과 이어붙인다. */
         .story-band::after {
@@ -737,7 +737,7 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: url("img/mid-cta-plate.png") center right / cover no-repeat;
+            background: url("img/mid-cta-plate.webp") center right / cover no-repeat;
         }
         /* 스크림 + 골드 글로우. 사진 위에 덮여 텍스트 대비를 보장한다. */
         .mid-cta::after {
