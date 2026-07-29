@@ -65,6 +65,13 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
                             && resource.data.userId == request.auth.uid;
     }
+
+    // 랜딩 사회적 증거용 공개 집계. 숫자 하나만 들어있고 개인정보는 없다.
+    // recipes는 계속 비공개이며, 이 문서는 관리자만 쓸 수 있다.
+    match /public_stats/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }
 ```
@@ -73,6 +80,17 @@ service cloud.firestore {
 > 먼저 확인하고 위 내용을 병합해서 올려야 한다. 그래서 이 저장소에는 `firestore.rules`를
 > 만들어두지 않았고 `firebase.json`에도 연결하지 않았다 — `firebase deploy`가 모르는 사이에
 > 규칙을 덮어쓰는 사고를 막기 위해서다.
+
+### 랜딩 누적 기록 수 (`public_stats/landing`)
+
+랜딩 히어로의 "지금까지 기록된 추출 N회"는 이 문서 하나만 읽는다.
+`recipes`는 사용자 데이터라 익명 공개가 불가능하므로, **이미 전체를 읽고 있는
+이 대시보드가 접속할 때마다 숫자만 공개 문서에 기록한다**(`admin.js`).
+따라서 수치는 *마지막 관리자 접속 시점 기준*이며, 대시보드를 한 번도 열지 않으면
+문서가 없어 랜딩에서는 아무것도 표시되지 않는다.
+
+- 노출 최소 기준은 `landing.js`의 `MIN_STAT_TO_SHOW`(기본 100). 미만이면 감춘다.
+- 문서가 없거나 읽기에 실패하면 요소를 숨긴 채 둔다 — `0회`를 노출하지 않는다.
 
 규칙이 관리자 전체 읽기를 허용하지 않으면 대시보드는 `permission-denied`로 실패하고,
 화면에 그 사실과 현재 UID를 띄운다.

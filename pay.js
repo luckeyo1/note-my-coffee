@@ -40,6 +40,7 @@
   }
 
   async function openPayPanel() {
+    window.nmcTrack?.('support_open');
     var btnOpen = document.getElementById('btn-open-pay');
     btnOpen.disabled = true;
     btnOpen.querySelector('span:first-child').textContent = '불러오는 중…';
@@ -109,6 +110,7 @@
 
   async function requestPayment() {
     if (!widgets) return;
+    window.nmcTrack?.('support_pay_attempt', { amount: amount });
     document.getElementById('pay-error').hidden = true;
     try {
       await widgets.requestPayment({

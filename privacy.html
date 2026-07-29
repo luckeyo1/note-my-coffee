@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>개인정보처리방침 — Note My Coffee</title>
+    <meta name="description" content="Note My Coffee가 어떤 정보를 어디에 저장하고, 무엇을 저장하지 않는지 정리한 문서입니다.">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#080604">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Note My Coffee">
+    <script src="boot.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold: #C8A96E;
+            --gold-border: rgba(200,169,110,0.25);
+            --bg: #080604;
+            --text: #EBE5DC;
+            --sub: #9B9087;
+            /* 랜딩과 같은 값 — 본문 보조 텍스트가 WCAG AA(4.5:1)를 넘기는 하한 */
+            --muted: #8A8179;
+            --border: rgba(255,255,255,0.07);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', 'Noto Sans KR', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            padding: clamp(48px, 9vw, 96px) clamp(22px, 7vw, 40px);
+        }
+
+        .doc { max-width: 680px; margin: 0 auto; }
+
+        .back {
+            display: inline-block;
+            font-family: 'DM Mono', 'Noto Sans KR', monospace;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            margin-bottom: 30px;
+            transition: color 0.18s;
+        }
+        .back:hover { color: var(--gold); }
+
+        h1 {
+            font-family: 'Cormorant Garamond', 'Gowun Batang', Georgia, serif;
+            font-size: clamp(30px, 5.4vw, 44px);
+            font-weight: 600;
+            line-height: 1.22;
+            letter-spacing: -0.01em;
+            word-break: keep-all;
+            margin-bottom: 16px;
+        }
+
+        .lede {
+            font-size: 15px;
+            line-height: 1.85;
+            color: var(--sub);
+            word-break: keep-all;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .updated {
+            font-family: 'DM Mono', 'Noto Sans KR', monospace;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-top: 18px;
+        }
+
+        h2 {
+            font-family: 'Cormorant Garamond', 'Gowun Batang', Georgia, serif;
+            font-size: clamp(21px, 3.2vw, 26px);
+            font-weight: 600;
+            color: var(--gold);
+            word-break: keep-all;
+            margin: 48px 0 14px;
+        }
+
+        p, li {
+            font-size: 14.5px;
+            line-height: 1.9;
+            color: var(--sub);
+            word-break: keep-all;
+        }
+        p + p { margin-top: 13px; }
+
+        ul { list-style: none; margin-top: 12px; }
+        li { position: relative; padding-left: 17px; }
+        li + li { margin-top: 9px; }
+        li::before {
+            content: "";
+            position: absolute;
+            left: 2px; top: 12px;
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: var(--gold-border);
+        }
+
+        strong { color: var(--text); font-weight: 500; }
+        /* 랜딩과 동일한 규칙: 한글 폴백 서체가 가짜 이탤릭을 합성해버리므로
+           em은 절대 기울이지 않고 색으로만 강조한다. */
+        em { color: var(--gold); font-style: normal; }
+        code {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.92em;
+            color: var(--gold);
+        }
+
+        a { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold-border); }
+        a:hover { border-bottom-color: var(--gold); }
+
+        /* 저장 위치를 한눈에 대조하는 표. 좁은 화면에서 가로 스크롤로만 넘치게 둔다. */
+        .table-scroll { overflow-x: auto; margin-top: 16px; }
+        table { border-collapse: collapse; width: 100%; min-width: 420px; }
+        th, td {
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: var(--sub);
+            vertical-align: top;
+        }
+        th {
+            font-family: 'DM Mono', 'Noto Sans KR', monospace;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 400;
+            white-space: nowrap;
+        }
+        td:first-child { color: var(--text); }
+
+        footer {
+            margin-top: 60px;
+            padding-top: 26px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+<div class="doc">
+    <a class="back" href="index.html">← Note My Coffee</a>
+
+    <h1>개인정보처리방침</h1>
+    <p class="lede">
+        Note My Coffee는 커피 추출 기록을 남기는 데 필요한 최소한의 정보만 다룹니다.
+        이 문서는 무엇을 어디에 저장하는지, 그리고 <em>무엇을 저장하지 않는지</em>를
+        실제 동작 그대로 적은 것입니다.
+    </p>
+    <p class="updated">최종 수정 2026-07-29 · 운영자 개인 프로젝트</p>
+
+    <h2>1. 저장하는 정보</h2>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>저장 위치</th>
+                    <th>언제</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>레시피 기록<br>(도징·온도·시간·수율, 원두 이름, 산지, 테이스팅 노트, 별점, 성공 여부, 사진)</td>
+                    <td>로그인 전에는 <strong>지금 쓰는 브라우저 안(localStorage)에만</strong>.
+                        로그인 후에는 Google Firestore의 <code>recipes</code> 컬렉션에 계정 ID와 함께.</td>
+                    <td>레시피를 저장할 때</td>
+                </tr>
+                <tr>
+                    <td>구글 계정 정보<br>(이메일, 표시 이름, 프로필 사진 주소, 계정 고유 ID)</td>
+                    <td>Google Firebase Authentication</td>
+                    <td>구글 로그인을 할 때만</td>
+                </tr>
+                <tr>
+                    <td>날씨 표시 문구<br>(예: "서울 · 24°C 맑음")</td>
+                    <td>레시피 기록의 한 필드로 함께 저장</td>
+                    <td>레시피를 저장할 때</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p>
+        첫 레시피 한 개는 로그인 없이 저장되며, 이때는 서버로 아무것도 전송되지 않습니다.
+        이후 구글 로그인을 하면 그 체험 기록이 계정으로 옮겨갑니다.
+    </p>
+
+    <h2>2. 저장하지 않는 정보</h2>
+    <ul>
+        <li>이름, 전화번호, 주소, 생년월일 — 입력받는 곳이 없습니다.</li>
+        <li><strong>위치 좌표</strong> — 날씨를 불러오는 데만 쓰고 저장하지 않습니다. 기록에 남는 것은 위 표의 날씨 문구뿐입니다.</li>
+        <li><strong>카드 정보</strong> — 후원 섹션은 토스페이먼츠 <em>샌드박스(테스트 모드)</em> 데모입니다. 실제 결제가 발생하지 않고, 카드 정보는 이 서비스를 거치지 않습니다.</li>
+        <li>비밀번호 — 구글 로그인만 쓰므로 비밀번호를 받지도, 보관하지도 않습니다.</li>
+    </ul>
+
+    <h2>3. 위치 정보</h2>
+    <p>
+        앱은 추출 환경(기온·습도)을 보여주기 위해 위치를 한 번 확인합니다. 순서는 이렇습니다.
+    </p>
+    <ul>
+        <li>브라우저 위치 권한을 <strong>허용한 경우에만</strong> 기기 위치를 사용합니다. 거부하면 그대로 다음 단계로 넘어갑니다.</li>
+        <li>권한이 없으면 <a href="https://ipapi.co/privacy/" target="_blank" rel="noopener noreferrer">ipapi.co</a>가 접속 IP로 대략적인 도시를 추정합니다.</li>
+        <li>둘 다 실패하면 서울로 고정합니다.</li>
+    </ul>
+    <p>
+        확인된 좌표는 날씨 조회(<a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener noreferrer">Open-Meteo</a>)와
+        지역명 변환(BigDataCloud)에 전달되며, 이 서비스에는 저장되지 않습니다.
+    </p>
+
+    <h2>4. 사진</h2>
+    <p>
+        레시피에 사진을 붙이면 <strong>브라우저 안에서 먼저 축소·압축</strong>한 뒤 레시피 기록에 포함해
+        저장합니다. 원본 파일은 업로드되지 않으며, 사진은 본인 계정의 기록에서만 보입니다.
+    </p>
+
+    <h2>5. 접속 분석</h2>
+    <p>
+        어떤 안내가 실제로 도움이 되는지 알기 위해 <strong>Google Analytics 4</strong>로 익명 이벤트를 집계합니다.
+        기록하는 것은 이런 종류입니다 — 어떤 버튼을 눌렀는지, 취향 검사를 시작·완주했는지,
+        어떤 원두 추천 링크를 눌렀는지, 데모를 봤는지.
+    </p>
+    <p>
+        이 이벤트에는 <strong>개인을 식별할 수 있는 정보가 들어가지 않습니다</strong>. 레시피 내용,
+        원두 이름, 사진, 이메일은 분석으로 전송되지 않습니다. 분석은 쿠키와 유사 저장소를 사용하며,
+        브라우저의 추적 차단 기능이나 광고 차단기를 쓰고 있으면 수집되지 않고 서비스도 정상 동작합니다.
+    </p>
+
+    <h2>6. 처리를 위탁하는 곳</h2>
+    <p>정보를 판매하거나 광고 목적으로 제3자에게 제공하지 않습니다. 서비스 운영에 필요한 범위에서 아래를 이용합니다.</p>
+    <ul>
+        <li><strong>Google</strong> (Firebase Authentication, Firestore, Analytics, Hosting) — 로그인, 기록 저장, 접속 분석</li>
+        <li><strong>Open-Meteo · BigDataCloud · ipapi.co</strong> — 날씨와 지역명 조회</li>
+        <li><strong>토스페이먼츠</strong> — 후원 섹션 테스트 결제 데모</li>
+    </ul>
+
+    <h2>7. 보관과 삭제</h2>
+    <p>
+        기록은 직접 지울 때까지 보관됩니다. 로그북에서 레시피를 개별 삭제할 수 있고,
+        로그인 전 기록은 브라우저 저장소를 비우면 사라집니다.
+        <strong>계정과 저장된 모든 기록의 삭제</strong>를 원하시면 아래 주소로 알려주세요 —
+        확인 후 처리하고 결과를 회신드립니다.
+    </p>
+
+    <h2>8. 문의</h2>
+    <p>
+        이 방침이나 본인 정보 처리에 대한 문의는
+        <a href="mailto:qorlgh1994@gmail.com">qorlgh1994@gmail.com</a>으로 보내주세요.
+    </p>
+
+    <footer>
+        방침이 바뀌면 이 페이지의 최종 수정일을 갱신합니다.<br>
+        ☕ Note My Coffee · 바리스타가 만든 커피 기록 앱
+    </footer>
+</div>
+</body>
+</html>

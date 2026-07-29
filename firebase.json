@@ -8,13 +8,12 @@
       "**/node_modules/**",
       "firebase-debug.log",
 
-      "GEMINI.md",
-      "ADMIN.md",
-      "blueprint.md",
+      "**/*.md",
       "*.docx",
       "scripts/**",
       "package.json",
-      "package-lock.json"
+      "package-lock.json",
+      "생성된 이미지*.png"
     ]
   }
 }

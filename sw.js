@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v12';
+const VERSION = 'v14';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -26,14 +26,30 @@ const PRECACHE_ASSETS = [
   'icon-192.png',
   'icon-512.png',
   'icon-maskable-512.png',
-  'apple-touch-icon.png'
+  'apple-touch-icon.png',
+  'privacy.html'
+];
+
+// Optional assets: art that may not be in the repo yet. addAll() rejects the
+// whole install if a single entry 404s, so these are added one by one and their
+// failures ignored. share-card.js is deliberately absent — it is lazily
+// imported and left to runtime caching.
+const OPTIONAL_ASSETS = [
+  'img/hero-plate.png',
+  'img/story-notebook.png',
+  'img/mid-cta-plate.png'
 ];
 
 // ── Install: warm the cache, then take over immediately ────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
+      .then(async (cache) => {
+        await cache.addAll(PRECACHE_ASSETS);
+        await Promise.all(
+          OPTIONAL_ASSETS.map((url) => cache.add(url).catch(() => {}))
+        );
+      })
       .then(() => self.skipWaiting())
   );
 });
@@ -55,18 +71,24 @@ self.addEventListener('activate', (event) => {
 function isCacheable(url) {
   return (
     url.origin === self.location.origin ||
-    url.hostname === 'unpkg.com' ||
     url.hostname === 'fonts.googleapis.com' ||
     url.hostname === 'fonts.gstatic.com'
   );
 }
 
-// Auth / API / extension traffic must bypass the SW entirely.
+// Auth / API / analytics / extension traffic must bypass the SW entirely.
+// Analytics beacons in particular must never be cached or replayed from cache —
+// a network-first SW would otherwise write /g/collect responses into the cache.
 function isPassthrough(req, url) {
   return (
     req.url.startsWith('chrome-extension://') ||
     url.hostname === 'apis.google.com' ||
     url.hostname === 'www.gstatic.com' ||
+    // GA4 collects via regional subdomains (region1., region2., …), so match the
+    // whole suffix rather than listing hosts that will change out from under us.
+    url.hostname.endsWith('google-analytics.com') ||
+    url.hostname === 'analytics.google.com' ||
+    url.hostname.endsWith('googletagmanager.com') ||
     url.hostname.includes('firebase') ||
     url.hostname.includes('identitytoolkit') ||
     url.hostname.includes('securetoken') ||

@@ -1,9 +1,21 @@
 import {
     auth,
+    db,
     googleProvider,
     signInWithPopup,
-    onAuthStateChanged
+    onAuthStateChanged,
+    doc,
+    getDoc,
+    track
 } from "./firebase-config.js";
+
+// 사회적 증거로 노출할 최소 기준. 숫자가 이보다 작으면 오히려 역효과라 아예 감춘다.
+const MIN_STAT_TO_SHOW = 100;
+
+// 인라인 <script>(데모 플레이어·취향 검사)와 pay.js는 클래식 스크립트라 import를
+// 못 쓴다. 이들이 이벤트를 보낼 수 있도록 track을 전역에 하나 걸어둔다.
+// 호출부는 `window.nmcTrack?.(...)` 형태로 써서 이 모듈이 실패해도 안전하다.
+window.nmcTrack = track;
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -14,12 +26,36 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     onAuthStateChanged(auth, (user) => {
-        updateCtaText(user ? '콘솔로 이동하기' : '지금 무료로 저장하기');
+        updateCtaText(user ? '콘솔로 이동하기' : '지금 무료로 기록 시작하기');
     });
+
+    // ====== 사회적 증거: 누적 기록 수 ======
+    // 관리자 대시보드가 갱신해두는 공개 집계 문서 하나만 읽는다.
+    // 값이 없거나 실패하면 요소를 숨긴 채로 둔다 — 0이나 자리표시 숫자를 절대 보여주지 않는다.
+    (async () => {
+        const elStat = document.getElementById('hero-stat');
+        if (!elStat) return;
+        try {
+            const snap = await getDoc(doc(db, 'public_stats', 'landing'));
+            if (!snap.exists()) return;
+            const n = snap.data().recipeCount;
+            if (typeof n !== 'number' || !Number.isFinite(n) || n < MIN_STAT_TO_SHOW) return;
+            elStat.textContent = `지금까지 기록된 추출 ${n.toLocaleString('ko-KR')}회`;
+            elStat.hidden = false;
+        } catch (e) {
+            console.warn('[Landing] 누적 기록 수를 불러오지 못했습니다.', e);
+        }
+    })();
 
     const btnGetStarted = document.getElementById('btn-get-started');
     if (btnGetStarted) {
-        btnGetStarted.addEventListener('click', async () => {
+        btnGetStarted.addEventListener('click', async (e) => {
+            // 다른 CTA들은 이 버튼의 .click()으로 프록시된다(인라인 스크립트).
+            // 스크립트가 만든 클릭은 isTrusted가 false라, 이 조건 하나로 히어로에서
+            // 직접 누른 경우만 골라낸다 — 없으면 nav/final 클릭이 hero로 이중 집계된다.
+            if (e.isTrusted) {
+                track('cta_click', { location: 'hero', signed_in: !!auth.currentUser });
+            }
             if (auth.currentUser) {
                 window.location.href = 'app.html';
                 return;
@@ -34,79 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.location.href = 'app.html';
                 }
             }
-        });
-    }
-
-    // ====== Three.js 3D Background (선택적 - 실패해도 위 기능에 영향 없음) ======
-    import('three').then((THREE) => {
-        initThree(THREE);
-    }).catch((e) => {
-        console.warn('[Landing] Three.js 로드 실패, 3D 배경 없이 계속합니다.', e);
-        const canvas = document.getElementById('three-canvas');
-        if (canvas) canvas.style.display = 'none';
-    });
-
-    function initThree(THREE) {
-        const container = document.getElementById('three-canvas');
-        if (!container) return;
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        container.appendChild(renderer.domElement);
-
-        const geometry = new THREE.IcosahedronGeometry(1, 4);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0x3d2b1f,
-            roughness: 0.7,
-            metalness: 0.2,
-            flatShading: false
-        });
-
-        const bean = new THREE.Mesh(geometry, material);
-        bean.scale.set(1.5, 0.9, 1.1);
-        scene.add(bean);
-
-        const creaseGeo = new THREE.TorusGeometry(1, 0.02, 16, 100, Math.PI);
-        const creaseMat = new THREE.MeshBasicMaterial({ color: 0x2a1e16 });
-        const crease = new THREE.Mesh(creaseGeo, creaseMat);
-        crease.rotation.x = Math.PI / 2;
-        crease.position.y = 0.45;
-        bean.add(crease);
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-
-        const pointLight = new THREE.PointLight(0xd4af37, 2, 10);
-        pointLight.position.set(2, 3, 4);
-        scene.add(pointLight);
-
-        camera.position.z = 5;
-
-        const mouse = { x: 0, y: 0 };
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-        });
-
-        const animate = () => {
-            requestAnimationFrame(animate);
-            bean.rotation.y += 0.005;
-            bean.rotation.x += (mouse.y * 0.5 - bean.rotation.x) * 0.05;
-            bean.rotation.y += (mouse.x * 0.5 - bean.rotation.y) * 0.05;
-            bean.position.y = Math.sin(Date.now() * 0.001) * 0.2;
-            renderer.render(scene, camera);
-        };
-
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     }
 });

@@ -934,6 +934,18 @@ if (isDemo) {
                         allRecipes.push({ id: d.id, ...data });
                     });
 
+                    // 랜딩의 사회적 증거용 공개 집계. recipes 자체는 비공개라
+                    // 익명 방문자가 셀 수 없으므로, 이미 전체를 읽은 여기서 숫자만 공개 문서에 남긴다.
+                    // 실패해도 대시보드는 그대로 동작해야 한다.
+                    try {
+                        await fb.setDoc(fb.doc(fb.db, 'public_stats', 'landing'), {
+                            recipeCount: allRecipes.length,
+                            updatedAt: new Date().toISOString()
+                        });
+                    } catch (statErr) {
+                        console.warn('public_stats 갱신 실패 (대시보드에는 영향 없음)', statErr);
+                    }
+
                     showDash();
                 } catch (err) {
                     const hint = document.createElement('code');

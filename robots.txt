@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# 운영자 계정만 열 수 있는 대시보드 — 색인될 이유가 없다.
+Disallow: /admin
+Disallow: /admin.html
+
+# 결제 결과 페이지는 쿼리스트링에만 의미가 있어 단독 색인은 무가치하다.
+Disallow: /pay-success
+Disallow: /pay-success.html
+Disallow: /pay-fail
+Disallow: /pay-fail.html
+
+Sitemap: https://note-my-coffee.web.app/sitemap.xml

@@ -150,6 +150,46 @@ The AI's workflow is iterative, transparent, and responsive to user input.
   4. **Remediation/Report:** If errors are found, AI attempts automatic fixes. If unsuccessful, it reports details to the user.
 
 
+# 취향 검사 추천 원두 링크 유지보수
+
+`index.html`의 취향 검사 섹션(`#quiz`)에는 프로필(A~D) 4종 × 상품 3개(컬리·홈바리스타클럽·네이버)의
+추천 원두 데이터(`RESULTS`)가 있다. `.github/workflows/bean-link-check.yml`이 매주 링크를 점검하고,
+죽은 링크가 있으면 Gemini가 이 규칙에 따라 대체 상품을 찾아 PR을 올린다.
+
+**교체 규칙**
+
+- 대체 상품은 반드시 **인지도 있는 국내 로스터리/브랜드**로 고른다
+  (예: 프릳츠, 커피리브레, 모모스커피, 테라로사, 앤트러사이트, 나무사이로, 센터커피, 빈브라더스, 블루보틀, 폴 바셋).
+- 취향 프로필과 맛 방향을 맞춘다: A 라이트·플로럴/산미, B 미디엄·밸런스, C 고소·초콜릿(라떼), D 다크·묵직.
+- 카드의 `name`(상품명)·`roaster`(로스터리 · 판매처)·`desc`(맛 설명)·`url`을 함께 고쳐 서로 어긋나지 않게 한다.
+- 시즌 한정·디카페인·드립백 상품은 피하고 스테디셀러 원두를 고른다.
+- 교체 URL은 커밋 전에 반드시 `curl`로 HTTP 200을 확인하고, `node scripts/check-bean-links.mjs`로 재검증한다.
+- `#quiz` 데이터 외의 코드는 수정하지 않는다.
+
+**상품 탐색 방법**
+
+- 컬리 — 게스트 토큰 발급 후 검색 API 사용, 상품 URL은 `https://www.kurly.com/goods/<no>`:
+
+  ```bash
+  TOKEN=$(curl -s -X POST https://api.kurly.com/v3/auth/guest -H "Content-Type: application/json" | jq -r .data.access_token)
+  curl -s -H "Authorization: Bearer $TOKEN" \
+    "https://api.kurly.com/search/v4/sites/market/normal-search?keyword=%EC%9B%90%EB%91%90&page=1"
+  # listSections[].data.items[] 의 no / name 사용
+  ```
+
+- 홈바리스타클럽 — 커피 카테고리 HTML에서 `goodsNo`와 상품명 추출,
+  상품 URL은 `https://www.homebaristashop.com/goods/goods_view.php?goodsNo=<번호>`:
+
+  ```bash
+  curl -s "https://www.homebaristashop.com/goods/goods_list.php?cateCd=003"
+  ```
+
+- 네이버 — 개별 스마트스토어 URL은 변동이 잦으므로 상품명 검색 URL을 유지한다:
+  `https://search.shopping.naver.com/search/all?query=<브랜드+상품명+원두>`
+
+**제휴 전환 예정**: 제휴(쇼핑 커넥트/링크프라이스) 승인 후에는 `url`이 제휴 딥링크로 바뀐다.
+그 경우에도 최종 도착 상품 페이지가 살아있는지가 판정 기준이며, 결과 하단 `.quiz-note` 고지 문구를 함께 관리한다.
+
 # Firebase MCP
 
 When requested for Firebase add the following the server configurations to .idx/mcp.json. Just add the following and don't add anything else.
