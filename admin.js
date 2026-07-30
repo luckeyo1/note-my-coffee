@@ -143,6 +143,25 @@ function aggregate(recipes, days) {
     }
 
     const users = new Set(valid.map((r) => r.userId).filter(Boolean));
+
+    // 활성화 → 유지 퍼널 (Firestore 부분 퍼널).
+    // 랜딩·CTA·가입 단계는 GA4에만 있어 여기서 못 그린다(docs/funnel.md 참고).
+    // Firestore recipes로 그릴 수 있는 건 '기록을 남긴 사용자'가 얼마나 깊이
+    // 정착하는가다 — 사용자별 기록 수로 단계를 나눈다. 각 단계는 앞 단계의
+    // 부분집합이라 반드시 단조 감소한다(진짜 퍼널). 선택한 기간으로 스코프된다.
+    const perUser = new Map();
+    for (const r of valid) {
+        if (!r.userId) continue;
+        perUser.set(r.userId, (perUser.get(r.userId) || 0) + 1);
+    }
+    const perUserCounts = [...perUser.values()];
+    const funnel = [
+        { label: '기록 사용자', hint: '1건 이상 저장', min: 1 },
+        { label: '재기록', hint: '2건 이상 — 다시 돌아옴', min: 2 },
+        { label: '정착', hint: '5건 이상 — 습관화', min: 5 },
+        { label: '헤비 유저', hint: '10건 이상', min: 10 },
+    ].map((s) => ({ ...s, users: perUserCounts.filter((c) => c >= s.min).length }));
+
     const todayK = dayKey(new Date());
     const today = valid.filter((r) => dayKey(new Date(r.date)) === todayK).length;
 
@@ -181,6 +200,7 @@ function aggregate(recipes, days) {
         total: valid.length,
         series: [...byDay.entries()].map(([key, count]) => ({ key, count })),
         users: users.size,
+        funnel,
         today,
         avgRating,
         ratingCounts,
@@ -674,6 +694,108 @@ function renderBeans(wrap, beans) {
     wrap.appendChild(tip);
 }
 
+/* ──────────────────── chart: 활성화·유지 퍼널 ──────────────────── */
+
+function renderFunnel(wrap, funnel) {
+    clear(wrap);
+    const top = funnel[0] ? funnel[0].users : 0;
+    if (!top) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = '기록을 남긴 사용자가 아직 없습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const W = Math.max(320, wrap.clientWidth || 640);
+    const labelW = Math.min(150, Math.max(96, W * 0.24));
+    const valueW = 96;
+    const BAR = 26;
+    const ROW = 52;
+    const H = funnel.length * ROW + 8;
+    const pw = W - labelW - valueW - 12;
+    const R = 5;
+
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
+    s.setAttribute('aria-label', '활성화·유지 퍼널 — 사용자별 기록 깊이');
+
+    const tip = document.createElement('div');
+    tip.className = 'tip';
+
+    funnel.forEach((stage, i) => {
+        const cy = i * ROW + ROW / 2;
+        // 막대 길이는 최상단(기록 사용자) 대비 비율 — 100%에서 좁아지는 퍼널
+        const share = stage.users / top;
+        const w = Math.max(2, share * pw);
+        const y0 = cy - BAR / 2;
+        const pctTop = Math.round(share * 100);
+        // 직전 단계 대비 전환율 — 어디서 사람이 빠지는지
+        const prev = i > 0 ? funnel[i - 1].users : stage.users;
+        const stepPct = prev ? Math.round((stage.users / prev) * 100) : 100;
+
+        const name = svg('text', { x: labelW - 12, y: cy - 1, 'text-anchor': 'end', 'font-size': 12.5 });
+        name.style.fill = cssVar('--ink-2');
+        name.textContent = stage.label;
+        s.appendChild(name);
+
+        const sub = svg('text', { x: labelW - 12, y: cy + 14, 'text-anchor': 'end', 'font-size': 10.5 });
+        sub.style.fill = cssVar('--muted');
+        sub.textContent = stage.hint;
+        s.appendChild(sub);
+
+        const rr = Math.min(R, w);
+        const path = `M${labelW},${y0} H${labelW + w - rr} A${rr},${rr} 0 0 1 ${labelW + w},${y0 + rr} V${y0 + BAR - rr} A${rr},${rr} 0 0 1 ${labelW + w - rr},${y0 + BAR} H${labelW} Z`;
+        const bar = svg('path', { d: path });
+        bar.style.fill = cssVar('--series-1');
+        // 단계가 깊어질수록 옅게 — 좁아지는 퍼널의 시각적 신호
+        bar.style.opacity = (1 - i * 0.16).toFixed(2);
+        s.appendChild(bar);
+
+        // 값: 사용자 수 + 최상단 대비 %
+        const v = svg('text', { x: labelW + w + 10, y: cy - 1, 'font-size': 12.5, 'font-weight': 600 });
+        v.style.fill = cssVar('--ink');
+        v.style.fontVariantNumeric = 'tabular-nums';
+        v.textContent = `${fmt(stage.users)}명 · ${pctTop}%`;
+        s.appendChild(v);
+
+        // 직전 단계 대비 전환(첫 단계 제외) — 이탈 지점 판독
+        if (i > 0) {
+            const step = svg('text', { x: labelW + w + 10, y: cy + 14, 'font-size': 10.5 });
+            step.style.fill = cssVar('--muted');
+            step.style.fontVariantNumeric = 'tabular-nums';
+            step.textContent = `직전 대비 ${stepPct}%`;
+            s.appendChild(step);
+        }
+
+        const hit = svg('rect', { x: 0, y: cy - ROW / 2, width: W, height: ROW, fill: 'transparent' });
+        hit.style.cursor = 'pointer';
+        hit.addEventListener('pointerenter', () => {
+            clear(tip);
+            const head = document.createElement('div');
+            head.className = 'tip-head';
+            head.textContent = stage.label;
+            const row = document.createElement('div');
+            row.className = 'tip-row';
+            const key = document.createElement('span');
+            key.className = 'tip-key';
+            key.style.background = cssVar('--series-1');
+            const val = document.createElement('span');
+            val.className = 'tip-val';
+            val.textContent = `${fmt(stage.users)}명 (전체의 ${pctTop}%${i > 0 ? `, 직전 대비 ${stepPct}%` : ''})`;
+            row.append(key, val);
+            tip.append(head, row);
+            tip.classList.add('on');
+            tip.style.left = Math.min(labelW + 10, W - 200) + 'px';
+            tip.style.top = Math.max(0, cy - 46) + 'px';
+        });
+        hit.addEventListener('pointerleave', () => tip.classList.remove('on'));
+        s.appendChild(hit);
+    });
+
+    wrap.appendChild(s);
+    wrap.appendChild(tip);
+}
+
 /* ────────────────────────── table views ────────────────────────── */
 
 function buildTable(cols, rows) {
@@ -755,6 +877,9 @@ function render() {
     renderRatings(el('rating-wrap'), a.ratingCounts);
     renderBeans(el('beans-wrap'), a.beans);
 
+    el('funnel-sub').textContent = `${label} · 기록을 남긴 사용자가 얼마나 정착하는가`;
+    renderFunnel(el('funnel-wrap'), a.funnel);
+
     // 표 뷰 — 모든 차트는 표로도 읽을 수 있어야 한다
     clear(el('tv-trend'));
     el('tv-trend').appendChild(buildTable(
@@ -782,6 +907,23 @@ function render() {
     el('tv-beans').appendChild(buildTable(
         [{ key: 'n', label: '원두' }, { key: 'c', label: '기록 수', num: true }],
         a.beans.map((b) => ({ n: b.name, c: fmt(b.count) }))
+    ));
+
+    clear(el('tv-funnel'));
+    const funnelTop = a.funnel[0] ? a.funnel[0].users : 0;
+    el('tv-funnel').appendChild(buildTable(
+        [
+            { key: 's', label: '단계' }, { key: 'u', label: '사용자', num: true },
+            { key: 'pt', label: '전체 대비', num: true }, { key: 'sp', label: '직전 대비', num: true },
+        ],
+        a.funnel.map((stage, i) => ({
+            s: `${stage.label} (${stage.hint})`,
+            u: fmt(stage.users),
+            pt: (funnelTop ? Math.round((stage.users / funnelTop) * 100) : 0) + '%',
+            sp: i === 0
+                ? '—'
+                : (a.funnel[i - 1].users ? Math.round((stage.users / a.funnel[i - 1].users) * 100) : 0) + '%',
+        }))
     ));
 
     // 최근 기록

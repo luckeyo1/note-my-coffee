@@ -378,6 +378,19 @@
         <div class="tableview" id="tv-trend"></div>
     </section>
 
+    <!-- 활성화·유지 퍼널: Firestore로 그릴 수 있는 부분 퍼널.
+         랜딩·CTA·가입 단계는 GA4에만 있다(docs/funnel.md). 여기서는 기록을 남긴
+         사용자가 얼마나 깊이 정착하는지를 사용자별 기록 수로 본다. -->
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">활성화 · 유지 퍼널</h2>
+            <button class="card-toggle" type="button" data-tv="tv-funnel">표로 보기</button>
+        </div>
+        <p class="card-sub" id="funnel-sub">기록을 남긴 사용자가 얼마나 정착하는가</p>
+        <div class="chart-wrap" id="funnel-wrap"></div>
+        <div class="tableview" id="tv-funnel"></div>
+    </section>
+
     <div class="grid-2">
         <!-- 모드 분포: 2개 시리즈 → 범례 + 직접 라벨 -->
         <section class="card">
