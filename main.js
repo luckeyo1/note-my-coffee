@@ -152,10 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
             originTags: ["Ethiopia", "Colombia", "Brazil", "Kenya", "Guatemala", "Indonesia", "Costa Rica", "Panama"],
             tasteTags: ["Floral", "Fruity", "Nutty", "Chocolaty", "Sweet", "Acidic", "Bitter", "Spicy"],
             obSteps: [
-                { icon: "⚡", title: "Pick Your Brew Mode", desc: "Start with Espresso or Hand Drip — pro ranges and guides adapt to your method." },
-                { icon: "🎚️", title: "Dial In the Variables", desc: "Set dosing, water temp, time and yield with the sliders. Tap ⓘ for the SCA guide, or time your shot with the built-in stopwatch." },
-                { icon: "✦", title: "Log the Recipe", desc: "Hit LOG THIS RECIPE and add bean info & tasting notes. Your first cup logs without an account — sign in with Google to keep every brew in the cloud." },
-                { icon: "📖", title: "Review & Share", desc: "Revisit every brew in your LOG BOOK and share recipes as cards. You can reopen this guide anytime with the ? button up top." }
+                { title: "Pick Your Brew Mode", desc: "Start with Espresso or Hand Drip — pro ranges and guides adapt to your method." },
+                { title: "Dial In the Variables", desc: "Set dosing, water temp, time and yield with the sliders. Tap ⓘ for the SCA guide, or time your shot with the built-in stopwatch." },
+                { title: "Log the Recipe", desc: "Hit LOG THIS RECIPE and add bean info & tasting notes. Your first cup logs without an account — sign in with Google to keep every brew in the cloud." },
+                { title: "Review & Share", desc: "Revisit every brew in your LOG BOOK and share recipes as cards. You can reopen this guide anytime with the ? button up top." }
             ],
             obSkip: "Skip",
             obNext: "Next →",
@@ -257,10 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
             originTags: ["에티오피아", "콜롬비아", "브라질", "케냐", "과테말라", "인도네시아", "코스타리카", "파나마"],
             tasteTags: ["플로럴", "프루티", "고소한", "초콜릿", "달콤한", "산미있는", "쌉쌀한", "스파이시"],
             obSteps: [
-                { icon: "⚡", title: "추출 방식 선택", desc: "에스프레소와 핸드드립 중 오늘의 추출 방식을 고르세요. 프로 범위와 가이드가 방식에 맞춰 바뀝니다." },
-                { icon: "🎚️", title: "변수 조절", desc: "도징·물 온도·추출 시간·추출량을 슬라이더로 맞추세요. ⓘ 버튼에서 SCA 가이드를 보고, 내장 스톱워치로 추출 시간을 잴 수 있어요." },
-                { icon: "✦", title: "레시피 기록", desc: "'레시피 기록하기'를 누르고 원두 정보와 테이스팅 노트를 더하세요. 첫 잔은 로그인 없이 기록되고, 구글 로그인하면 모든 기록이 클라우드에 보관됩니다." },
-                { icon: "📖", title: "로그북 & 공유", desc: "기록한 레시피는 로그북에서 다시 보고 카드로 공유할 수 있어요. 이 안내는 상단 ? 버튼으로 언제든 다시 볼 수 있습니다." }
+                { title: "추출 방식 선택", desc: "에스프레소와 핸드드립 중 오늘의 추출 방식을 고르세요. 프로 범위와 가이드가 방식에 맞춰 바뀝니다." },
+                { title: "변수 조절", desc: "도징·물 온도·추출 시간·추출량을 슬라이더로 맞추세요. ⓘ 버튼에서 SCA 가이드를 보고, 내장 스톱워치로 추출 시간을 잴 수 있어요." },
+                { title: "레시피 기록", desc: "'레시피 기록하기'를 누르고 원두 정보와 테이스팅 노트를 더하세요. 첫 잔은 로그인 없이 기록되고, 구글 로그인하면 모든 기록이 클라우드에 보관됩니다." },
+                { title: "로그북 & 공유", desc: "기록한 레시피는 로그북에서 다시 보고 카드로 공유할 수 있어요. 이 안내는 상단 ? 버튼으로 언제든 다시 볼 수 있습니다." }
             ],
             obSkip: "건너뛰기",
             obNext: "다음 →",
@@ -965,10 +965,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const OB_SEEN_KEY = 'nmcGuideSeenV1';
     const ob = { step: 0 };
 
+    // 온보딩 아이콘. 원래 ⚡ 🎚️ ✦ 📖 를 텍스트로 넣었는데 두 가지 문제가 있었다:
+    // ✦(U+2726)은 이모지가 아니라 이 프로젝트가 싣는 웹폰트에 없는 글리프이고
+    // (랜딩이 같은 이유로 이미 SVG로 뺐다), 🎚️는 플랫폼마다 모양이 크게 달라
+    // 무엇인지 알아보기 어렵다. 앱의 다른 아이콘과 같은 인라인 SVG로 통일한다.
+    // 순서는 i18n obSteps와 같다: 모드 선택 → 변수 조절 → 기록 → 로그북/공유.
+    const OB_ICONS = [
+        // 번개 (에스프레소/모드)
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg>',
+        // 슬라이더 (변수 조절)
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11M18.5 7H21M3 17h5M12.5 17H21"/><circle cx="16.2" cy="7" r="2.3"/><circle cx="10.2" cy="17" r="2.3"/></svg>',
+        // 북마크 + 체크 (레시피 기록)
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.8h12v17l-6-4.2-6 4.2z"/><path d="M9.2 10.2l2.2 2.2 3.6-3.9"/></svg>',
+        // 펼친 책 (로그북)
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5v14"/><path d="M12 6.5C9.6 4.6 6 4 3 4.5v14c3-.5 6.6.1 9 2"/><path d="M12 6.5c2.4-1.9 6-2.5 9-2v14c-3-.5-6.6.1-9 2"/></svg>',
+    ];
+
     const renderObStep = () => {
         const t = i18n[currentLang];
         const s = t.obSteps[ob.step];
-        el.obIcon.textContent = s.icon;
+        el.obIcon.innerHTML = OB_ICONS[ob.step] || '';
         el.obTitle.textContent = s.title;
         el.obDesc.textContent = s.desc;
         el.obSkip.textContent = t.obSkip;

@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Note My Coffee | Logbook</title>
+    <meta name="description" content="원두별·날짜별로 쌓인 추출 기록. 원두가 바뀌는 날 지난 성공 세팅을 그대로 꺼내 쓰고, 레시피를 카드로 공유합니다.">
+
+    <!-- 로그북은 개인 기록 화면이라 색인 대상이 아니지만, 링크를 붙였을 때
+         회색 빈 박스로 뜨지 않도록 공유 카드는 채워둔다. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Note My Coffee">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:url" content="https://note-my-coffee.web.app/logbook">
+    <meta property="og:title" content="Note My Coffee — 레시피 로그북">
+    <meta property="og:description" content="원두별·날짜별로 쌓인 추출 기록이 다음 다이얼링의 출발점이 됩니다.">
+    <meta property="og:image" content="https://note-my-coffee.web.app/og-image.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Note My Coffee — 어제의 완벽한 한 잔을, 오늘 그대로.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Note My Coffee — 레시피 로그북">
+    <meta name="twitter:description" content="원두별·날짜별로 쌓인 추출 기록이 다음 다이얼링의 출발점이 됩니다.">
+    <meta name="twitter:image" content="https://note-my-coffee.web.app/og-image.png">
+
     <meta name="theme-color" content="#1C1410">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
@@ -15,7 +35,9 @@
     <script src="boot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+    <!-- Cormorant/DM Sans는 라틴 전용이라 한글이 OS 폴백으로 떨어진다(랜딩과 같은 이유).
+         Gowun Batang(제목)·Noto Sans KR(본문)을 함께 실어 한글까지 의도한 서체로 렌더한다. -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>

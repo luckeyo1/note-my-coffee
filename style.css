@@ -29,9 +29,9 @@
     --ink-dark: #000000;
     --bg-deep: #0D0B0A;
     --font-brand: 'Cormorant Garamond', serif;
-    --font-display: 'Cormorant Garamond', Georgia, serif;
-    --font-body: 'DM Sans', system-ui, sans-serif;
-    --font-mono: 'DM Mono', monospace;
+    --font-display: 'Cormorant Garamond', 'Gowun Batang', Georgia, serif;
+    --font-body: 'DM Sans', 'Noto Sans KR', system-ui, sans-serif;
+    --font-mono: 'DM Mono', 'Noto Sans KR', monospace;
     --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     --spring: 0.5s cubic-bezier(0.34, 1.4, 0.4, 1);
 }
@@ -751,6 +751,16 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
     color: #fff;
 }
 
+.no-recipes-art {
+    width: 96px;
+    height: auto;
+    display: block;
+    margin: 0 auto 18px;
+    color: var(--gold);
+    opacity: 0.55;
+}
+.no-recipes-text { margin: 0; }
+
 .no-recipes-message {
     grid-column: 1 / -1;
     text-align: center;
@@ -1102,7 +1112,10 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 .ob-dot.active { background: var(--gold); border-color: var(--gold); transform: scale(1.25); }
 .ob-dot.done { background: var(--gold-border); border-color: var(--gold-border); }
 
-.ob-icon { font-size: 40px; line-height: 1; margin-bottom: 16px; }
+/* 인라인 SVG 아이콘(main.js의 OB_ICONS). 텍스트 글리프였을 때의 font-size 대신
+   svg 크기로 제어한다. */
+.ob-icon { line-height: 1; margin-bottom: 16px; color: var(--gold); }
+.ob-icon svg { width: 40px; height: 40px; display: block; margin: 0 auto; }
 
 .onboarding-content h3 { font-family: var(--font-display); font-size: 26px; color: var(--ink); margin-bottom: 10px; }
 

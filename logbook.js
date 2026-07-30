@@ -85,8 +85,26 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.recipeCardsGrid.innerHTML = '';
 
         if (!recipesCache.length) {
-            elements.recipeCardsGrid.innerHTML =
-                `<p class="no-recipes-message">${i18n[currentLang].noRecipes}</p>`;
+            // 빈 로그북. 앱은 크림색 라이트 테마라 랜딩의 다크 사진이 맞지 않아
+            // 앱 팔레트의 골드 라인아트(인라인 SVG)로 둔다 — 요청 0건이고 어느
+            // 화면 폭에서도 선명하다.
+            elements.recipeCardsGrid.innerHTML = `
+                <div class="no-recipes-message">
+                    <svg class="no-recipes-art" viewBox="0 0 120 96" fill="none" aria-hidden="true"
+                         stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- 펼친 노트 -->
+                        <path d="M60 26v56"/>
+                        <path d="M60 26C50 19 34 17 22 19v56c12-2 28 0 38 7"/>
+                        <path d="M60 26c10-7 26-9 38-7v56c-12-2-28 0-38 7"/>
+                        <!-- 빈 줄 (기록되지 않은 상태) -->
+                        <path d="M31 33h18M31 43h18M31 53h13" opacity="0.42"/>
+                        <path d="M71 33h18M71 43h18M71 53h13" opacity="0.42"/>
+                        <!-- 원두 한 알 -->
+                        <ellipse cx="60" cy="12" rx="9" ry="6" transform="rotate(-18 60 12)"/>
+                        <path d="M53 14c3-4 11-6 14-4" opacity="0.55"/>
+                    </svg>
+                    <p class="no-recipes-text">${i18n[currentLang].noRecipes}</p>
+                </div>`;
             return;
         }
 
@@ -213,12 +231,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillStyle = SURF;
         ctx.fillRect(0, 0, W, 48);
         ctx.fillStyle = GOLD;
-        ctx.font = '13px monospace';
+        ctx.font = "13px 'DM Mono', 'Noto Sans KR', monospace";
         ctx.fillText('☕  NOTE MY COFFEE', 22, 30);
 
         // Mode badge
         const mode  = modeLabel(recipe.mode);
-        ctx.font    = 'bold 9px monospace';
+        ctx.font    = "bold 9px 'DM Mono', 'Noto Sans KR', monospace";
         const modeW = ctx.measureText(mode).width + 20;
         ctx.fillStyle = 'rgba(200,169,110,0.14)';
         _rrect(ctx, W - 22 - modeW, 14, modeW, 20, 3);
@@ -228,13 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Bean name
         ctx.fillStyle = TEXT;
-        ctx.font = 'bold 26px Georgia, serif';
+        ctx.font = "bold 26px Georgia, 'Gowun Batang', serif";
         ctx.fillText(_trunc(recipe.beanName || 'Unknown Bean', 34), 22, 92);
 
         // Origin line
         const sub = [mode, recipe.origin].filter(Boolean).join(' · ');
         ctx.fillStyle = SUB;
-        ctx.font      = '12px monospace';
+        ctx.font      = "12px 'DM Mono', 'Noto Sans KR', monospace";
         ctx.fillText(sub, 22, 112);
 
         // Divider
@@ -251,10 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
         params.forEach(({ k, v }, i) => {
             const x = 22 + i * colW;
             ctx.fillStyle = GOLD;
-            ctx.font = 'bold 20px monospace';
+            ctx.font = "bold 20px 'DM Mono', 'Noto Sans KR', monospace";
             ctx.fillText(v, x, 170);
             ctx.fillStyle = MUTED;
-            ctx.font = '9px monospace';
+            ctx.font = "9px 'DM Mono', 'Noto Sans KR', monospace";
             ctx.fillText(k, x, 186);
         });
 
@@ -264,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Taste notes
         if (recipe.tasteNotes) {
             ctx.fillStyle = SUB;
-            ctx.font = '13px sans-serif';
+            ctx.font = "13px 'DM Sans', 'Noto Sans KR', sans-serif";
             ctx.fillText('✦  ' + _trunc(recipe.tasteNotes, 56), 22, 228);
         }
 
@@ -280,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         _rrect(ctx, 22, 272, ok ? 90 : 64, 22, 3);
         ctx.fill();
         ctx.fillStyle = ok ? '#4ADE80' : '#F87171';
-        ctx.font = 'bold 10px monospace';
+        ctx.font = "bold 10px 'DM Mono', 'Noto Sans KR', monospace";
         ctx.fillText(ok ? '✓  SUCCESS' : '✗  FAIL', 32, 287);
 
         // Bottom divider
@@ -288,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Footer
         ctx.fillStyle = MUTED;
-        ctx.font = '11px monospace';
+        ctx.font = "11px 'DM Mono', 'Noto Sans KR', monospace";
         ctx.fillText('note-my-coffee.web.app', 22, 344);
         const ds = new Date().toLocaleDateString('ko-KR');
         ctx.fillText(ds, W - 22 - ctx.measureText(ds).width, 344);
@@ -343,16 +361,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const GOLD = '#C8A96E', TEXT = '#F5F0E8', SUB = '#D8CFC4', MUTED = '#A89E92';
 
-        // ── Background: photo (cover-fit) or gradient fallback ──────────
+        // ── Background: photo → brand plate → gradient ──────────────────
+        // 사진 없는 레시피도 이 스타일을 고를 수 있어서, 그 경우엔 랜딩과 같은
+        // 다크 플레이트를 깔아 밋밋한 그라데이션 한 장으로 나가지 않게 한다.
+        // 플레이트도 못 받으면(오프라인 등) 원래의 그라데이션으로 떨어진다.
         let hasPhoto = false;
         if (recipe.imageUrl) {
             try { _drawCover(ctx, await _loadImage(recipe.imageUrl), W, H); hasPhoto = true; }
-            catch (e) { /* fall through to gradient */ }
+            catch (e) { /* fall through */ }
         }
         if (!hasPhoto) {
             const g = ctx.createLinearGradient(0, 0, W, H);
             g.addColorStop(0, '#2A2320'); g.addColorStop(1, '#0F0D0C');
             ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+            try { _drawCover(ctx, await _loadImage('img/hero-plate.webp'), W, H); }
+            catch (e) { /* 그라데이션만으로 충분하다 */ }
         }
 
         // ── Legibility scrims (top + heavy bottom) ──────────────────────
@@ -372,12 +395,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Brand (top-left) ────────────────────────────────────────────
         shadowOn();
         ctx.fillStyle = GOLD;
-        ctx.font = '500 30px monospace';
+        ctx.font = "500 30px 'DM Mono', 'Noto Sans KR', monospace";
         ctx.fillText('☕  NOTE MY COFFEE', 64, 84);
 
         // Mode badge (top-right)
         const mode  = modeLabel(recipe.mode);
-        ctx.font    = 'bold 22px monospace';
+        ctx.font    = "bold 22px 'DM Mono', 'Noto Sans KR', monospace";
         const modeW = ctx.measureText(mode).width + 44;
         shadowOff();
         ctx.fillStyle = 'rgba(200,169,110,0.18)';
@@ -388,12 +411,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Bean name + origin (bottom block) ───────────────────────────
         shadowOn();
         ctx.fillStyle = TEXT;
-        ctx.font = 'bold 72px Georgia, serif';
+        ctx.font = "bold 72px Georgia, 'Gowun Batang', serif";
         ctx.fillText(_trunc(recipe.beanName || 'Unknown Bean', 22), 64, 870);
 
         const sub = [mode, recipe.origin].filter(Boolean).join('  ·  ');
         ctx.fillStyle = SUB;
-        ctx.font = '30px monospace';
+        ctx.font = "30px 'DM Mono', 'Noto Sans KR', monospace";
         ctx.fillText(_trunc(sub, 42), 64, 916);
         shadowOff();
 
@@ -411,10 +434,10 @@ document.addEventListener('DOMContentLoaded', () => {
         params.forEach(({ k, v }, i) => {
             const x = 64 + i * colW;
             ctx.fillStyle = GOLD;
-            ctx.font = 'bold 52px monospace';
+            ctx.font = "bold 52px 'DM Mono', 'Noto Sans KR', monospace";
             ctx.fillText(v, x, 1052);
             ctx.fillStyle = MUTED;
-            ctx.font = '22px monospace';
+            ctx.font = "22px 'DM Mono', 'Noto Sans KR', monospace";
             ctx.fillText(k, x, 1088);
         });
         shadowOff();
@@ -425,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (recipe.tasteNotes) {
             shadowOn();
             ctx.fillStyle = SUB;
-            ctx.font = '32px sans-serif';
+            ctx.font = "32px 'DM Sans', 'Noto Sans KR', sans-serif";
             ctx.fillText('✦  ' + _trunc(recipe.tasteNotes, 40), 64, 1190);
             shadowOff();
         }
@@ -440,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ok    = !!recipe.success;
         const bText = ok ? '✓  SUCCESS' : '✗  FAIL';
-        ctx.font    = 'bold 24px monospace';
+        ctx.font    = "bold 24px 'DM Mono', 'Noto Sans KR', monospace";
         const bW    = ctx.measureText(bText).width + 40;
         ctx.fillStyle = ok ? 'rgba(74,222,128,0.16)' : 'rgba(248,113,113,0.16)';
         _rrect(ctx, W - 64 - bW, 1232, bW, 44, 8); ctx.fill();
@@ -449,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ── Footer ──────────────────────────────────────────────────────
         ctx.fillStyle = MUTED;
-        ctx.font = '24px monospace';
+        ctx.font = "24px 'DM Mono', 'Noto Sans KR', monospace";
         ctx.fillText('note-my-coffee.web.app', 64, 1318);
         const ds = new Date().toLocaleDateString('ko-KR');
         ctx.fillText(ds, W - 64 - ctx.measureText(ds).width, 1318);
@@ -458,10 +481,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Build the canvas for a given style ('card' = compact, 'story' = photo bg).
-    function renderShareCanvas(recipe, style) {
+    // 캔버스는 웹폰트가 로드되기 전에 그리면 조용히 폴백 서체로 그린다. 게다가
+    // 구글 폰트는 한글을 unicode-range 서브셋으로 쪼개 서빙하므로, load()에 그릴
+    // 텍스트를 함께 넘겨야 그 글자를 담은 서브셋까지 받아온다 — 원두명처럼 페이지
+    // 어디에도 없던 글자가 두부(□)로 찍히는 걸 막는다.
+    async function waitForCardFonts(recipe) {
+        if (!document.fonts) return;
+        const text = [recipe.beanName, recipe.origin, recipe.tasteNotes, recipe.weather,
+                      i18n.ko.success, i18n.ko.fail].filter(Boolean).join(' ');
+        const faces = [
+            "bold 72px 'Gowun Batang'", "bold 26px 'Gowun Batang'",
+            "500 30px 'DM Mono'", "24px 'DM Mono'",
+            "32px 'DM Sans'", "400 20px 'Noto Sans KR'", "700 20px 'Noto Sans KR'",
+        ];
+        try {
+            await Promise.all(faces.map((f) => document.fonts.load(f, text)));
+            await document.fonts.ready;
+        } catch (e) {
+            console.warn('Share card fonts failed to load; drawing with fallbacks.', e);
+        }
+    }
+
+    async function renderShareCanvas(recipe, style) {
+        await waitForCardFonts(recipe);
         return style === 'story'
             ? drawStoryCard(recipe)              // async → Promise<canvas>
-            : Promise.resolve(drawShareCard(recipe));
+            : drawShareCard(recipe);
     }
 
     async function shareRecipe(recipe) {
