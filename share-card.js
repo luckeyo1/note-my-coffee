@@ -53,17 +53,28 @@ async function probeArt(base) {
     return null;
 }
 
-/** 웹폰트가 실제로 로드된 뒤에 그려야 한다 — 아니면 조용히 폴백 서체로 그려진다. */
-async function waitForFonts() {
+/**
+ * 웹폰트가 실제로 로드된 뒤에 그려야 한다 — 아니면 조용히 폴백 서체로 그려진다.
+ *
+ * 중요: document.fonts.load()에 **그릴 문자열을 반드시 함께 넘겨야 한다.**
+ * 구글 폰트는 한글을 unicode-range 서브셋 수십 개로 쪼개 서빙하는데, 텍스트
+ * 인자가 없으면 라틴 서브셋만 받아온다. 그래서 페이지 어디에도 없는 글자
+ * (예: "밸런스의 클래식"의 '밸')가 두부(□)로 찍혔다. 텍스트를 넘기면 그 글자를
+ * 담은 서브셋까지 받아온다.
+ *
+ * @param {string[]} texts 이 카드에 실제로 그릴 문자열들
+ */
+async function waitForFonts(texts) {
     if (!document.fonts) return;
-    const faces = [
-        "700 64px 'Gowun Batang'",
-        "400 22px 'DM Mono'",
-        "500 24px 'DM Sans'",
-        "400 24px 'Noto Sans KR'",
+    const all = texts.join(' ');
+    const jobs = [
+        ["700 64px 'Gowun Batang'", all],
+        ["400 22px 'DM Mono'", all],
+        ["500 26px 'DM Sans'", all],
+        ["400 20px 'Noto Sans KR'", all],
     ];
     try {
-        await Promise.all(faces.map((f) => document.fonts.load(f)));
+        await Promise.all(jobs.map(([f, t]) => document.fonts.load(f, t)));
         await document.fonts.ready;
     } catch (e) {
         // 폰트를 못 받아도 카드는 폴백 서체로 나가는 게 낫다.
@@ -219,7 +230,10 @@ function wrapText(ctx, text, maxWidth) {
  * @returns {Promise<Blob>}
  */
 export async function buildQuizShareCard({ profile, title, tags, flavor }) {
-    await waitForFonts();
+    await waitForFonts([
+        title, ...tags, ...FLAVOR_AXES,
+        'YOUR COFFEE PROFILE', 'Note My Coffee', 'note-my-coffee.web.app',
+    ]);
     const art = await loadArt('img/profile-' + String(profile).toLowerCase());
 
     const canvas = document.createElement('canvas');
@@ -262,7 +276,9 @@ export async function buildQuizShareCard({ profile, title, tags, flavor }) {
 
     // 프로필 이름 — 길면 두 줄로 흘린다.
     ctx.fillStyle = C.text;
-    ctx.font = "700 64px 'Gowun Batang', 'Cormorant Garamond', Georgia, serif";
+    // Gowun Batang에 없는 글자가 나와도 두부가 아니라 실제 한글이 찍히도록
+    // 전역 커버리지가 있는 Noto Sans KR을 폴백에 둔다(Cormorant는 라틴 전용이라 무의미).
+    ctx.font = "700 64px 'Gowun Batang', 'Noto Sans KR', Georgia, serif";
     ctx.textAlign = 'center';
     wrapText(ctx, title, SIZE - 200).forEach((line) => {
         ctx.fillText(line, cx, y);

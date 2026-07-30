@@ -2481,7 +2481,9 @@
             const key = ['A', 'B', 'C', 'D'].reduce((best, k) => (counts[k] || 0) > (counts[best] || 0) ? k : best, 'A');
             const r = RESULTS[key];
 
-            const artSrc = 'img/profile-' + key.toLowerCase() + '.png';
+            // 확장자는 share-card.js의 탐색 순서(webp 우선)와 맞춘다 — 어긋나면
+            // 공유 카드에는 아트가 뜨는데 결과 화면에는 안 뜨는 상태가 된다.
+            const artSrc = 'img/profile-' + key.toLowerCase() + '.webp';
             card.innerHTML =
                 '<div class="quiz-step">' +
                 '<img class="quiz-result-art" src="' + artSrc + '" alt="">' +
