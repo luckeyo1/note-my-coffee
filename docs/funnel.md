@@ -3,7 +3,8 @@
 수익화 로드맵의 계측 단계. Phase 0(커밋 `6800954`)에서 원시 GA4 이벤트를 앱 전반에
 붙였고, 이 문서는 **그 이벤트들을 하나의 전환 퍼널로 묶는 단일 진실 소스**다. GA4에서
 무엇을 단계로 보고 어디서 이탈을 읽어야 하는지, 각 단계가 어떤 이벤트로 측정되는지를
-정의한다.
+정의한다. 퍼널 단계가 아닌 진단용 이벤트까지 포함한 **전체 목록은
+[그 외 이벤트 — 진단·보조 계측](#그-외-이벤트--진단보조-계측)** 에 있다.
 
 > 이 문서는 내부 문서다. `firebase.json`이 `**/*.md`를 호스팅 배포에서 제외하므로
 > 공개 사이트에는 올라가지 않는다.
@@ -68,6 +69,80 @@
 | 결제 위젯 열기 | `support_open` | — | `pay.js` |
 | 결제 요청 | `support_pay_attempt` | `{amount}` | `pay.js` |
 | 결제 성공 | `support_pay_success` | `{amount, order_id}` | `pay-success.html` |
+
+---
+
+## 그 외 이벤트 — 진단·보조 계측
+
+퍼널 **단계는 아니지만** Phase 0에서 함께 붙인 이벤트들. 이탈 원인을 파고들거나
+기능별 사용도를 볼 때 쓴다. 위 퍼널 표와 이 표를 합친 것이 계측 전체다.
+
+**앱 사용 행동** — 어떤 기능이 실제로 쓰이는지. 기능 정리·우선순위 판단에 쓴다.
+
+| 이벤트 | 파라미터 | 발생 위치 |
+|--------|----------|-----------|
+| `mode_selected` | `{mode: espresso\|drip}` | `main.js` (모드 버튼 클릭) |
+| `stopwatch_applied` | `{mode}` | `main.js` (스톱워치 값을 레시피에 반영) |
+| `sca_guide_opened` | `{variable, mode}` | `main.js` (가이드를 **클릭으로 고정**한 경우만) |
+| `language_changed` | `{lang, page}` | `main.js`, `logbook.js` |
+
+**온보딩** — 첫 사용 경험이 활성화(6단계)로 이어지는지 보는 짝.
+
+| 이벤트 | 파라미터 | 발생 위치 |
+|--------|----------|-----------|
+| `onboarding_completed` | — | `main.js` |
+| `onboarding_skipped` | `{step}` | `main.js` — 몇 번째 화면에서 이탈했는지 |
+| `onboarding_reopened` | — | `main.js` (도움말 버튼) |
+
+**기록 관리** — 활성화 이후의 행동.
+
+| 이벤트 | 파라미터 | 발생 위치 |
+|--------|----------|-----------|
+| `recipe_deleted` | — | `logbook.js` |
+| `recipe_delete_failed` | — | `logbook.js` (삭제 반환값이 실패일 때) |
+| `recipe_share_opened` | — | `logbook.js` |
+
+**공유 유입** — 바이럴 루프의 착지 지점. 공유 링크로 들어온 사람이 실제로 저장까지
+갔는지를 본다. `recipe_share_opened`(내보내기)와 짝을 이룬다.
+
+| 이벤트 | 파라미터 | 발생 위치 |
+|--------|----------|-----------|
+| `shared_recipe_imported` | — | `logbook.js` |
+| `shared_recipe_import_failed` | — | `logbook.js` |
+
+**실패·이탈 신호** — 전환율이 떨어졌을 때 "사람이 안 온 것"과 "기능이 깨진 것"을
+가르는 데 쓴다. 이게 없으면 실패가 이탈로 오독된다.
+
+| 이벤트 | 파라미터 | 발생 위치 |
+|--------|----------|-----------|
+| `recipes_load_failed` | `{page}` | `main.js`, `logbook.js` |
+| `login_failed` | `{source, code}` | `main.js` — 사용자가 팝업을 직접 닫은 건 제외 |
+| `guest_gate_declined` | — | `main.js` — 게스트 게이트 **수락률의 반대편**(`guest_gate_shown`/`_accepted`와 한 세트) |
+
+**랜딩 상호작용**
+
+| 이벤트 | 파라미터 | 발생 위치 |
+|--------|----------|-----------|
+| `demo_step_click` | `{scene}` | `index.html` — 데모를 수동으로 넘긴 경우 |
+
+### 인벤토리 완전성 — 재감사할 때 주의할 함정
+
+현재 구현된 이벤트는 **총 36종**이다(퍼널 20종 + 위 16종).
+
+이벤트는 두 가지 형태로 방출된다. 코드를 훑어 목록을 만들 때 **두 번째를 빠뜨리면
+안 된다.**
+
+```js
+track('quiz_start');                                  // ① 정규 호출
+track(isNew ? 'sign_up' : 'login', { source });       // ② 삼항 분기
+```
+
+②를 놓치면 `sign_up` · `login` · `recipe_saved` · `recipe_save_failed` ·
+`recipe_deleted` · `recipe_delete_failed`가 **통째로 목록에서 사라진다** — 하필
+퍼널의 4·6단계 정점들이다. 실제로 이 문서의 초기 인벤토리가 그렇게 누락됐다.
+
+`page_view` · `session_start`는 GA4가 자동 발생시키므로 코드에 없는 게 정상이다.
+코드와 문서를 대조했을 때 **차이가 이 둘만 남으면 인벤토리는 완전하다.**
 
 ---
 
