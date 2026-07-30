@@ -197,5 +197,18 @@
         document.getElementById('val-order-id').textContent = params.get('orderId') || '—';
         document.getElementById('val-payment-key').textContent = params.get('paymentKey') || '—';
     </script>
+
+    <!-- 후원 퍼널의 마지막 단계. 이 페이지는 boot.js(클래식)만 실어 window.nmcTrack이
+         없으므로, track을 직접 import해 support_pay_success를 보낸다.
+         support_open → support_pay_attempt(pay.js) → support_pay_success 로 완결. -->
+    <script type="module">
+        import { track } from "./firebase-config.js";
+        const q = new URLSearchParams(window.location.search);
+        const amt = Number(q.get('amount'));
+        track('support_pay_success', {
+            amount: Number.isFinite(amt) && amt > 0 ? amt : undefined,
+            order_id: q.get('orderId') || undefined,
+        });
+    </script>
 </body>
 </html>

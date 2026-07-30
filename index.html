@@ -2114,6 +2114,31 @@
     );
     document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
+    // ── 섹션 도달 계측: 랜딩 어디까지 스크롤하다 이탈하는지(미드퍼널) ──
+    // 랜딩 상단→CTA 사이가 그동안 깜깜했다. 핵심 구간이 처음 뷰포트에 들어올 때
+    // 구간당 정확히 1회만 보낸다(발생 후 unobserve) — 무한 스크롤로 폭주하지 않게.
+    (() => {
+        // 퍼널 순서대로. 이름은 GA4에서 단계로 쓰므로 안정적으로 유지한다.
+        const SECTIONS = [
+            ['#story', 'story'], ['#demo', 'demo'], ['#quiz', 'quiz'],
+            ['#compare', 'compare'], ['#faq', 'faq'],
+            ['.final-cta', 'final_cta'], ['#support', 'support'],
+        ];
+        const sectionObserver = new IntersectionObserver((entries, obs) => {
+            entries.forEach((e) => {
+                if (!e.isIntersecting) return;
+                obs.unobserve(e.target);
+                window.nmcTrack?.('section_view', { id: e.target.dataset.funnelSection });
+            });
+        }, { threshold: 0.4 });
+        SECTIONS.forEach(([sel, name]) => {
+            const el = document.querySelector(sel);
+            if (!el) return;
+            el.dataset.funnelSection = name;
+            sectionObserver.observe(el);
+        });
+    })();
+
     // Secondary CTAs → primary.
     // 위치를 여기서 붙여 보내고, 히어로 버튼 쪽은 isTrusted로 프록시 클릭을 걸러낸다
     // (landing.js) — 그래서 한 번의 클릭이 한 줄로만 집계된다.

@@ -1,11 +1,12 @@
 // firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-    getAuth, 
-    GoogleAuthProvider, 
-    signInWithPopup, 
-    signOut, 
-    onAuthStateChanged 
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged,
+    getAdditionalUserInfo
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
     getFirestore,
@@ -103,11 +104,12 @@ export {
     track,
     auth, 
     db, 
-    googleProvider, 
-    signInWithPopup, 
-    signOut, 
+    googleProvider,
+    signInWithPopup,
+    getAdditionalUserInfo,
+    signOut,
     onAuthStateChanged,
-    collection, 
+    collection,
     addDoc, 
     getDocs, 
     query, 

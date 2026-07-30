@@ -3,6 +3,7 @@ import {
     auth,
     googleProvider,
     signInWithPopup,
+    getAdditionalUserInfo,
     signOut,
     onAuthStateChanged,
     track
@@ -412,8 +413,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.btnLogin.addEventListener('click', async () => {
         try {
-            await signInWithPopup(auth, googleProvider);
-            track('login', { source: 'app_header' });
+            const result = await signInWithPopup(auth, googleProvider);
+            // 첫 계정 생성과 재로그인을 나눠 센다 — 활성화 퍼널 분모는 '신규 가입'이다.
+            const isNew = getAdditionalUserInfo(result)?.isNewUser;
+            track(isNew ? 'sign_up' : 'login', { source: 'app_header' });
         } catch (error) {
             console.error("Login failed", error);
             // 사용자가 팝업을 직접 닫은 건 실패로 세지 않는다 — 지표가 부풀려진다.
@@ -1187,7 +1190,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     track('guest_gate_accepted');
                     try {
-                        await signInWithPopup(auth, googleProvider);
+                        const result = await signInWithPopup(auth, googleProvider);
+                        const isNew = getAdditionalUserInfo(result)?.isNewUser;
+                        track(isNew ? 'sign_up' : 'login', { source: 'guest_gate' });
                     } catch (error) {
                         console.error("Login failed", error);
                         alert(currentLang === 'ko' ? '로그인에 실패했어요. 다시 시도해 주세요.' : 'Login failed. Please try again.');
