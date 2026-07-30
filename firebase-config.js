@@ -8,12 +8,15 @@ import {
     onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    getDocs, 
-    query, 
-    where, 
+    getFirestore,
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager,
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    where,
     doc,
     deleteDoc,
     updateDoc,
@@ -45,7 +48,21 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+// IndexedDB 영속 캐시. 이게 없으면 로그인 사용자가 오프라인에서 저장할 때
+// addDoc 프로미스가 서버 확인을 기다리며 영구 대기하고(reject도 안 한다),
+// 탭을 닫으면 그 쓰기가 조용히 사라진다. 영속 캐시가 있으면 쓰기가 큐에 남아
+// 재연결 시 전송된다. persistentMultipleTabManager로 여러 탭도 허용한다.
+// 사파리 프라이빗 모드 등 IndexedDB를 못 쓰는 환경에서는 던지므로,
+// 그때는 메모리 캐시로 떨어진다 — 오프라인 큐는 없지만 앱은 정상 동작한다.
+let db;
+try {
+    db = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+} catch (e) {
+    console.warn('[Firestore] 영속 캐시를 사용할 수 없습니다. 메모리 캐시로 계속합니다.', e);
+    db = getFirestore(app);
+}
 const googleProvider = new GoogleAuthProvider();
 
 // ── GA4 이벤트 ────────────────────────────────────────────────────────────

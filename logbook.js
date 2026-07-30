@@ -1,6 +1,7 @@
 import {
     auth,
-    onAuthStateChanged
+    onAuthStateChanged,
+    track
 } from "./firebase-config.js";
 import CoffeeNotesStorage from "./storage.js";
 
@@ -19,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
             overallRating: "Rating:", success: "SUCCESS", fail: "FAIL",
             purchaseLink: "Purchase Link", delete: "Delete", weather: "Weather:",
             share: "Share",
+            loadFailed: "Couldn't load your recipes. Your records are safe — this is a connection problem.",
+            retry: "Try again",
+            deleteFailed: "Couldn't delete this recipe. Check your connection and try again.",
         },
         ko: {
             newRecipe: "새 레시피",
@@ -30,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
             overallRating: "전체 평점:", success: "성공", fail: "실패",
             purchaseLink: "구매처 링크", delete: "삭제", weather: "날씨:",
             share: "공유",
+            loadFailed: "기록을 불러오지 못했습니다. 기록은 그대로 있고, 연결 문제입니다.",
+            retry: "다시 시도",
+            deleteFailed: "삭제하지 못했습니다. 연결을 확인하고 다시 시도해주세요.",
         }
     };
 
@@ -59,6 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRecipeCards();
     };
 
+    // 앱 페이지는 지금까지 GA4 히트가 0건이었다. track()이 처음 호출될 때만
+    // getAnalytics()가 실행되는 구조라, 자동 page_view조차 발생하지 않았다.
+    track('app_page_view', { page: 'logbook' });
+
     const _stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
     // 사용자 입력·공유 링크에서 온 값을 innerHTML에 넣기 전 이스케이프 (XSS 방지)
@@ -81,8 +92,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderRecipeCards = async () => {
         elements.recipeCardsGrid.innerHTML = '<div class="loading">Loading recipes...</div>';
         const recipes = await CoffeeNotesStorage.getRecipes();
-        recipesCache = Array.isArray(recipes) ? recipes : [];
         elements.recipeCardsGrid.innerHTML = '';
+
+        // null은 "기록 없음"이 아니라 "읽지 못했다"는 뜻이다(storage.js 규약).
+        // 이걸 빈 상태로 렌더하면 일시적 네트워크 오류가 전체 기록 유실로 보인다.
+        // recipesCache도 덮어쓰지 않는다 — 직전에 성공적으로 읽은 목록을 남겨둔다.
+        if (recipes === null) {
+            elements.recipeCardsGrid.innerHTML = `
+                <div class="no-recipes-message">
+                    <p class="no-recipes-text">${esc(i18n[currentLang].loadFailed)}</p>
+                    <button type="button" class="recipe-share-btn" id="btn-retry-load">${esc(i18n[currentLang].retry)}</button>
+                </div>`;
+            const retry = document.getElementById('btn-retry-load');
+            if (retry) retry.addEventListener('click', renderRecipeCards);
+            track('recipes_load_failed', { page: 'logbook' });
+            return;
+        }
+
+        recipesCache = recipes;
 
         if (!recipesCache.length) {
             // 빈 로그북. 앱은 크림색 라이트 테마라 랜딩의 다크 사진이 맞지 않아
@@ -151,7 +178,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const deleteRecipe = async (id) => {
         if (confirm(i18n[currentLang].deleteConfirm)) {
-            await CoffeeNotesStorage.deleteRecipe(id);
+            // 반환값을 확인한다. 예전에는 무시해서, 권한 오류나 오프라인 삭제가
+            // 아무 메시지 없이 재렌더 후 카드가 되살아나는 UI 결함처럼 보였다.
+            const ok = await CoffeeNotesStorage.deleteRecipe(id);
+            track(ok ? 'recipe_deleted' : 'recipe_delete_failed');
+            if (!ok) alert(i18n[currentLang].deleteFailed);
             renderRecipeCards();
         }
     };
@@ -161,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.mobileFab) {
         elements.mobileFab.addEventListener('click', () => { window.location.href = 'app.html'; });
     }
-    elements.btnLangEn.addEventListener('click', () => setLang('en'));
-    elements.btnLangKo.addEventListener('click', () => setLang('ko'));
+    elements.btnLangEn.addEventListener('click', () => { track('language_changed', { lang: 'en', page: 'logbook' }); setLang('en'); });
+    elements.btnLangKo.addEventListener('click', () => { track('language_changed', { lang: 'ko', page: 'logbook' }); setLang('ko'); });
 
     elements.recipeCardsGrid.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
@@ -174,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteRecipe(id);
         } else if (btn.classList.contains('share-btn')) {
             const recipe = recipesCache.find(r => r.id === id);
-            if (recipe) shareRecipe(recipe);
+            if (recipe) { track('recipe_share_opened'); shareRecipe(recipe); }
         }
     });
 
@@ -667,13 +698,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const btn = e.target;
                 btn.disabled     = true;
                 btn.textContent  = '저장 중...';
-                await CoffeeNotesStorage.saveRecipe({
+                // 반환값을 확인해야 한다. 예전에는 결과를 무시하고 무조건
+                // '✓ 저장됨!'을 표시해서, 저장 실패(오프라인·권한·문서 크기)에도
+                // 성공했다고 알리고 모달을 닫았다.
+                const saved = await CoffeeNotesStorage.saveRecipe({
                     ...recipe,
                     id: Date.now().toString(),
                     date: new Date().toISOString(),
                     sharedFrom: true,
                 });
+                if (!saved) {
+                    btn.textContent = '저장 실패 — 다시 시도';
+                    btn.disabled = false;
+                    track('shared_recipe_import_failed');
+                    return;
+                }
                 btn.textContent = '✓ 저장됨!';
+                track('shared_recipe_imported');
                 setTimeout(() => {
                     _removeModal('import-modal');
                     window.history.replaceState({}, '', window.location.pathname);

@@ -1,14 +1,19 @@
 // main.js
-import { 
-    auth, 
-    googleProvider, 
-    signInWithPopup, 
-    signOut, 
-    onAuthStateChanged 
+import {
+    auth,
+    googleProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged,
+    track
 } from "./firebase-config.js";
 import CoffeeNotesStorage from "./storage.js";
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 앱 페이지는 지금까지 GA4 히트가 0건이었다 — track()이 처음 호출될 때만
+    // getAnalytics()가 실행되는 구조라 자동 page_view조차 발생하지 않았다.
+    track('app_page_view', { page: 'app' });
+
     let currentMode = 'espresso';
     let currentLang = 'en';
     let successResult = false;
@@ -408,8 +413,13 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnLogin.addEventListener('click', async () => {
         try {
             await signInWithPopup(auth, googleProvider);
+            track('login', { source: 'app_header' });
         } catch (error) {
             console.error("Login failed", error);
+            // 사용자가 팝업을 직접 닫은 건 실패로 세지 않는다 — 지표가 부풀려진다.
+            if (error && error.code !== 'auth/popup-closed-by-user') {
+                track('login_failed', { source: 'app_header', code: error.code || 'unknown' });
+            }
         }
     });
 
@@ -558,6 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const swApply = () => {
+        track('stopwatch_applied', { mode: currentMode });
         if (sw.elapsed === 0) return;
         const snapped = Math.floor((sw.elapsed / 1000) * 10) / 10;
         el.rTime.value = snapped.toFixed(1);
@@ -857,6 +868,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateLogbookBadge = async () => {
         const recipes = await CoffeeNotesStorage.getRecipes();
+        // null이면 읽기 실패다(storage.js 규약). 배지와 오늘 개수를 0으로 덮으면
+        // 사용자에게는 기록이 사라진 것처럼 보이므로, 직전 값을 그대로 남긴다.
+        if (recipes === null) {
+            track('recipes_load_failed', { page: 'app' });
+            return;
+        }
         if (!Array.isArray(recipes)) return;
         el.logbookCount.textContent = recipes.length; el.logbookCount.style.display = recipes.length > 0 ? 'flex' : 'none';
         const todayCount = recipes.filter(r => r && r.date && new Date(r.date).toDateString() === new Date().toDateString()).length;
@@ -922,6 +939,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const openScaPopover = (id, pin) => {
+        // 호버로도 열리므로 계측은 '고정(클릭)'한 경우만 — 아니면 이벤트가 폭주한다.
+        if (pin) track('sca_guide_opened', { variable: id, mode: currentMode });
         if (scaPop.openId && scaPop.openId !== id) closeScaPopovers();
         renderScaPopover(id);
         const pop = document.getElementById(`pop-${id}`);
@@ -1001,11 +1020,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try { localStorage.setItem(OB_SEEN_KEY, '1'); } catch (e) { /* private mode 등 저장 불가 시 무시 */ }
     };
 
-    el.btnHelp.addEventListener('click', openOnboarding);
-    el.obSkip.addEventListener('click', closeOnboarding);
+    el.btnHelp.addEventListener('click', () => { track('onboarding_reopened'); openOnboarding(); });
+    el.obSkip.addEventListener('click', () => {
+        track('onboarding_skipped', { step: ob.step + 1 });
+        closeOnboarding();
+    });
     el.obNext.addEventListener('click', () => {
-        if (ob.step >= i18n[currentLang].obSteps.length - 1) closeOnboarding();
-        else { ob.step++; renderObStep(); }
+        if (ob.step >= i18n[currentLang].obSteps.length - 1) {
+            track('onboarding_completed');
+            closeOnboarding();
+        } else { ob.step++; renderObStep(); }
     });
     el.onboardingModal.querySelector('.modal-backdrop').addEventListener('click', closeOnboarding);
 
@@ -1081,11 +1105,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Events ---
-    el.btnEspresso.addEventListener('click', () => setMode('espresso'));
-    el.btnDrip.addEventListener('click', () => setMode('drip'));
-    el.btnLangEn.addEventListener('click', () => setLang('en'));
-    el.btnLangKo.addEventListener('click', () => setLang('ko'));
-    el.btnViewLogbook.addEventListener('click', () => window.location.href = 'logbook.html');
+    // setMode는 부팅 시에도 호출되므로 계측은 클릭 핸들러 쪽에 붙인다.
+    el.btnEspresso.addEventListener('click', () => { track('mode_selected', { mode: 'espresso' }); setMode('espresso'); });
+    el.btnDrip.addEventListener('click', () => { track('mode_selected', { mode: 'drip' }); setMode('drip'); });
+    el.btnLangEn.addEventListener('click', () => { track('language_changed', { lang: 'en', page: 'app' }); setLang('en'); });
+    el.btnLangKo.addEventListener('click', () => { track('language_changed', { lang: 'ko', page: 'app' }); setLang('ko'); });
+    el.btnViewLogbook.addEventListener('click', () => {
+        track('logbook_opened', { from: 'app_header' });
+        window.location.href = 'logbook.html';
+    });
 
     // Range sliders
     [el.rDosing, el.rTemp, el.rTime, el.rYield].forEach(input => {
@@ -1132,9 +1160,15 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
     el.btnSuccess.addEventListener('click', () => { successResult = true; el.modalSuccessFail.checked = true; el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active'); });
 
+    // 저장 중 재클릭을 막는다. 가드가 없으면 느린 연결·오프라인에서 사용자가
+    // 여러 번 누르는 만큼 addDoc이 쌓이고, 재연결 시 전부 전송되어 중복 문서가 된다.
+    let savingRecipe = false;
     el.modalSaveRecipe.addEventListener('click', async () => {
+        if (savingRecipe) return;
         try {
             const bean = el.modalBeanName.value.trim(); if (!bean) return el.modalBeanName.focus();
+            savingRecipe = true;
+            el.modalSaveRecipe.disabled = true;
 
             // ── Guest trial gate ────────────────────────────────────────
             // First-time visitors may save ONE recipe locally to try the app.
@@ -1146,7 +1180,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const wantLogin = confirm(currentLang === 'ko'
                         ? "무료 체험은 레시피 1개까지 저장할 수 있어요.\n레시피를 더 기록하고 모든 기기에서 동기화하려면 구글 로그인이 필요합니다. 지금 로그인할까요?"
                         : "The free trial lets you save 1 recipe.\nLog in with Google to save more and sync across all your devices. Log in now?");
-                    if (!wantLogin) return; // declined → don't save the 2nd recipe
+                    track('guest_gate_shown');
+                    if (!wantLogin) {
+                        track('guest_gate_declined');
+                        return; // declined → don't save the 2nd recipe
+                    }
+                    track('guest_gate_accepted');
                     try {
                         await signInWithPopup(auth, googleProvider);
                     } catch (error) {
@@ -1187,6 +1226,13 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const saved = await CoffeeNotesStorage.saveRecipe(recipe);
+            track(saved ? 'recipe_saved' : 'recipe_save_failed', {
+                mode: currentMode,
+                has_photo: !!uploadedImageData,
+                guest: !auth.currentUser,
+                rated: !!ratingInput,
+                success_flag: successResult,
+            });
             if (saved) {
                 if (guestFirstSave) {
                     alert(currentLang === 'ko'
@@ -1201,7 +1247,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("Save failed:", error);
+            track('recipe_save_failed', { mode: currentMode, reason: 'exception' });
             alert(i18n[currentLang].recipeSavedFail);
+        } finally {
+            // 성공 시엔 곧 logbook으로 이동하지만, 이동이 취소되는 경우까지
+            // 버튼이 잠긴 채 남지 않게 항상 되돌린다.
+            savingRecipe = false;
+            el.modalSaveRecipe.disabled = false;
         }
     });
 
