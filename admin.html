@@ -34,6 +34,8 @@
             --ord-4:      #9f6900;
             --ord-5:      #835600;   /* 5 stars */
             --good:       #006300;
+            /* 휴면 단계처럼 좋음↔나쁨 사이를 나타낼 때. 액센트(--series-1)와 구분되게 붉은 쪽으로 */
+            --warn:       #A2540B;
             --danger:     #C0392B;
         }
         @media (prefers-color-scheme: dark) {
@@ -56,6 +58,7 @@
                 --ord-4:    #c38308;
                 --ord-5:    #e49a03;
                 --good:     #0ca30c;
+                --warn:     #E39A4A;
                 --danger:   #E06A5C;
             }
         }
@@ -78,6 +81,7 @@
             --ord-4:    #c38308;
             --ord-5:    #e49a03;
             --good:     #0ca30c;
+            --warn:     #E39A4A;
             --danger:   #E06A5C;
         }
 
@@ -451,6 +455,41 @@
         <div class="chart-wrap" id="heatmap-wrap"></div>
         <div class="tableview" id="tv-heatmap"></div>
     </section>
+
+    <!-- ── Phase 2: 행동으로 이어지는 카드 ─────────────────────────
+         앞의 카드들이 '관찰'이라면 여기는 '그래서 뭘 할까'에 답한다. -->
+
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">휴면 위험군</h2>
+            <button class="card-toggle" type="button" data-tv="tv-dormancy">표로 보기</button>
+        </div>
+        <p class="card-sub" id="dormancy-sub">마지막 기록 이후 얼마나 지났는가</p>
+        <div class="chart-wrap" id="dormancy-wrap"></div>
+        <div class="tableview" id="tv-dormancy"></div>
+    </section>
+
+    <div class="grid-2">
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">급상승 원두</h2>
+                <button class="card-toggle" type="button" data-tv="tv-rising">표로 보기</button>
+            </div>
+            <p class="card-sub" id="rising-sub">직전 같은 길이의 기간과 비교</p>
+            <div class="chart-wrap" id="rising-wrap"></div>
+            <div class="tableview" id="tv-rising"></div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">실패율이 높은 원두</h2>
+                <button class="card-toggle" type="button" data-tv="tv-failing">표로 보기</button>
+            </div>
+            <p class="card-sub" id="failing-sub">가이드 콘텐츠 소재가 되는 구간</p>
+            <div class="chart-wrap" id="failing-wrap"></div>
+            <div class="tableview" id="tv-failing"></div>
+        </section>
+    </div>
 
     <!-- 집계 구조 (docs/admin-roadmap.md Phase 1).
          집계가 없으면 대시보드는 recipes 전체를 내려받는 예전 경로로 동작한다. -->

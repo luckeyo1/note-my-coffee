@@ -521,6 +521,138 @@ function retentionFromAggregates(a, cohortCount, horizon) {
     return out;
 }
 
+/* ─────────────── Phase 2: 휴면 · 급상승 원두 · 실패율 ───────────────
+ *
+ * 세 지표 모두 집계 경로와 스캔 폴백 양쪽에서 **같은 모양**을 만들어야 한다.
+ * 그래야 규칙 게시 전후로 화면이 달라지지 않는다.
+ */
+
+// 마지막 활동 이후 경과일 구간. 리인게이지먼트 대상 규모를 본다.
+// 기간 필터와 무관한 '현재 시점 상태'다 — 코호트와 같은 성격.
+const DORMANCY_BUCKETS = [
+    { label: '활성', hint: '6일 이내', max: 6 },
+    { label: '주의', hint: '7–13일', max: 13 },
+    { label: '위험', hint: '14–29일', max: 29 },
+    { label: '휴면', hint: '30일 이상', max: Infinity },
+];
+
+function dormancyFromLastSeen(lastSeenList) {
+    const now = Date.now();
+    const buckets = DORMANCY_BUCKETS.map((b) => ({ ...b, users: 0 }));
+    for (const iso of lastSeenList) {
+        const t = new Date(iso).getTime();
+        if (!Number.isFinite(t)) continue;
+        const days = Math.floor((now - t) / 864e5);
+        for (const b of buckets) {
+            if (days <= b.max) { b.users += 1; break; }
+        }
+    }
+    return buckets;
+}
+
+// 원두별 {기간 내 건수, 직전 동일 기간 건수, 성공 건수}
+// days=0(전체)이면 직전 기간이 없으므로 prev는 전부 0이고 급상승 카드는 안내로 대체된다.
+function beanStatsFromAggregates(a, days) {
+    const cur = new Map(), prev = new Map(), suc = new Map();
+
+    const addTo = (map, obj) => {
+        for (const [id, n] of Object.entries(obj || {})) {
+            map.set(id, (map.get(id) || 0) + (Number(n) || 0));
+        }
+    };
+
+    if (!days) {
+        for (const d of a.daily.values()) { addTo(cur, d.bn); addTo(suc, d.bs); }
+    } else {
+        const inRange = (offset) => {
+            const keys = [];
+            for (let i = days - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setHours(0, 0, 0, 0);
+                d.setDate(d.getDate() - i - offset);
+                keys.push(dayKey(d));
+            }
+            return keys;
+        };
+        for (const k of inRange(0)) {
+            const d = a.daily.get(k); if (!d) continue;
+            addTo(cur, d.bn); addTo(suc, d.bs);
+        }
+        for (const k of inRange(days)) {
+            const d = a.daily.get(k); if (!d) continue;
+            addTo(prev, d.bn);
+        }
+    }
+
+    return [...cur.entries()].map(([id, count]) => ({
+        name: a.beanNames.get(id) || '(이름 없음)',
+        count,
+        prev: prev.get(id) || 0,
+        success: suc.get(id) || 0,
+    }));
+}
+
+function beanStatsFromScan(allRecipes, days) {
+    const key = (r) => (r.beanName || '').trim();
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+
+    const from = (offset) => {
+        if (!days) return null;
+        const f = new Date(now); f.setDate(f.getDate() - (days - 1) - offset);
+        const t = new Date(now); t.setDate(t.getDate() + 1 - offset);
+        return [f, t];
+    };
+    const within = (r, span) => {
+        if (!span) return true;
+        const d = new Date(r.date);
+        return !isNaN(d) && d >= span[0] && d < span[1];
+    };
+
+    const curSpan = from(0), prevSpan = from(days);
+    const cur = new Map(), prev = new Map(), suc = new Map();
+
+    for (const r of allRecipes) {
+        const name = key(r);
+        if (!name) continue;
+        if (within(r, curSpan)) {
+            cur.set(name, (cur.get(name) || 0) + 1);
+            if (r.success === true) suc.set(name, (suc.get(name) || 0) + 1);
+        }
+        if (days && within(r, prevSpan)) prev.set(name, (prev.get(name) || 0) + 1);
+    }
+
+    return [...cur.entries()].map(([name, count]) => ({
+        name, count, prev: prev.get(name) || 0, success: suc.get(name) || 0,
+    }));
+}
+
+// 급상승 — 직전 기간 대비 증가분 기준. 신규 진입(prev 0)도 포함한다.
+function risingBeans(stats, topN) {
+    return stats
+        .filter((b) => b.count > b.prev)
+        .map((b) => ({
+            ...b,
+            delta: b.count - b.prev,
+            // prev가 0이면 증가율이 무한대라 숫자 대신 '신규'로 표시한다
+            pct: b.prev ? (b.count - b.prev) / b.prev : null,
+        }))
+        .sort((x, y) => y.delta - x.delta || y.count - x.count || x.name.localeCompare(y.name))
+        .slice(0, topN);
+}
+
+// 실패율 — 표본이 적으면 요동친다. 최소 표본 미만은 제외한다.
+// 이걸 안 하면 1건 기록해 1건 실패한 원두가 100%로 1위에 올라 목록이 쓸모없어진다.
+const FAILURE_MIN_SAMPLE = 5;
+
+function failingBeans(stats, topN) {
+    return stats
+        .filter((b) => b.count >= FAILURE_MIN_SAMPLE)
+        .map((b) => ({ ...b, failed: b.count - b.success, rate: (b.count - b.success) / b.count }))
+        .filter((b) => b.failed > 0)
+        .sort((x, y) => y.rate - x.rate || y.count - x.count || x.name.localeCompare(y.name))
+        .slice(0, topN);
+}
+
 /* ────────────────────────── chart: trend ────────────────────────── */
 
 function renderTrend(wrap, series, ariaLabel) {
@@ -1168,6 +1300,103 @@ function renderRetention(wrap, cohorts, horizon) {
     wrap.appendChild(scroll);
 }
 
+/* ─────────── chart: 범용 수평 막대 (Phase 2 카드 3장 공용) ───────────
+ * renderBeans의 규약(labelW · BAR · ROW · tip)을 그대로 따르되, 라벨 아래 보조
+ * 설명과 막대별 색을 받을 수 있게 일반화했다. 카드마다 차트 함수를 새로 만들면
+ * 규약이 조금씩 어긋나므로 하나로 묶는다.
+ *
+ * items: { label, sub, value, valueText, color, tip }
+ */
+function renderHBars(wrap, items, opts) {
+    const o = opts || {};
+    clear(wrap);
+    if (!items.length) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = o.emptyText || '표시할 데이터가 없습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const W = Math.max(320, wrap.clientWidth || 640);
+    const labelW = Math.min(200, Math.max(112, W * 0.28));
+    const valueW = o.valueW || 96;
+    const BAR = 18, ROW = o.sub ? 42 : 32, R = 4;
+    const H = items.length * ROW + 10;
+    const pw = W - labelW - valueW - 12;
+    const max = Math.max(1, ...items.map((d) => d.value));
+
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
+    s.setAttribute('aria-label', o.ariaLabel || '');
+
+    const tip = document.createElement('div');
+    tip.className = 'tip';
+
+    items.forEach((d, i) => {
+        const cy = i * ROW + ROW / 2;
+        const w = Math.max(2, (d.value / max) * pw);
+        const y0 = cy - BAR / 2;
+        const color = d.color || cssVar('--series-1');
+
+        const name = svg('text', {
+            x: labelW - 12, y: d.sub ? cy - 1 : cy + 4,
+            'text-anchor': 'end', 'font-size': 12.5,
+        });
+        name.style.fill = cssVar('--ink-2');
+        name.textContent = d.label.length > 22 ? d.label.slice(0, 21) + '…' : d.label;
+        const title = svg('title');
+        title.textContent = d.label;
+        name.appendChild(title);
+        s.appendChild(name);
+
+        if (d.sub) {
+            const sub = svg('text', { x: labelW - 12, y: cy + 13, 'text-anchor': 'end', 'font-size': 10.5 });
+            sub.style.fill = cssVar('--muted');
+            sub.textContent = d.sub;
+            s.appendChild(sub);
+        }
+
+        const rr = Math.min(R, w);
+        const path = `M${labelW},${y0} H${labelW + w - rr} A${rr},${rr} 0 0 1 ${labelW + w},${y0 + rr} V${y0 + BAR - rr} A${rr},${rr} 0 0 1 ${labelW + w - rr},${y0 + BAR} H${labelW} Z`;
+        const bar = svg('path', { d: path });
+        bar.style.fill = color;
+        s.appendChild(bar);
+
+        const v = svg('text', { x: labelW + w + 10, y: cy + 4, 'font-size': 12, 'font-weight': 600 });
+        v.style.fill = cssVar('--ink');
+        v.style.fontVariantNumeric = 'tabular-nums';
+        v.textContent = d.valueText;
+        s.appendChild(v);
+
+        const hit = svg('rect', { x: 0, y: cy - ROW / 2, width: W, height: ROW, fill: 'transparent' });
+        hit.style.cursor = 'pointer';
+        hit.addEventListener('pointerenter', () => {
+            clear(tip);
+            const head = document.createElement('div');
+            head.className = 'tip-head';
+            head.textContent = d.label;
+            const row = document.createElement('div');
+            row.className = 'tip-row';
+            const k = document.createElement('span');
+            k.className = 'tip-key';
+            k.style.background = color;
+            const val = document.createElement('span');
+            val.className = 'tip-val';
+            val.textContent = d.tip || d.valueText;
+            row.append(k, val);
+            tip.append(head, row);
+            tip.classList.add('on');
+            tip.style.left = Math.min(labelW + 10, W - 190) + 'px';
+            tip.style.top = Math.max(0, cy - 44) + 'px';
+        });
+        hit.addEventListener('pointerleave', () => tip.classList.remove('on'));
+        s.appendChild(hit);
+    });
+
+    wrap.appendChild(s);
+    wrap.appendChild(tip);
+}
+
 /* ──────────────── chart: 요일 × 시간대 활동 히트맵 ──────────────── */
 
 const DOW_KO = ['월', '화', '수', '목', '금', '토', '일'];
@@ -1360,6 +1589,71 @@ function render() {
     el('heatmap-sub').textContent = `${label} · 기록이 저장된 요일과 시각`;
     renderHeatmap(el('heatmap-wrap'), heat);
 
+    // ── Phase 2 — 행동으로 이어지는 카드들 ──
+
+    // 휴면: 기간 필터와 무관한 '현재 시점' 상태다. 마지막 활동 시각만 있으면 된다.
+    const lastSeen = useAgg
+        ? agg.users.map((u) => u.lastSeenAt).filter(Boolean)
+        : [...allRecipes.reduce((m, r) => {
+            if (!r.userId || !r.date) return m;
+            const prev = m.get(r.userId);
+            if (!prev || new Date(r.date) > new Date(prev)) m.set(r.userId, r.date);
+            return m;
+        }, new Map()).values()];
+    const dormancy = dormancyFromLastSeen(lastSeen);
+    const dormancyTotal = dormancy.reduce((s, b) => s + b.users, 0);
+    el('dormancy-sub').textContent = dormancyTotal
+        ? `현재 시점 · 전체 ${fmt(dormancyTotal)}명 기준 (기간 필터와 무관)`
+        : '아직 사용자가 없습니다.';
+    // 좋음 → 나쁨 순서. 상태색은 액센트(--series-1)와 별개 체계다.
+    const DORMANCY_COLORS = ['--good', '--series-1', '--warn', '--danger'];
+    renderHBars(el('dormancy-wrap'), dormancy.map((b, i) => ({
+        label: b.label,
+        sub: b.hint,
+        value: b.users,
+        valueText: `${fmt(b.users)}명 · ${dormancyTotal ? Math.round((b.users / dormancyTotal) * 100) : 0}%`,
+        color: cssVar(DORMANCY_COLORS[i]),
+        tip: `${fmt(b.users)}명 (마지막 기록 ${b.hint})`,
+    })), { ariaLabel: '마지막 활동 이후 경과일 분포', sub: true, valueW: 108 });
+
+    // 원두 인사이트 — 급상승과 실패율은 같은 통계에서 나온다.
+    const beanStats = useAgg
+        ? beanStatsFromAggregates(agg, rangeDays)
+        : beanStatsFromScan(allRecipes, rangeDays);
+
+    const rising = rangeDays ? risingBeans(beanStats, 8) : [];
+    el('rising-sub').textContent = rangeDays
+        ? `${label} vs 직전 ${rangeDays}일 · 증가폭이 큰 순서`
+        : '전체 기간에는 비교할 직전 구간이 없습니다. 7·30·90일을 선택하세요.';
+    renderHBars(el('rising-wrap'), rising.map((b) => ({
+        label: b.name,
+        sub: b.prev ? `직전 ${fmt(b.prev)}건 → ${fmt(b.count)}건` : '직전 기간에 없던 원두',
+        value: b.delta,
+        valueText: b.pct === null ? `+${fmt(b.delta)} · 신규` : `+${fmt(b.delta)} · ${Math.round(b.pct * 100)}%`,
+        tip: `${fmt(b.prev)}건 → ${fmt(b.count)}건 (증가 ${fmt(b.delta)})`,
+    })), {
+        ariaLabel: '급상승 원두',
+        sub: true,
+        valueW: 116,
+        emptyText: rangeDays ? '직전 기간보다 늘어난 원두가 없습니다.' : '기간을 선택하면 비교합니다.',
+    });
+
+    const failing = failingBeans(beanStats, 8);
+    el('failing-sub').textContent =
+        `${label} · 표본 ${FAILURE_MIN_SAMPLE}건 이상인 원두만 (표본이 적으면 비율이 요동칩니다)`;
+    renderHBars(el('failing-wrap'), failing.map((b) => ({
+        label: b.name,
+        sub: `실패 ${fmt(b.failed)} / 총 ${fmt(b.count)}건`,
+        value: b.rate,
+        valueText: Math.round(b.rate * 100) + '%',
+        color: cssVar('--danger'),
+        tip: `실패율 ${Math.round(b.rate * 100)}% (${fmt(b.failed)}/${fmt(b.count)}건)`,
+    })), {
+        ariaLabel: '실패율이 높은 원두',
+        sub: true,
+        emptyText: `표본 ${FAILURE_MIN_SAMPLE}건 이상이면서 실패가 있는 원두가 없습니다.`,
+    });
+
     // 표 뷰 — 모든 차트는 표로도 읽을 수 있어야 한다
     clear(el('tv-trend'));
     el('tv-trend').appendChild(buildTable(
@@ -1419,6 +1713,40 @@ function render() {
             row.forEach((n, h) => { o['h' + h] = fmt(n); });
             return o;
         })
+    ));
+
+    clear(el('tv-dormancy'));
+    el('tv-dormancy').appendChild(buildTable(
+        [{ key: 's', label: '상태' }, { key: 'u', label: '사용자', num: true }, { key: 'p', label: '비중', num: true }],
+        dormancy.map((b) => ({
+            s: `${b.label} (${b.hint})`,
+            u: fmt(b.users),
+            p: (dormancyTotal ? Math.round((b.users / dormancyTotal) * 100) : 0) + '%',
+        }))
+    ));
+
+    clear(el('tv-rising'));
+    el('tv-rising').appendChild(buildTable(
+        [
+            { key: 'n', label: '원두' }, { key: 'p', label: '직전', num: true },
+            { key: 'c', label: '현재', num: true }, { key: 'd', label: '증가', num: true },
+            { key: 'r', label: '증가율', num: true },
+        ],
+        rising.map((b) => ({
+            n: b.name, p: fmt(b.prev), c: fmt(b.count),
+            d: '+' + fmt(b.delta), r: b.pct === null ? '신규' : Math.round(b.pct * 100) + '%',
+        }))
+    ));
+
+    clear(el('tv-failing'));
+    el('tv-failing').appendChild(buildTable(
+        [
+            { key: 'n', label: '원두' }, { key: 'f', label: '실패', num: true },
+            { key: 't', label: '총 기록', num: true }, { key: 'r', label: '실패율', num: true },
+        ],
+        failing.map((b) => ({
+            n: b.name, f: fmt(b.failed), t: fmt(b.count), r: Math.round(b.rate * 100) + '%',
+        }))
     ));
 
     clear(el('tv-funnel'));
@@ -1567,13 +1895,22 @@ async function rebuildAggregates(fb, onProgress) {
         const d = new Date(r.date);
         if (isNaN(d) || !r.userId) continue;
         const k = dayKey(d);
-        if (!daily.has(k)) daily.set(k, { count: 0, espresso: 0, drip: 0, successCount: 0, ratedCount: 0, uc: {}, bn: {} });
+        if (!daily.has(k)) daily.set(k, {
+            count: 0, espresso: 0, drip: 0, successCount: 0, es: 0, ds: 0,
+            ratedCount: 0, uc: {}, bn: {}, bs: {},
+        });
         const day = daily.get(k);
 
+        const isEspresso = r.mode === 'espresso';
         day.count += 1;
-        if (r.mode === 'espresso') day.espresso += 1; else day.drip += 1;
+        if (isEspresso) day.espresso += 1; else day.drip += 1;
         day['h' + d.getHours()] = (day['h' + d.getHours()] || 0) + 1;
-        if (r.success === true) day.successCount += 1;
+        // 필드 구성은 storage.js의 bumpAggregates와 반드시 같아야 한다 —
+        // 어긋나면 실시간 집계와 백필 결과가 달라진다.
+        if (r.success === true) {
+            day.successCount += 1;
+            if (isEspresso) day.es += 1; else day.ds += 1;
+        }
         const rating = Number(r.overallRating);
         if (Number.isFinite(rating) && rating >= 1 && rating <= 5) {
             day.ratedCount += 1;
@@ -1585,6 +1922,7 @@ async function rebuildAggregates(fb, onProgress) {
         if (bean) {
             const id = beanId(bean);
             day.bn[id] = (day.bn[id] || 0) + 1;
+            if (r.success === true) day.bs[id] = (day.bs[id] || 0) + 1;
             beans.set(id, bean);
         }
 

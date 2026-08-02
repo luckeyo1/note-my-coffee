@@ -67,13 +67,23 @@ async function bumpAggregates(recipe, uid, delta) {
         ['h' + hour]: increment(delta),
         uc: { [uid]: increment(delta) },
     };
-    if (recipe.success === true) daily.successCount = increment(delta);
+    // 성공은 총계(successCount)뿐 아니라 모드별(es/ds)·원두별(bs)로도 쪼갠다.
+    // 총계만 있으면 "어떤 원두·모드에서 실패가 잦은가"를 만들 수 없다 — 그게
+    // 가이드 콘텐츠 소재이자 제휴 판단 근거다. (docs/admin-roadmap.md Phase 2)
+    if (recipe.success === true) {
+        daily.successCount = increment(delta);
+        daily[espresso ? 'es' : 'ds'] = increment(delta);
+    }
     if (rated) {
         daily.ratedCount = increment(delta);
         daily['rating' + rating] = increment(delta);
     }
     const beanName = (recipe.beanName || '').trim();
-    if (beanName) daily.bn = { [beanDocId(beanName)]: increment(delta) };
+    if (beanName) {
+        const bid = beanDocId(beanName);
+        daily.bn = { [bid]: increment(delta) };
+        if (recipe.success === true) daily.bs = { [bid]: increment(delta) };
+    }
 
     await setDoc(doc(db, 'stats_daily', key), daily, { merge: true });
 
