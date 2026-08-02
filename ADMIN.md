@@ -108,6 +108,9 @@ service cloud.firestore {
   **다운로드 자체를 피할 수는 없다** — 클라이언트 SDK에는 필드 선택 기능이 없다.)
   기록이 쌓이면 Cloud Functions에서 일별 집계 문서를 만들어두고 대시보드는 그것만
   읽는 구조로 옮기는 게 맞다.
+  → Functions는 Blaze(유료) 플랜이 필요하다. **쓰기 시점 집계로 Functions 없이 가는
+  더 싼 경로**와 규모 추정치를 [`docs/admin-roadmap.md`](docs/admin-roadmap.md)에
+  정리해뒀다.
 - **로그인 없이 저장된 레시피는 집계에 안 잡힌다.** 게스트 기록은 localStorage에만
   있고 Firestore에 올라오지 않는다. 로그인 시 `migrateLocalToCloud()`로 넘어온
   것만 보인다.
