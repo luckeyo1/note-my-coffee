@@ -15,8 +15,17 @@ const MIN_STAT_TO_SHOW = 100;
 
 // 인라인 <script>(데모 플레이어·취향 검사)와 pay.js는 클래식 스크립트라 import를
 // 못 쓴다. 이들이 이벤트를 보낼 수 있도록 track을 전역에 하나 걸어둔다.
-// 호출부는 `window.nmcTrack?.(...)` 형태로 써서 이 모듈이 실패해도 안전하다.
+//
+// 이 모듈은 파싱이 끝난 뒤에야 실행되므로, 그 전에 발생한 이벤트는 index.html
+// <head>의 큐 스텁이 모아둔다. 실제 track으로 교체하면서 쌓인 걸 비운다.
+// 비운 뒤 큐를 null로 두면 이후 호출은 큐를 우회해 바로 전송된다.
+//
+// flush된 이벤트는 발생 시각이 아니라 지금 시각으로 전송된다 — 퍼널 집계에는
+// 무해하지만 초 단위 타이밍 분석에는 영향이 있다.
+const queuedEvents = Array.isArray(window.nmcTrackQueue) ? window.nmcTrackQueue : [];
 window.nmcTrack = track;
+window.nmcTrackQueue = null;
+queuedEvents.forEach(([name, params]) => track(name, params));
 
 document.addEventListener('DOMContentLoaded', () => {
 

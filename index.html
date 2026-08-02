@@ -106,6 +106,27 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Note My Coffee">
     <script src="boot.js"></script>
+    <script>
+        // 계측 큐 — 이 스크립트는 landing.js(모듈)보다 반드시 먼저 실행돼야 한다.
+        //
+        // 본문 인라인 스크립트는 파싱 중 실행되며 즉시 IntersectionObserver를 만드는데,
+        // window.nmcTrack을 대입하는 landing.js는 모듈이라 파싱이 끝난 뒤에야 실행된다.
+        // 그 사이(느린 네트워크에서는 1초를 넘기도 한다)에 발생한 section_view·demo_view는
+        // nmcTrack이 undefined라 `?.`가 조용히 삼켜 유실됐다 — 하필 퍼널 2단계(참여),
+        // 이탈 분석의 시작점이다. 실측에서 모듈 대입 1271ms, 그 전에 3건이 사라졌다.
+        //
+        // 그래서 전송로를 먼저 깔아둔다. 여기서는 쌓기만 하고, landing.js가 실제 track으로
+        // 교체하면서 비운다. 모듈이 끝내 안 오면 큐는 그냥 버려진다 — 그 경우 어차피
+        // 전송 경로 자체가 없다(분석 모듈이 차단된 상황은 이 큐로도 구제되지 않는다).
+        window.nmcTrackQueue = [];
+        window.nmcTrack = function (name, params) {
+            // 모듈이 영영 안 올 때 큐가 무한정 자라지 않게 상한을 둔다.
+            // 한 페이지뷰의 정상 이벤트 수는 이보다 훨씬 적다.
+            if (window.nmcTrackQueue && window.nmcTrackQueue.length < 50) {
+                window.nmcTrackQueue.push([name, params]);
+            }
+        };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Cormorant/DM Sans는 라틴 전용이라 한글이 OS 폴백으로 떨어진다.
