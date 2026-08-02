@@ -68,40 +68,57 @@ function makeDemoRecipes() {
         'Indonesia Mandheling', 'Ethiopia Sidamo', 'Peru Cajamarca', 'Rwanda Kivu',
     ];
     const notes = ['Floral · Peach', 'Chocolate · Nutty', 'Citrus · Bright', 'Caramel · Round', 'Berry · Juicy'];
-    const users = Array.from({ length: 34 }, (_, i) => 'demoUser' + String(i).padStart(3, '0'));
+    // 사용자마다 '합류일'을 준다. 이게 없으면(매 기록마다 무작위 배정) 모든 사용자의
+    // 첫 기록이 초반에 몰려서, 신규 유입 추이가 0으로 깔리고 리텐션 코호트도 한 줄만
+    // 생긴다 — 데모 모드로 그 카드들을 검증할 수 없다.
+    // joinDay는 '며칠 전'이며 89(가장 오래전)~0(오늘) 범위다.
+    const users = Array.from({ length: 52 }, (_, i) => ({
+        id: 'demoUser' + String(i).padStart(3, '0'),
+        // 지수를 1보다 작게 둬서 최근으로 갈수록 합류가 조금씩 늘어난다(완만한 성장)
+        joinDay: Math.floor(89 * Math.pow(rnd(), 1.25)),
+    }));
     const out = [];
     const now = Date.now();
 
-    for (let day = 89; day >= 0; day--) {
-        // 완만한 성장 + 주말 가중 + 노이즈
-        const growth = 1.1 + (89 - day) / 42;
-        const weekend = [0, 6].includes(new Date(now - day * 864e5).getDay()) ? 1.45 : 1;
-        const count = Math.max(0, Math.round((growth * weekend) * (0.55 + rnd() * 1.5)));
+    const pushRecipe = (user, day) => {
+        const d = new Date(now - day * 864e5);
+        d.setHours(6 + Math.floor(rnd() * 15), Math.floor(rnd() * 60), 0, 0);
+        const espresso = rnd() < 0.62;
+        const rr = rnd();
+        const rating = rr < 0.06 ? 1 : rr < 0.16 ? 2 : rr < 0.38 ? 3 : rr < 0.74 ? 4 : 5;
+        const bi = Math.min(beans.length - 1, Math.floor(Math.pow(rnd(), 1.7) * beans.length));
+        out.push({
+            id: 'demo-' + day + '-' + user.id + '-' + out.length,
+            userId: user.id,
+            date: d.toISOString(),
+            mode: espresso ? 'espresso' : 'drip',
+            dosing: espresso ? 17 + Math.round(rnd() * 40) / 10 : 14 + Math.round(rnd() * 60) / 10,
+            temp: 90 + Math.round(rnd() * 60) / 10,
+            time: espresso ? 24 + Math.round(rnd() * 120) / 10 : 150 + Math.round(rnd() * 900) / 10,
+            yield: espresso ? 30 + Math.round(rnd() * 150) / 10 : 220 + Math.round(rnd() * 1200) / 10,
+            beanName: beans[bi],
+            origin: '',
+            tasteNotes: notes[Math.floor(rnd() * notes.length)],
+            overallRating: rating,
+            success: rating >= 4,
+            beanStatus: 'opened',
+        });
+    };
 
-        for (let i = 0; i < count; i++) {
-            const d = new Date(now - day * 864e5);
-            d.setHours(6 + Math.floor(rnd() * 15), Math.floor(rnd() * 60), 0, 0);
-            const espresso = rnd() < 0.62;
-            const r = rnd();
-            const rating = r < 0.06 ? 1 : r < 0.16 ? 2 : r < 0.38 ? 3 : r < 0.74 ? 4 : 5;
-            // 인기 원두가 실제로 쏠리도록 앞쪽 원두에 가중치
-            const bi = Math.min(beans.length - 1, Math.floor(Math.pow(rnd(), 1.7) * beans.length));
-            out.push({
-                id: 'demo-' + day + '-' + i,
-                userId: users[Math.floor(Math.pow(rnd(), 1.4) * users.length)],
-                date: d.toISOString(),
-                mode: espresso ? 'espresso' : 'drip',
-                dosing: espresso ? 17 + Math.round(rnd() * 40) / 10 : 14 + Math.round(rnd() * 60) / 10,
-                temp: 90 + Math.round(rnd() * 60) / 10,
-                time: espresso ? 24 + Math.round(rnd() * 120) / 10 : 150 + Math.round(rnd() * 900) / 10,
-                yield: espresso ? 30 + Math.round(rnd() * 150) / 10 : 220 + Math.round(rnd() * 1200) / 10,
-                beanName: beans[bi],
-                origin: '',
-                tasteNotes: notes[Math.floor(rnd() * notes.length)],
-                overallRating: rating,
-                success: rating >= 4,
-                beanStatus: 'opened',
-            });
+    for (let day = 89; day >= 0; day--) {
+        const weekend = [0, 6].includes(new Date(now - day * 864e5).getDay()) ? 1.45 : 1;
+
+        // 1) 오늘 합류한 사람은 반드시 첫 기록을 남긴다 → 첫 기록일 = 합류일
+        for (const u of users) {
+            if (u.joinDay === day) pushRecipe(u, day);
+        }
+
+        // 2) 기존 사용자의 재방문 — 합류 후 시간이 지날수록 확률이 떨어진다(리텐션 감쇠)
+        for (const u of users) {
+            if (u.joinDay <= day) continue;              // 아직 합류 전
+            const weeksSince = (u.joinDay - day) / 7;
+            const p = 0.34 * Math.exp(-weeksSince / 5) * weekend;
+            if (rnd() < p) pushRecipe(u, day);
         }
     }
     return out;
@@ -214,9 +231,128 @@ function aggregate(recipes, days) {
     };
 }
 
+/* ──────────────── 마케팅 지표: 신규 유입 · 리텐션 · 활동 시간대 ────────────────
+ *
+ * 이 블록의 계산은 **항상 전체 기록(allRecipes)을 받아야 한다.** 기간으로 자른
+ * 데이터로 '첫 기록일'을 구하면, 60일 전에 시작한 사용자가 "최근 30일" 화면에서
+ * 신규로 잡힌다 — 유입이 실제보다 부풀려지는 치명적 오독이다.
+ *
+ * 가입일 필드가 따로 없으므로 **첫 기록일을 가입 시점의 프록시**로 쓴다. 또한
+ * Firestore에는 로그인 사용자의 기록만 올라오므로 게스트는 잡히지 않는다.
+ */
+
+// 주 시작(월요일 00:00)으로 내림
+function weekStart(d) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // 월=0
+    return x;
+}
+
+// userId → 첫 기록 시각(ms)
+function firstSeenMap(allRecipes) {
+    const m = new Map();
+    for (const r of allRecipes) {
+        if (!r || !r.userId || !r.date) continue;
+        const t = new Date(r.date).getTime();
+        if (!Number.isFinite(t)) continue;
+        const prev = m.get(r.userId);
+        if (prev === undefined || t < prev) m.set(r.userId, t);
+    }
+    return m;
+}
+
+// 선택 기간의 일별 **신규** 사용자 수.
+// 기존 '사용자 수' 타일은 기간 내 기록을 남긴 계정 수라 신규와 복귀가 섞여 있다.
+// 이건 그 기간에 '처음' 기록한 사람만 센다 — 획득(acquisition) 지표.
+function newUserSeries(allRecipes, days) {
+    const firstSeen = firstSeenMap(allRecipes);
+    const times = [...firstSeen.values()];
+
+    const span = days || (() => {
+        if (!times.length) return 30;
+        const oldest = Math.min(...times);
+        return Math.min(365, Math.max(7, Math.ceil((Date.now() - oldest) / 864e5) + 1));
+    })();
+
+    const byDay = new Map();
+    for (let i = span - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        byDay.set(dayKey(d), 0);
+    }
+    for (const t of times) {
+        const k = dayKey(new Date(t));
+        if (byDay.has(k)) byDay.set(k, byDay.get(k) + 1);
+    }
+    return {
+        series: [...byDay.entries()].map(([key, count]) => ({ key, count })),
+        total: times.filter((t) => byDay.has(dayKey(new Date(t)))).length,
+    };
+}
+
+// 주간 리텐션 코호트. 첫 기록 주차로 사람을 묶고, 그 뒤 N주차에 다시 기록했는지 본다.
+// 기간 필터와 무관하게 전체 데이터로 계산한다 — 코호트는 원래 시간축 전체가 필요하다.
+function retentionCohorts(allRecipes, cohortCount, horizon) {
+    const firstSeen = firstSeenMap(allRecipes);
+
+    // userId → 활동한 주차 집합
+    const active = new Map();
+    for (const r of allRecipes) {
+        if (!r || !r.userId || !r.date) continue;
+        const d = new Date(r.date);
+        if (isNaN(d)) continue;
+        const k = dayKey(weekStart(d));
+        if (!active.has(r.userId)) active.set(r.userId, new Set());
+        active.get(r.userId).add(k);
+    }
+
+    // 코호트 주차 → 멤버 (한 번만 훑는다)
+    const byCohort = new Map();
+    for (const [uid, t] of firstSeen) {
+        const k = dayKey(weekStart(new Date(t)));
+        if (!byCohort.has(k)) byCohort.set(k, []);
+        byCohort.get(k).push(uid);
+    }
+
+    const thisWeek = weekStart(new Date());
+    const out = [];
+    for (let i = cohortCount - 1; i >= 0; i--) {
+        const ws = new Date(thisWeek);
+        ws.setDate(ws.getDate() - i * 7);
+        const key = dayKey(ws);
+        const members = byCohort.get(key) || [];
+
+        const cells = [];
+        for (let w = 0; w <= horizon; w++) {
+            const target = new Date(ws);
+            target.setDate(target.getDate() + w * 7);
+            if (target > thisWeek) { cells.push(null); continue; } // 아직 오지 않은 주는 0%가 아니라 빈칸
+            const tk = dayKey(target);
+            const n = members.filter((u) => active.get(u) && active.get(u).has(tk)).length;
+            cells.push({ n, pct: members.length ? n / members.length : 0 });
+        }
+        out.push({ key, label: shortDate(key), size: members.length, cells });
+    }
+    return out;
+}
+
+// 요일(월=0) × 시간(0~23) 기록 수. 언제 푸시·포스팅할지 정하는 데 쓴다.
+// 이건 '기간 내 활동 분포'라 스코프된 기록을 받는 게 맞다.
+function hourDowMatrix(recipes) {
+    const m = Array.from({ length: 7 }, () => new Array(24).fill(0));
+    for (const r of recipes) {
+        const d = new Date(r.date);
+        if (isNaN(d)) continue;
+        m[(d.getDay() + 6) % 7][d.getHours()] += 1;
+    }
+    return m;
+}
+
 /* ────────────────────────── chart: trend ────────────────────────── */
 
-function renderTrend(wrap, series) {
+function renderTrend(wrap, series, ariaLabel) {
     clear(wrap);
     const W = Math.max(320, wrap.clientWidth || 640);
     const H = 250;
@@ -230,7 +366,7 @@ function renderTrend(wrap, series) {
     const y = (v) => pad.t + ph - (v / niceMax) * ph;
 
     const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
-    s.setAttribute('aria-label', '일별 기록 추이');
+    s.setAttribute('aria-label', ariaLabel || '일별 기록 추이');
 
     // 하한선 위 격자 — 실선 헤어라인, 뒤로 물러나게
     const ticks = 4;
@@ -796,6 +932,157 @@ function renderFunnel(wrap, funnel) {
     wrap.appendChild(tip);
 }
 
+/* ──────────────────── chart: 주간 리텐션 코호트 ──────────────────── */
+
+function renderRetention(wrap, cohorts, horizon) {
+    clear(wrap);
+    const withMembers = cohorts.filter((c) => c.size > 0);
+    if (!withMembers.length) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = '아직 코호트를 만들 만큼 데이터가 쌓이지 않았습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const scroll = document.createElement('div');
+    scroll.className = 'scroll-x';
+    const t = document.createElement('table');
+    t.className = 'cohort';
+
+    const thead = document.createElement('thead');
+    const hr = document.createElement('tr');
+    ['시작 주', '유입'].concat(
+        Array.from({ length: horizon + 1 }, (_, i) => `W${i}`)
+    ).forEach((label) => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    t.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    withMembers.forEach((c) => {
+        const tr = document.createElement('tr');
+
+        const tdWeek = document.createElement('td');
+        tdWeek.textContent = c.label;
+        tr.appendChild(tdWeek);
+
+        const tdSize = document.createElement('td');
+        tdSize.className = 'num';
+        tdSize.textContent = fmt(c.size) + '명';
+        tr.appendChild(tdSize);
+
+        c.cells.forEach((cell) => {
+            const td = document.createElement('td');
+            td.className = 'num cohort-cell';
+            if (!cell) {                      // 아직 오지 않은 주 — 0%가 아니라 빈칸
+                td.textContent = '';
+                td.classList.add('cohort-future');
+            } else {
+                const pct = Math.round(cell.pct * 100);
+                td.textContent = pct + '%';
+                // 순차 램프: 잔존율이 높을수록 진하게. 값이 이미 크기를 말하므로 채도만 쓴다.
+                td.style.background = `color-mix(in srgb, var(--series-1) ${Math.round(cell.pct * 62)}%, transparent)`;
+                td.title = `${fmt(cell.n)}명 / ${fmt(c.size)}명`;
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    t.appendChild(tbody);
+    scroll.appendChild(t);
+    wrap.appendChild(scroll);
+}
+
+/* ──────────────── chart: 요일 × 시간대 활동 히트맵 ──────────────── */
+
+const DOW_KO = ['월', '화', '수', '목', '금', '토', '일'];
+
+function renderHeatmap(wrap, matrix) {
+    clear(wrap);
+    const max = Math.max(0, ...matrix.flat());
+    if (!max) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = '표시할 기록이 없습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const CELL = 22, GAP = 2, LABEL_W = 26, TOP_H = 16;
+    const W = LABEL_W + 24 * (CELL + GAP);
+    const H = TOP_H + 7 * (CELL + GAP) + 4;
+
+    const scroll = document.createElement('div');
+    scroll.className = 'scroll-x';
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
+    s.setAttribute('aria-label', '요일과 시간대별 기록 분포');
+
+    // 시간 눈금 — 3시간 간격만 적어 라벨이 뭉개지지 않게
+    for (let h = 0; h < 24; h += 3) {
+        const tx = svg('text', {
+            x: LABEL_W + h * (CELL + GAP) + CELL / 2, y: TOP_H - 5,
+            'text-anchor': 'middle', 'font-size': 9.5,
+        });
+        tx.style.fill = cssVar('--muted');
+        tx.style.fontVariantNumeric = 'tabular-nums';
+        tx.textContent = h;
+        s.appendChild(tx);
+    }
+
+    const tip = document.createElement('div');
+    tip.className = 'tip';
+
+    matrix.forEach((row, dow) => {
+        const ty = svg('text', {
+            x: LABEL_W - 8, y: TOP_H + dow * (CELL + GAP) + CELL / 2 + 3.5,
+            'text-anchor': 'end', 'font-size': 10.5,
+        });
+        ty.style.fill = cssVar('--ink-2');
+        ty.textContent = DOW_KO[dow];
+        s.appendChild(ty);
+
+        row.forEach((n, h) => {
+            const x = LABEL_W + h * (CELL + GAP);
+            const y = TOP_H + dow * (CELL + GAP);
+            const rect = svg('rect', { x, y, width: CELL, height: CELL, rx: 3 });
+            // 0은 격자만 남겨 '데이터 없음'과 '적음'을 구분한다
+            rect.style.fill = n === 0
+                ? cssVar('--grid')
+                : `color-mix(in srgb, var(--series-1) ${Math.round((n / max) * 88) + 12}%, transparent)`;
+            rect.style.cursor = 'pointer';
+            rect.addEventListener('pointerenter', () => {
+                clear(tip);
+                const head = document.createElement('div');
+                head.className = 'tip-head';
+                head.textContent = `${DOW_KO[dow]} ${String(h).padStart(2, '0')}시`;
+                const r2 = document.createElement('div');
+                r2.className = 'tip-row';
+                const k = document.createElement('span');
+                k.className = 'tip-key';
+                k.style.background = cssVar('--series-1');
+                const v = document.createElement('span');
+                v.className = 'tip-val';
+                v.textContent = fmt(n) + '건';
+                r2.append(k, v);
+                tip.append(head, r2);
+                tip.classList.add('on');
+                tip.style.left = Math.min(x, W - 150) + 'px';
+                tip.style.top = Math.max(0, y - 44) + 'px';
+            });
+            rect.addEventListener('pointerleave', () => tip.classList.remove('on'));
+            s.appendChild(rect);
+        });
+    });
+
+    scroll.appendChild(s);
+    wrap.appendChild(scroll);
+    wrap.appendChild(tip);
+}
+
 /* ────────────────────────── table views ────────────────────────── */
 
 function buildTable(cols, rows) {
@@ -880,6 +1167,21 @@ function render() {
     el('funnel-sub').textContent = `${label} · 기록을 남긴 사용자가 얼마나 정착하는가`;
     renderFunnel(el('funnel-wrap'), a.funnel);
 
+    // ── 마케팅 지표 ──
+    // 신규 유입·리텐션은 **allRecipes**(전체)로 계산한다. scoped를 넘기면 기간 밖에서
+    // 시작한 사용자가 신규로 잡혀 유입이 부풀려진다.
+    const nu = newUserSeries(allRecipes, rangeDays);
+    el('newusers-sub').textContent = `${label} · 처음 기록을 남긴 사용자 ${fmt(nu.total)}명`;
+    renderTrend(el('newusers-wrap'), nu.series, '일별 신규 사용자 추이');
+
+    const RETENTION_HORIZON = 4;
+    const cohorts = retentionCohorts(allRecipes, 6, RETENTION_HORIZON);
+    renderRetention(el('retention-wrap'), cohorts, RETENTION_HORIZON);
+
+    const heat = hourDowMatrix(scoped);
+    el('heatmap-sub').textContent = `${label} · 기록이 저장된 요일과 시각`;
+    renderHeatmap(el('heatmap-wrap'), heat);
+
     // 표 뷰 — 모든 차트는 표로도 읽을 수 있어야 한다
     clear(el('tv-trend'));
     el('tv-trend').appendChild(buildTable(
@@ -907,6 +1209,38 @@ function render() {
     el('tv-beans').appendChild(buildTable(
         [{ key: 'n', label: '원두' }, { key: 'c', label: '기록 수', num: true }],
         a.beans.map((b) => ({ n: b.name, c: fmt(b.count) }))
+    ));
+
+    clear(el('tv-newusers'));
+    el('tv-newusers').appendChild(buildTable(
+        [{ key: 'd', label: '날짜' }, { key: 'c', label: '신규 사용자', num: true }],
+        nu.series.map((s) => ({ d: s.key, c: fmt(s.count) }))
+    ));
+
+    clear(el('tv-retention'));
+    el('tv-retention').appendChild(buildTable(
+        [{ key: 'w', label: '시작 주' }, { key: 'n', label: '유입', num: true }].concat(
+            Array.from({ length: RETENTION_HORIZON + 1 }, (_, i) => ({ key: 'w' + i, label: `W${i}`, num: true }))
+        ),
+        cohorts.filter((c) => c.size > 0).map((c) => {
+            const row = { w: c.label, n: fmt(c.size) };
+            c.cells.forEach((cell, i) => {
+                row['w' + i] = cell ? Math.round(cell.pct * 100) + '%' : '—';
+            });
+            return row;
+        })
+    ));
+
+    clear(el('tv-heatmap'));
+    el('tv-heatmap').appendChild(buildTable(
+        [{ key: 'd', label: '요일' }].concat(
+            Array.from({ length: 24 }, (_, h) => ({ key: 'h' + h, label: String(h), num: true }))
+        ),
+        heat.map((row, dow) => {
+            const o = { d: DOW_KO[dow] };
+            row.forEach((n, h) => { o['h' + h] = fmt(n); });
+            return o;
+        })
     ));
 
     clear(el('tv-funnel'));
