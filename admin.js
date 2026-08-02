@@ -23,6 +23,13 @@ const isDemo = new URLSearchParams(location.search).get('demo') === '1';
 let allRecipes = [];
 let rangeDays = 30;
 
+// 데이터 출처. 'aggregate'는 stats_daily/users를 읽는 가벼운 경로,
+// 'scan'은 recipes 전체를 내려받는 예전 경로다(집계가 아직 없거나 권한이 없을 때).
+// docs/admin-roadmap.md Phase 1 참고.
+let dataMode = 'scan';
+let agg = null;   // { daily: Map<dayKey, obj>, users: [], beanNames: Map<id,name>, recent: [] }
+let fbRef = null; // 로드된 firebase-config 모듈. '집계 재생성' 버튼이 쓴다.
+
 /* ────────────────────────── helpers ────────────────────────── */
 
 const svg = (name, attrs = {}) => {
@@ -348,6 +355,170 @@ function hourDowMatrix(recipes) {
         m[(d.getDay() + 6) % 7][d.getHours()] += 1;
     }
     return m;
+}
+
+/* ─────────────── 집계 문서에서 뷰 만들기 (Phase 1 경로) ───────────────
+ *
+ * 전체 스캔 경로의 aggregate()/newUserSeries()/retentionCohorts()/hourDowMatrix()가
+ * 만들어내는 것과 **같은 모양**을 stats_daily·users에서 만든다. 그래야 렌더러를
+ * 그대로 쓰고 화면 의미도 안 바뀐다.
+ *
+ * 기간 스코프가 유지되는 건 일별 문서에 uc(사용자별)·bn(원두별) 맵이 있기 때문이다.
+ * 이게 없으면 '기간 내 사용자 수'와 퍼널이 생애 기준으로 밀린다.
+ */
+
+// 선택 기간에 해당하는 일별 문서 키 목록(오래된 것부터). days=0이면 전체.
+function rangeDayKeys(dailyMap, days) {
+    if (!days) return [...dailyMap.keys()].sort();
+    const out = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        out.push(dayKey(d));
+    }
+    return out;
+}
+
+function buildViewFromAggregates(a, days) {
+    const keys = rangeDayKeys(a.daily, days);
+    const get = (k) => a.daily.get(k) || {};
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+    const series = keys.map((k) => ({ key: k, count: num(get(k).count) }));
+    const total = series.reduce((s, d) => s + d.count, 0);
+
+    let espresso = 0, drip = 0, successCount = 0, ratedTotal = 0;
+    const ratingCounts = [0, 0, 0, 0, 0];
+    const perUser = new Map();   // 기간 내 사용자별 기록 수 → 사용자 수와 퍼널
+    const perBean = new Map();   // 기간 내 원두별 기록 수 → TOP 10
+    const hourDow = Array.from({ length: 7 }, () => new Array(24).fill(0));
+
+    for (const k of keys) {
+        const d = get(k);
+        espresso += num(d.espresso);
+        drip += num(d.drip);
+        successCount += num(d.successCount);
+        ratedTotal += num(d.ratedCount);
+        for (let r = 1; r <= 5; r++) ratingCounts[r - 1] += num(d['rating' + r]);
+
+        const dow = (new Date(k + 'T00:00:00').getDay() + 6) % 7;
+        for (let h = 0; h < 24; h++) hourDow[dow][h] += num(d['h' + h]);
+
+        for (const [uid, n] of Object.entries(d.uc || {})) {
+            perUser.set(uid, (perUser.get(uid) || 0) + num(n));
+        }
+        for (const [bid, n] of Object.entries(d.bn || {})) {
+            perBean.set(bid, (perBean.get(bid) || 0) + num(n));
+        }
+    }
+
+    const ratingSum = ratingCounts.reduce((s, c, i) => s + c * (i + 1), 0);
+    const perUserCounts = [...perUser.values()].filter((n) => n > 0);
+
+    const funnel = [
+        { label: '기록 사용자', hint: '1건 이상 저장', min: 1 },
+        { label: '재기록', hint: '2건 이상 — 다시 돌아옴', min: 2 },
+        { label: '정착', hint: '5건 이상 — 습관화', min: 5 },
+        { label: '헤비 유저', hint: '10건 이상', min: 10 },
+    ].map((s) => ({ ...s, users: perUserCounts.filter((c) => c >= s.min).length }));
+
+    const beans = [...perBean.entries()]
+        .map(([id, count]) => ({ name: a.beanNames.get(id) || '(이름 없음)', count }))
+        .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name))
+        .slice(0, 10);
+
+    const todayK = dayKey(new Date());
+
+    return {
+        total,
+        series,
+        users: perUserCounts.length,
+        today: num(get(todayK).count),
+        avgRating: ratedTotal ? ratingSum / ratedTotal : 0,
+        ratingCounts,
+        ratedTotal,
+        espresso,
+        drip,
+        successCount,
+        successRate: total ? successCount / total : 0,
+        beans,
+        recent: a.recent,
+        funnel,
+        hourDow,
+    };
+}
+
+// users 컬렉션의 firstSeenAt으로 신규 유입 시계열. 전체 스캔 경로의
+// newUserSeries()와 같은 모양을 돌려준다 — 다만 여기서는 프록시가 아니라 실제 값이다.
+function newUserSeriesFromUsers(users, days) {
+    const times = users
+        .map((u) => new Date(u.firstSeenAt).getTime())
+        .filter((t) => Number.isFinite(t));
+
+    const span = days || (() => {
+        if (!times.length) return 30;
+        return Math.min(365, Math.max(7, Math.ceil((Date.now() - Math.min(...times)) / 864e5) + 1));
+    })();
+
+    const byDay = new Map();
+    for (let i = span - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        byDay.set(dayKey(d), 0);
+    }
+    for (const t of times) {
+        const k = dayKey(new Date(t));
+        if (byDay.has(k)) byDay.set(k, byDay.get(k) + 1);
+    }
+    return {
+        series: [...byDay.entries()].map(([key, count]) => ({ key, count })),
+        total: times.filter((t) => byDay.has(dayKey(new Date(t)))).length,
+    };
+}
+
+// 코호트 — 소속은 users.firstSeenAt으로, 주차별 활동은 stats_daily.uc로 판정한다.
+function retentionFromAggregates(a, cohortCount, horizon) {
+    const byCohort = new Map();
+    for (const u of a.users) {
+        const t = new Date(u.firstSeenAt).getTime();
+        if (!Number.isFinite(t)) continue;
+        const k = dayKey(weekStart(new Date(t)));
+        if (!byCohort.has(k)) byCohort.set(k, []);
+        byCohort.get(k).push(u.id);
+    }
+
+    // uid → 활동한 주차 집합
+    const active = new Map();
+    for (const [dk, d] of a.daily) {
+        const wk = dayKey(weekStart(new Date(dk + 'T00:00:00')));
+        for (const [uid, n] of Object.entries(d.uc || {})) {
+            if (!Number(n)) continue;
+            if (!active.has(uid)) active.set(uid, new Set());
+            active.get(uid).add(wk);
+        }
+    }
+
+    const thisWeek = weekStart(new Date());
+    const out = [];
+    for (let i = cohortCount - 1; i >= 0; i--) {
+        const ws = new Date(thisWeek);
+        ws.setDate(ws.getDate() - i * 7);
+        const key = dayKey(ws);
+        const members = byCohort.get(key) || [];
+        const cells = [];
+        for (let w = 0; w <= horizon; w++) {
+            const target = new Date(ws);
+            target.setDate(target.getDate() + w * 7);
+            if (target > thisWeek) { cells.push(null); continue; }
+            const tk = dayKey(target);
+            const n = members.filter((u) => active.get(u) && active.get(u).has(tk)).length;
+            cells.push({ n, pct: members.length ? n / members.length : 0 });
+        }
+        out.push({ key, label: shortDate(key), size: members.length, cells });
+    }
+    return out;
 }
 
 /* ────────────────────────── chart: trend ────────────────────────── */
@@ -1122,8 +1293,11 @@ function buildTable(cols, rows) {
 /* ────────────────────────── render ────────────────────────── */
 
 function render() {
-    const scoped = sliceByRange(allRecipes, rangeDays);
-    const a = aggregate(scoped, rangeDays);
+    // 집계 경로가 살아 있으면 그걸 쓰고, 아니면 예전 전체 스캔 경로로 떨어진다.
+    // 두 경로가 같은 모양을 돌려주므로 아래 렌더 코드는 출처를 몰라도 된다.
+    const useAgg = dataMode === 'aggregate' && agg;
+    const scoped = useAgg ? null : sliceByRange(allRecipes, rangeDays);
+    const a = useAgg ? buildViewFromAggregates(agg, rangeDays) : aggregate(scoped, rangeDays);
     const label = rangeDays ? `최근 ${rangeDays}일` : '전체 기간';
 
     el('hero-label').textContent = `${label} 기록된 레시피`;
@@ -1170,15 +1344,19 @@ function render() {
     // ── 마케팅 지표 ──
     // 신규 유입·리텐션은 **allRecipes**(전체)로 계산한다. scoped를 넘기면 기간 밖에서
     // 시작한 사용자가 신규로 잡혀 유입이 부풀려진다.
-    const nu = newUserSeries(allRecipes, rangeDays);
+    const nu = useAgg
+        ? newUserSeriesFromUsers(agg.users, rangeDays)
+        : newUserSeries(allRecipes, rangeDays);
     el('newusers-sub').textContent = `${label} · 처음 기록을 남긴 사용자 ${fmt(nu.total)}명`;
     renderTrend(el('newusers-wrap'), nu.series, '일별 신규 사용자 추이');
 
     const RETENTION_HORIZON = 4;
-    const cohorts = retentionCohorts(allRecipes, 6, RETENTION_HORIZON);
+    const cohorts = useAgg
+        ? retentionFromAggregates(agg, 6, RETENTION_HORIZON)
+        : retentionCohorts(allRecipes, 6, RETENTION_HORIZON);
     renderRetention(el('retention-wrap'), cohorts, RETENTION_HORIZON);
 
-    const heat = hourDowMatrix(scoped);
+    const heat = useAgg ? a.hourDow : hourDowMatrix(scoped);
     el('heatmap-sub').textContent = `${label} · 기록이 저장된 요일과 시각`;
     renderHeatmap(el('heatmap-wrap'), heat);
 
@@ -1295,9 +1473,144 @@ function render() {
         })
     ));
 
+    // 어떤 경로로 읽었는지는 숫자를 해석할 때 중요하다 — 반드시 표기한다.
     el('foot').textContent = isDemo
         ? '데모 데이터 · 실제 Firestore를 조회하지 않았습니다.'
-        : `Firestore recipes 컬렉션 전체 ${fmt(allRecipes.length)}건을 불러와 브라우저에서 집계했습니다.`;
+        : useAgg
+            ? `집계 문서(stats_daily ${fmt(agg.daily.size)}일 · users ${fmt(agg.users.length)}명)를 읽었습니다. recipes 전체는 내려받지 않습니다.`
+            : `Firestore recipes 컬렉션 전체 ${fmt(allRecipes.length)}건을 불러와 브라우저에서 집계했습니다. 집계 문서가 준비되면 이 전체 조회는 사라집니다.`;
+}
+
+/* ──────────────────── 데이터 로딩 (Phase 1) ────────────────────
+ *
+ * 집계 문서를 먼저 시도하고, 없거나 권한이 없으면 예전 전체 스캔으로 떨어진다.
+ * 이 폴백 덕분에 보안 규칙 게시나 백필 전에도 대시보드가 그대로 뜬다.
+ */
+
+// 예전 경로. recipes를 통째로 받는다 — 사진(base64)까지 딸려와 무겁다.
+async function loadAllRecipes(fb) {
+    const snap = await fb.getDocs(fb.collection(fb.db, 'recipes'));
+    const out = [];
+    snap.forEach((d) => {
+        const data = d.data();
+        // 받은 뒤 버릴 뿐 전송은 이미 끝났다 — 클라이언트 SDK엔 필드 선택이 없다.
+        delete data.imageUrl;
+        out.push({ id: d.id, ...data });
+    });
+    return out;
+}
+
+// 집계 경로. 셋 다 작은 문서라 합쳐도 수십 KB 수준이다.
+// 집계가 비어 있으면(=아직 백필 전) null을 돌려 폴백을 유도한다.
+async function loadAggregates(fb) {
+    try {
+        const [dailySnap, usersSnap, beansSnap, recentSnap] = await Promise.all([
+            fb.getDocs(fb.collection(fb.db, 'stats_daily')),
+            fb.getDocs(fb.collection(fb.db, 'users')),
+            fb.getDocs(fb.collection(fb.db, 'stats_beans')),
+            fb.getDocs(fb.query(
+                fb.collection(fb.db, 'recipes'), fb.orderBy('date', 'desc'), fb.limit(20)
+            )),
+        ]);
+
+        if (dailySnap.empty || usersSnap.empty) return null;   // 아직 집계가 없다
+
+        const daily = new Map();
+        dailySnap.forEach((d) => daily.set(d.id, d.data()));
+
+        const users = [];
+        usersSnap.forEach((d) => users.push({ id: d.id, ...d.data() }));
+
+        const beanNames = new Map();
+        beansSnap.forEach((d) => beanNames.set(d.id, (d.data() || {}).name || ''));
+
+        const recent = [];
+        recentSnap.forEach((d) => {
+            const data = d.data();
+            delete data.imageUrl;
+            recent.push({ id: d.id, ...data });
+        });
+
+        return { daily, users, beanNames, recent };
+    } catch (e) {
+        // 권한이 없거나 컬렉션이 없다 → 폴백. 대시보드를 막지는 않는다.
+        console.warn('[Stats] 집계를 읽지 못해 전체 스캔으로 대체합니다.', e);
+        return null;
+    }
+}
+
+/**
+ * 집계 재생성(백필). recipes를 한 번 전부 읽어 stats_daily·users·stats_beans를
+ * 처음부터 다시 만든다. 과거 데이터 이관과 정합성 복구를 겸한다 —
+ * 삭제 중 집계 갱신이 실패해 원본과 어긋났을 때 되돌리는 수단이기도 하다.
+ *
+ * 평소 경로에서는 절대 부르지 않는다. 이 버튼을 누를 때만 전체를 읽는다.
+ */
+async function rebuildAggregates(fb, onProgress) {
+    const recipes = await loadAllRecipes(fb);
+    onProgress(`기록 ${fmt(recipes.length)}건을 읽었습니다. 집계를 계산합니다…`);
+
+    const daily = new Map();
+    const users = new Map();
+    const beans = new Map();
+
+    const beanId = (name) => {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < name.length; i++) {
+            h ^= name.charCodeAt(i);
+            h = Math.imul(h, 0x01000193) >>> 0;
+        }
+        return 'b' + h.toString(36);
+    };
+
+    for (const r of recipes) {
+        const d = new Date(r.date);
+        if (isNaN(d) || !r.userId) continue;
+        const k = dayKey(d);
+        if (!daily.has(k)) daily.set(k, { count: 0, espresso: 0, drip: 0, successCount: 0, ratedCount: 0, uc: {}, bn: {} });
+        const day = daily.get(k);
+
+        day.count += 1;
+        if (r.mode === 'espresso') day.espresso += 1; else day.drip += 1;
+        day['h' + d.getHours()] = (day['h' + d.getHours()] || 0) + 1;
+        if (r.success === true) day.successCount += 1;
+        const rating = Number(r.overallRating);
+        if (Number.isFinite(rating) && rating >= 1 && rating <= 5) {
+            day.ratedCount += 1;
+            day['rating' + rating] = (day['rating' + rating] || 0) + 1;
+        }
+        day.uc[r.userId] = (day.uc[r.userId] || 0) + 1;
+
+        const bean = (r.beanName || '').trim();
+        if (bean) {
+            const id = beanId(bean);
+            day.bn[id] = (day.bn[id] || 0) + 1;
+            beans.set(id, bean);
+        }
+
+        const u = users.get(r.userId) || { firstSeenAt: r.date, lastSeenAt: r.date, recipeCount: 0 };
+        u.recipeCount += 1;
+        if (new Date(r.date) < new Date(u.firstSeenAt)) u.firstSeenAt = r.date;
+        if (new Date(r.date) > new Date(u.lastSeenAt)) u.lastSeenAt = r.date;
+        users.set(r.userId, u);
+    }
+
+    // merge:false로 덮어써야 이전 잘못된 값이 남지 않는다(정합성 복구가 목적이므로).
+    let written = 0;
+    const total = daily.size + users.size + beans.size;
+    for (const [k, v] of daily) {
+        await fb.setDoc(fb.doc(fb.db, 'stats_daily', k), v);
+        onProgress(`집계 기록 중… ${fmt(++written)}/${fmt(total)}`);
+    }
+    for (const [uid, v] of users) {
+        await fb.setDoc(fb.doc(fb.db, 'users', uid), v, { merge: true });
+        onProgress(`집계 기록 중… ${fmt(++written)}/${fmt(total)}`);
+    }
+    for (const [id, name] of beans) {
+        await fb.setDoc(fb.doc(fb.db, 'stats_beans', id), { name });
+        onProgress(`집계 기록 중… ${fmt(++written)}/${fmt(total)}`);
+    }
+    return { recipes: recipes.length, days: daily.size, users: users.size, beans: beans.size };
 }
 
 /* ────────────────────────── wiring ────────────────────────── */
@@ -1315,6 +1628,8 @@ function wireUI() {
 
     document.querySelectorAll('.card-toggle').forEach((btn) => {
         btn.addEventListener('click', () => {
+            // 같은 스타일을 쓰지만 표 토글이 아닌 버튼(집계 재생성)이 섞여 있다.
+            if (!btn.dataset.tv) return;
             const tv = el(btn.dataset.tv);
             const chart = tv.previousElementSibling;
             const showTable = !tv.classList.contains('on');
@@ -1323,6 +1638,37 @@ function wireUI() {
             btn.textContent = showTable ? '차트로 보기' : '표로 보기';
         });
     });
+
+    // ── 집계 재생성 ──
+    // 평소 경로에서 사라진 '전체 읽기'를 여기서만 의도적으로 한 번 수행한다.
+    const btnRebuild = el('btn-rebuild');
+    if (btnRebuild) {
+        btnRebuild.addEventListener('click', async () => {
+            const status = el('rebuild-status');
+            if (isDemo || !fbRef) {
+                status.textContent = '데모 모드에서는 집계를 재생성할 수 없습니다.';
+                return;
+            }
+            btnRebuild.disabled = true;
+            const original = btnRebuild.textContent;
+            btnRebuild.textContent = '재생성 중…';
+            try {
+                const r = await rebuildAggregates(fbRef, (msg) => { status.textContent = msg; });
+                status.textContent =
+                    `완료 — 기록 ${fmt(r.recipes)}건에서 일별 ${fmt(r.days)}일 · 사용자 ${fmt(r.users)}명 · 원두 ${fmt(r.beans)}종을 만들었습니다. 새로고침하면 집계 경로로 열립니다.`;
+                // 방금 만든 집계로 즉시 갈아탄다 — 새로고침을 기다릴 필요가 없다.
+                agg = await loadAggregates(fbRef);
+                if (agg) { dataMode = 'aggregate'; allRecipes = []; render(); }
+            } catch (e) {
+                console.error('집계 재생성 실패', e);
+                status.textContent =
+                    `재생성에 실패했습니다 (${e.code || e.message}). 보안 규칙에서 stats_daily·users·stats_beans 쓰기를 관리자에게 허용해야 합니다.`;
+            } finally {
+                btnRebuild.disabled = false;
+                btnRebuild.textContent = original;
+            }
+        });
+    }
 
     let t;
     window.addEventListener('resize', () => {
@@ -1359,6 +1705,7 @@ if (isDemo) {
 
     import('./firebase-config.js')
         .then((fb) => {
+            fbRef = fb;
             el('btn-login').addEventListener('click', async () => {
                 try {
                     await fb.signInWithPopup(fb.auth, fb.googleProvider);
@@ -1401,21 +1748,29 @@ if (isDemo) {
                 el('who').textContent = user.email || user.uid;
 
                 try {
-                    const snap = await fb.getDocs(fb.collection(fb.db, 'recipes'));
-                    allRecipes = [];
-                    snap.forEach((d) => {
-                        const data = d.data();
-                        // 본문 이미지는 base64로 최대 1MB — 집계에 쓰지 않으니 들고 있지 않는다
-                        delete data.imageUrl;
-                        allRecipes.push({ id: d.id, ...data });
-                    });
+                    // ① 가벼운 경로 먼저 — 집계 문서가 있으면 recipes 전체를 안 받는다.
+                    agg = await loadAggregates(fb);
+                    if (agg) {
+                        dataMode = 'aggregate';
+                        allRecipes = [];
+                    } else {
+                        // ② 집계가 아직 없거나 권한이 없다 → 예전 전체 스캔으로 떨어진다.
+                        //    규칙 게시·백필 전에도 대시보드가 멀쩡히 뜨게 하려는 안전망이다.
+                        dataMode = 'scan';
+                        allRecipes = await loadAllRecipes(fb);
+                    }
 
                     // 랜딩의 사회적 증거용 공개 집계. recipes 자체는 비공개라
-                    // 익명 방문자가 셀 수 없으므로, 이미 전체를 읽은 여기서 숫자만 공개 문서에 남긴다.
+                    // 익명 방문자가 셀 수 없으므로 여기서 숫자만 공개 문서에 남긴다.
+                    // 집계 모드에서는 allRecipes가 비어 있으므로 일별 합계를 쓴다 —
+                    // 그냥 length를 쓰면 랜딩 숫자가 0으로 덮인다.
+                    const totalCount = dataMode === 'aggregate'
+                        ? [...agg.daily.values()].reduce((s, d) => s + (Number(d.count) || 0), 0)
+                        : allRecipes.length;
                     // 실패해도 대시보드는 그대로 동작해야 한다.
                     try {
                         await fb.setDoc(fb.doc(fb.db, 'public_stats', 'landing'), {
-                            recipeCount: allRecipes.length,
+                            recipeCount: totalCount,
                             updatedAt: new Date().toISOString()
                         });
                     } catch (statErr) {
