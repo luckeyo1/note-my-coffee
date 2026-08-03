@@ -100,11 +100,30 @@ body {
     padding: 20px 0 24px;
 }
 /* 좁은 화면에서 브랜드와 액션이 합쳐 뷰포트를 넘겨 페이지가 가로로 밀렸다
-   (390px에서 scrollWidth 405). flex 자식의 기본 min-width:auto가 콘텐츠 폭만큼
-   버티는 게 원인이라 브랜드 쪽이 줄어들 수 있게 풀어준다. */
-.brand, .brand-text { min-width: 0; }
-.brand-name, .brand-tagline { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+   (390px에서 scrollWidth 405).
+
+   처음엔 `.brand, .brand-text { min-width: 0 }`로 브랜드를 줄어들게 풀고
+   `.header-actions`를 flex-shrink:0으로 고정했다. 오버플로는 사라졌지만
+   **줄어드는 부담이 전부 브랜드에 쏠려** 워드마크가 데스크톱 56px, 모바일 11px까지
+   찌그러졌다(필요 폭 188px). overflow:hidden이 그 결과를 잘라내 로고가 사라졌다.
+
+   그래서 반대로 잡는다 — 마크와 워드마크는 절대 줄이지 않고, 좁아질 때 양보하는
+   것은 **태그라인 하나**뿐이다. 태그라인은 없어도 되는 정보다. */
+.brand { flex-shrink: 0; min-width: 0; }
+.brand-mark { flex-shrink: 0; }
+.brand-name { white-space: nowrap; }          /* 잘리지 않는다 — 줄어들지도 않는다 */
+.brand-text { min-width: 0; }
+.brand-tagline { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .header-actions { flex-shrink: 0; }
+
+/* 390px에서 가용 폭은 362px인데 브랜드 223 + 액션 303 = 538이다.
+   한 줄에 넣는 것 자체가 불가능하다 — 예전엔 이걸 브랜드를 찌그러뜨려 "해결"했다.
+   대신 두 줄로 접는다. 각 줄이 온전한 폭을 갖고, 덤으로 탭 타깃도 넉넉해진다. */
+@media (max-width: 560px) {
+    .app-header { flex-wrap: wrap; gap: 12px; padding-bottom: 18px; }
+    .brand { flex: 1 1 100%; }
+    .header-actions { flex: 1 1 100%; justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
+}
 
 .brand {
     display: flex;
@@ -509,6 +528,13 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
     cursor: pointer;
     transition: var(--transition);
     margin-bottom: 0;
+    /* 별 자체는 28px 그대로 두고 눌리는 영역만 넓힌다 — 손가락으로 별점을 주는
+       게 이 앱의 핵심 동작인데 18px 표적은 너무 작았다. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
 }
 .rating-input label:hover,
 .rating-input label:hover ~ label,
@@ -1253,5 +1279,26 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+/* ===== 터치 표적 =====
+   손가락 입력일 때만 적용한다(pointer: coarse). 데스크톱 조판은 그대로 두고
+   모바일에서 눌리는 영역만 44px로 넓힌다 — 보이는 크기는 바뀌지 않는다. */
+@media (pointer: coarse) {
+    .lang-btn, .help-btn, .logbook-btn, .logout-btn,
+    .share-btn, .delete-btn, .mode-pill, .info-btn,
+    .stopwatch-trigger, .sw-btn, .result-btn {
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    /* info-btn과 logout-btn은 아이콘이라 보이는 크기를 키우면 안 된다.
+       상자는 44px로 두되 시각적 표식은 원래 크기로 유지한다. */
+    .info-btn, .logout-btn {
+        background-clip: content-box;
+        padding: 0;
     }
 }

@@ -1,15 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="90 30 332 438">
+  <!-- 진한 마크 — **밝은 배경용**(현재 모든 페이지가 밝다). 이름과 용도가 반대이니 주의. -->
   <!-- Note My Coffee — mark C, inverted for light backgrounds -->
   <path d="M150 46 H362 Q406 46 406 90 L406 452 L256 379 L106 452 L106 90 Q106 46 150 46 Z"
-        fill="#1A1614" stroke="#1A1614" stroke-width="16" stroke-linejoin="round"/>
-  <g fill="#F5EFE4">
+        fill="#241C15" stroke="#241C15" stroke-width="16" stroke-linejoin="round"/>
+  <g fill="#FCFAF6">
     <rect x="142" y="86" width="168" height="15" rx="7.5"/>
     <path d="M152 101 L152 128 A74 70 0 0 0 300 128 L300 101 Z"/>
   </g>
-  <circle cx="316" cy="130" r="26" fill="none" stroke="#F5EFE4" stroke-width="14"/>
-  <g stroke="#F5EFE4" stroke-width="14" stroke-linecap="round">
+  <circle cx="316" cy="130" r="26" fill="none" stroke="#FCFAF6" stroke-width="14"/>
+  <g stroke="#FCFAF6" stroke-width="14" stroke-linecap="round">
     <line x1="178" y1="233" x2="283" y2="233"/>
     <line x1="178" y1="261" x2="258" y2="261"/>
   </g>
-  <path d="M169 286 Q256 336 343 286" fill="none" stroke="#C89B55" stroke-width="18" stroke-linecap="round"/>
+  <path d="M169 286 Q256 336 343 286" fill="none" stroke="#B4532A" stroke-width="18" stroke-linecap="round"/>
 </svg>
