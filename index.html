@@ -1366,6 +1366,12 @@
             .param { border-right: none; border-bottom: 1px solid var(--border); }
             .param:last-child { border-bottom: none; }
         }
+
+        /* 터치 입력일 때만 표적을 44px로. 데스크톱 조판은 그대로 둔다. */
+        @media (pointer: coarse) {
+            .btn-primary, .sticky-cta-btn, .nav-btn, .demo-open { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+            footer a { display: inline-block; padding: 12px 4px; }
+        }
     </style>
 
     <!-- .reveal은 기본 opacity:0이고 IntersectionObserver가 해제한다.
@@ -1424,7 +1430,7 @@
 
     <!-- NAV -->
     <nav class="nav">
-        <span class="nav-logo"><img src="logo.svg" alt=""> Note My Coffee</span>
+        <span class="nav-logo"><img src="logo-dark.svg" alt=""> Note My Coffee</span>
         <button class="nav-btn" id="btn-nav-cta">시작하기</button>
     </nav>
 
