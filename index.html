@@ -97,7 +97,7 @@
     }
     </script>
 
-    <meta name="theme-color" content="#FBFAF8">
+    <meta name="theme-color" content="#FCFAF6">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -143,18 +143,18 @@
            변수 이름(--gold, --bg …)은 수백 곳에서 참조하므로 그대로 두고 값만
            바꿨다. 이름은 옛 팔레트의 흔적이라 아래 의미 이름을 함께 제공한다. */
         :root {
-            --paper: #FBFAF8;      /* 기록지. AI 클리셰인 크림(#F4F1EA)보다 밝고 채도가 낮다 */
-            --paper-2: #F2EFE9;    /* 살짝 눌린 면 */
-            --ink: #15120E;        /* 순수 검정이 아닌 따뜻한 먹 */
-            --ink-2: #544C41;
-            --ink-3: #6B6357;      /* 종이 대비 5.3:1 — WCAG AA */
-            --rule: rgba(21,18,14,0.16);    /* 헤어라인 괘선 — 구획의 유일한 수단 */
-            --rule-soft: rgba(21,18,14,0.08);
-            --signal: #0E4C7A;     /* 계기 블루. 옛 팔레트에 파랑이 전무했고 커피=갈색 클리셰도 피한다 */
-            --signal-dim: rgba(14,76,122,0.10);
-            --signal-line: rgba(14,76,122,0.28);
-            --good: #1E6B3A;
-            --bad:  #A62B1F;
+            --paper: #FCFAF6;      /* 기록지. AI 클리셰인 크림(#F4F1EA)보다 밝고 채도가 낮다 */
+            --paper-2: #F4F0E8;    /* 살짝 눌린 면 */
+            --ink: #241C15;        /* 순수 검정이 아닌 따뜻한 먹 */
+            --ink-2: #5A4F44;
+            --ink-3: #7A6E60;      /* 종이 대비 5.3:1 — WCAG AA */
+            --rule: rgba(36,28,21,0.16);    /* 헤어라인 괘선 — 구획의 유일한 수단 */
+            --rule-soft: rgba(36,28,21,0.08);
+            --signal: #9E421D;   /* 버튼 배경으로도 쓰이므로 종이색 글자가 4.5:1을 넘도록 진하게 잡았다 */     /* 계기 블루. 옛 팔레트에 파랑이 전무했고 커피=갈색 클리셰도 피한다 */
+            --signal-dim: rgba(180,83,42,0.10);
+            --signal-line: rgba(180,83,42,0.28);
+            --good: #2F6B45;
+            --bad:  #A83B2A;
 
             /* 기존 이름 → 새 의미로의 별칭 */
             --gold: var(--signal);
@@ -238,7 +238,7 @@
             position: absolute;
             top: -18%; left: -12%;
             width: 72%; height: 82%;
-            background: rgba(14,76,122,0.09);
+            background: rgba(180,83,42,0.09);
             pointer-events: none;
             z-index: 1;
         }
@@ -253,8 +253,8 @@
             pointer-events: none;
             opacity: 0.28;
             background: none;
-            -webkit-mask-image: rgba(21,18,14,0.35);
-            mask-image: rgba(21,18,14,0.35);
+            -webkit-mask-image: rgba(36,28,21,0.35);
+            mask-image: rgba(36,28,21,0.35);
         }
         /* 콘텐츠는 사진 플레이트(::after, z-index 0)와 글로우(::before, z-index 1) 위로. */
         .hero-grid { position: relative; z-index: 2; }
@@ -306,8 +306,8 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: #2C6FA0;
-            color: #FBFAF8;
+            background: #9E421D;
+            color: #FCFAF6;
             border: none;
             padding: 17px 34px;
             border-radius: 0;
@@ -444,7 +444,7 @@
         @media (max-width: 560px) { .hero-visual { --hero-phone-scale: 0.7; } }
 
         /* ── DIVIDERS ── */
-        .rule { width: 100%; height: 1px; background: rgba(14,76,122,0.18); }
+        .rule { width: 100%; height: 1px; background: rgba(180,83,42,0.18); }
 
         /* ── STORY SECTIONS ── */
         .story-section {
@@ -541,7 +541,7 @@
             border-radius: 0;
             overflow: hidden;
             margin: 36px 0;
-            background: rgba(21,18,14,0.015);
+            background: rgba(36,28,21,0.015);
             font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
         }
 
@@ -570,13 +570,13 @@
         }
 
         /* ── DARK BG SECTION ──
-           --bg2(#F2EFE9)는 본문 배경과 2% 차이라 교대가 사실상 보이지 않았다.
+           --bg2(#F4F0E8)는 본문 배경과 2% 차이라 교대가 사실상 보이지 않았다.
            따뜻한 패널 톤 + 상단 골드 라디언스 + 인셋 헤어라인으로 섹션 리듬을 살린다. */
         .dark-section {
             position: relative;
             background:
-                rgba(14,76,122,0.055),
-                #FBFAF8;
+                rgba(180,83,42,0.055),
+                #FCFAF6;
         }
 
         /* ── FEATURES ── */
@@ -591,7 +591,7 @@
             border: 1px solid var(--border);
             border-radius: 0;
             padding: 28px 24px;
-            background: rgba(21,18,14,0.035);
+            background: rgba(36,28,21,0.035);
             transition: border-color 0.25s, transform 0.25s ease;
         }
         .feat-card:hover {
@@ -748,7 +748,7 @@
             border-radius: 0;
             position: relative;
             overflow: hidden;
-            background-color: #F6F3ED;
+            background-color: #F8F5EF;
         }
         /* 사진 층. 파일이 없으면 이 층만 비고 아래 스크림/글로우는 그대로 남는다. */
         .mid-cta::before {
@@ -764,7 +764,7 @@
             inset: 0;
             background:
                 rgba(251,250,248,0.97),
-                rgba(14,76,122,0.10);
+                rgba(180,83,42,0.10);
         }
         .mid-cta > * { position: relative; z-index: 1; }
         .mid-cta-text {
@@ -814,8 +814,8 @@
         }
         .sticky-cta-btn {
             flex-shrink: 0;
-            background: #2C6FA0;
-            color: #FBFAF8;
+            background: #9E421D;
+            color: #FCFAF6;
             border: none;
             padding: 11px 18px;
             border-radius: 0;
@@ -847,7 +847,7 @@
             display: block;
             width: 100%;
             text-align: left;
-            background: rgba(21,18,14,0.02);
+            background: rgba(36,28,21,0.02);
             border: 1px solid var(--border);
             border-radius: 0;
             padding: 18px 20px;
@@ -860,7 +860,7 @@
         .demo-step:hover { border-color: var(--gold-border); }
         .demo-step.is-active { border-color: var(--gold-border); background: var(--gold-dim); }
 
-        .demo-step-track { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: rgba(21,18,14,0.06); }
+        .demo-step-track { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: rgba(36,28,21,0.06); }
         .demo-step-fill { display: block; width: 0; height: 100%; background: var(--gold); }
 
         .demo-step-num { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; font-size: 10px; letter-spacing: 0.14em; color: var(--gold); }
@@ -887,8 +887,8 @@
 
         .demo-phone {
             width: 300px; height: 620px;
-            background: #F6F3ED;
-            border: 1px solid rgba(14,76,122,0.3);
+            background: #F8F5EF;
+            border: 1px solid rgba(180,83,42,0.3);
             border-radius: 0;
             padding: 10px;
         }
@@ -898,8 +898,8 @@
         .demo-screen {
             position: relative; width: 100%; height: 100%;
             border-radius: 0; overflow: hidden;
-            background: #FBFAF8;
-            color: #15120E;
+            background: #FCFAF6;
+            color: #241C15;
             font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
             text-align: left;
         }
@@ -916,99 +916,99 @@
 
         .pd-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .pd-brand-name { font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif; font-size: 16px; font-weight: 600; display: block; line-height: 1.1; }
-        .pd-brand-tag { font-size: 7px; letter-spacing: 0.08em; color: #6B6357; text-transform: uppercase; }
-        .pd-logbook { position: relative; font-size: 9px; font-weight: 500; color: #544C41; background: #fff; border: 1px solid rgba(21,18,14,0.15); border-radius: 0; padding: 5px 9px; }
-        .pd-logbook-badge { position: absolute; top: -6px; right: -6px; width: 14px; height: 14px; border-radius: 50%; background: #0B3D62; color: #fff; font-size: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+        .pd-brand-tag { font-size: 7px; letter-spacing: 0.08em; color: #7A6E60; text-transform: uppercase; }
+        .pd-logbook { position: relative; font-size: 9px; font-weight: 500; color: #5A4F44; background: #fff; border: 1px solid rgba(36,28,21,0.15); border-radius: 0; padding: 5px 9px; }
+        .pd-logbook-badge { position: absolute; top: -6px; right: -6px; width: 14px; height: 14px; border-radius: 50%; background: #9E421D; color: #fff; font-size: 8px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
 
         /* 목업 안 인라인 아이콘. 크기 없는 인라인 SVG는 flex 안에서 찌그러지므로
            1em 고정 + flex:none. currentColor로 그려 .pd-mode.is-active 색 전환을 그대로 탄다. */
         .pd-ico { width: 1em; height: 1em; vertical-align: -0.15em; flex: none; }
 
-        .pd-env { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #544C41; margin-bottom: 10px; }
-        .pd-env-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #1E6B3A; margin-right: 4px; }
-        .pd-env-hint { color: #0B3D62; font-weight: 500; }
+        .pd-env { display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #5A4F44; margin-bottom: 10px; }
+        .pd-env-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #2F6B45; margin-right: 4px; }
+        .pd-env-hint { color: #9E421D; font-weight: 500; }
 
         .pd-modes { display: flex; gap: 6px; margin-bottom: 12px; }
-        .pd-mode { flex: 1; text-align: center; font-size: 9.5px; font-weight: 500; color: #6B6357; background: #fff; border: 1px solid rgba(21,18,14,0.08); border-radius: 0; padding: 8px 0; }
-        .pd-mode.is-active { background: #15120E; color: #fff; border-color: #15120E; }
+        .pd-mode { flex: 1; text-align: center; font-size: 9.5px; font-weight: 500; color: #7A6E60; background: #fff; border: 1px solid rgba(36,28,21,0.08); border-radius: 0; padding: 8px 0; }
+        .pd-mode.is-active { background: #241C15; color: #fff; border-color: #241C15; }
 
         .pd-progress { margin-bottom: 12px; }
         .pd-progress-label { display: flex; justify-content: space-between; font-size: 8.5px; margin-bottom: 5px; }
-        .pd-progress-label span:first-child { color: #6B6357; letter-spacing: 0.04em; }
-        .pd-progress-pct { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; color: #0B3D62; }
-        .pd-progress-track { height: 3px; background: #EAE5DC; border-radius: 0; overflow: hidden; }
-        .pd-progress-fill { display: block; width: 40%; height: 100%; background: #0B3D62; }
+        .pd-progress-label span:first-child { color: #7A6E60; letter-spacing: 0.04em; }
+        .pd-progress-pct { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; color: #9E421D; }
+        .pd-progress-track { height: 3px; background: #EFE9DF; border-radius: 0; overflow: hidden; }
+        .pd-progress-fill { display: block; width: 40%; height: 100%; background: #9E421D; }
 
-        .pd-panel { background: #fff; border: 1px solid rgba(21,18,14,0.08); border-radius: 0; padding: 14px; flex: 1; display: flex; flex-direction: column; }
+        .pd-panel { background: #fff; border: 1px solid rgba(36,28,21,0.08); border-radius: 0; padding: 14px; flex: 1; display: flex; flex-direction: column; }
 
         .pd-control { padding: 4px 0 12px; }
         .pd-control-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
-        .pd-label { font-size: 8.5px; font-weight: 600; letter-spacing: 0.05em; color: #6B6357; }
-        .pd-hint { font-size: 8.5px; color: #6B6357; margin-top: 2px; }
+        .pd-label { font-size: 8.5px; font-weight: 600; letter-spacing: 0.05em; color: #7A6E60; }
+        .pd-hint { font-size: 8.5px; color: #7A6E60; margin-top: 2px; }
         .pd-value { display: flex; align-items: baseline; gap: 2px; }
         .pd-value > span:first-child { font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif; font-size: 27px; font-weight: 600; line-height: 1; }
-        .pd-unit { font-size: 10px; color: #6B6357; }
-        .pd-badge { font-size: 7px; font-weight: 700; padding: 2px 6px; border-radius: 0; background: #E7F0E9; color: #1E6B3A; margin-left: 5px; align-self: center; opacity: 0; transform: scale(0.6); transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .pd-unit { font-size: 10px; color: #7A6E60; }
+        .pd-badge { font-size: 7px; font-weight: 700; padding: 2px 6px; border-radius: 0; background: #E9F0EB; color: #2F6B45; margin-left: 5px; align-self: center; opacity: 0; transform: scale(0.6); transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
         .pd-badge.is-on { opacity: 1; transform: none; }
 
-        .pd-vis { height: 5px; background: #EAE5DC; border-radius: 0; overflow: hidden; margin-bottom: 9px; }
-        .pd-vis-fill { display: block; height: 100%; width: 24%; background: #0B3D62; border-radius: 0; }
+        .pd-vis { height: 5px; background: #EFE9DF; border-radius: 0; overflow: hidden; margin-bottom: 9px; }
+        .pd-vis-fill { display: block; height: 100%; width: 24%; background: #9E421D; border-radius: 0; }
 
         .pd-slider { position: relative; height: 14px; }
-        .pd-slider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 4px; transform: translateY(-50%); background: #EAE5DC; border-radius: 0; }
-        .pd-slider-fill { position: absolute; top: 50%; left: 0; height: 4px; transform: translateY(-50%); background: #15120E; border-radius: 0; width: 24%; }
-        .pd-slider-thumb { position: absolute; top: 50%; left: 24%; width: 14px; height: 14px; transform: translate(-50%, -50%); background: #fff; border: 2px solid #15120E; border-radius: 50%; }
+        .pd-slider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 4px; transform: translateY(-50%); background: #EFE9DF; border-radius: 0; }
+        .pd-slider-fill { position: absolute; top: 50%; left: 0; height: 4px; transform: translateY(-50%); background: #241C15; border-radius: 0; width: 24%; }
+        .pd-slider-thumb { position: absolute; top: 50%; left: 24%; width: 14px; height: 14px; transform: translate(-50%, -50%); background: #fff; border: 2px solid #241C15; border-radius: 50%; }
 
-        .pd-div { height: 1px; background: rgba(21,18,14,0.08); margin: 2px 0 6px; }
+        .pd-div { height: 1px; background: rgba(36,28,21,0.08); margin: 2px 0 6px; }
 
-        .pd-ratio { background: #FBFAF8; border: 1px solid rgba(21,18,14,0.08); border-radius: 0; padding: 10px 12px; margin: 6px 0 12px; }
+        .pd-ratio { background: #FCFAF6; border: 1px solid rgba(36,28,21,0.08); border-radius: 0; padding: 10px 12px; margin: 6px 0 12px; }
         .pd-ratio-bars { display: flex; gap: 2px; height: 7px; border-radius: 0; overflow: hidden; margin-bottom: 7px; }
-        .pd-ratio-coffee { background: #15120E; width: 38%; }
+        .pd-ratio-coffee { background: #241C15; width: 38%; }
         .pd-ratio-water { background: #EAF2FB; flex: 1; }
         .pd-ratio-nums { display: flex; justify-content: space-between; align-items: center; }
-        .pd-ratio-num { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; font-size: 10px; color: #544C41; }
-        .pd-ratio-status { font-size: 8.5px; font-weight: 500; color: #1E6B3A; opacity: 0; transition: opacity 0.3s; }
+        .pd-ratio-num { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; font-size: 10px; color: #5A4F44; }
+        .pd-ratio-status { font-size: 8.5px; font-weight: 500; color: #2F6B45; opacity: 0; transition: opacity 0.3s; }
         .pd-ratio-status.is-on { opacity: 1; }
 
-        .pd-save { margin-top: auto; background: #15120E; color: #fff; text-align: center; font-size: 10.5px; font-weight: 500; letter-spacing: 0.04em; border-radius: 0; padding: 12px 0; }
+        .pd-save { margin-top: auto; background: #241C15; color: #fff; text-align: center; font-size: 10.5px; font-weight: 500; letter-spacing: 0.04em; border-radius: 0; padding: 12px 0; }
 
         /* Scene 2: 스톱워치 */
-        .pd-sw-card { background: #fff; border: 1px solid rgba(21,18,14,0.08); border-radius: 0; padding: 16px 14px; flex: 1; display: flex; flex-direction: column; }
+        .pd-sw-card { background: #fff; border: 1px solid rgba(36,28,21,0.08); border-radius: 0; padding: 16px 14px; flex: 1; display: flex; flex-direction: column; }
         .pd-ring-wrap { position: relative; width: 132px; height: 132px; margin: 16px auto 10px; }
         .pd-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
-        .pd-ring-bg { fill: none; stroke: #EAE5DC; stroke-width: 6; }
-        .pd-ring-fg { fill: none; stroke: #2C5F8A; stroke-width: 6; stroke-linecap: round; }
+        .pd-ring-bg { fill: none; stroke: #EFE9DF; stroke-width: 6; }
+        .pd-ring-fg { fill: none; stroke: #B4532A; stroke-width: 6; stroke-linecap: round; }
         .pd-sw-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .pd-sw-time { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; font-size: 28px; color: #15120E; line-height: 1; }
-        .pd-sw-time.running { color: #2C5F8A; }
-        .pd-sw-time.done { color: #1E6B3A; }
-        .pd-sw-status { font-size: 7.5px; font-weight: 700; letter-spacing: 0.1em; color: #6B6357; margin-top: 5px; }
+        .pd-sw-time { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; font-size: 28px; color: #241C15; line-height: 1; }
+        .pd-sw-time.running { color: #B4532A; }
+        .pd-sw-time.done { color: #2F6B45; }
+        .pd-sw-status { font-size: 7.5px; font-weight: 700; letter-spacing: 0.1em; color: #7A6E60; margin-top: 5px; }
         .pd-sw-btns { display: flex; gap: 6px; justify-content: center; margin: 12px 0 8px; }
-        .pd-sw-btn { font-size: 8.5px; font-weight: 600; padding: 8px 13px; border-radius: 0; border: 1px solid rgba(21,18,14,0.15); background: #fff; color: #544C41; opacity: 0.4; }
-        .pd-sw-btn.start { background: #15120E; color: #fff; border-color: #15120E; opacity: 1; }
-        .pd-sw-btn.apply.is-ready { opacity: 1; background: #1E6B3A; color: #fff; border-color: #1E6B3A; animation: pd-pulse 1s ease-in-out infinite; }
+        .pd-sw-btn { font-size: 8.5px; font-weight: 600; padding: 8px 13px; border-radius: 0; border: 1px solid rgba(36,28,21,0.15); background: #fff; color: #5A4F44; opacity: 0.4; }
+        .pd-sw-btn.start { background: #241C15; color: #fff; border-color: #241C15; opacity: 1; }
+        .pd-sw-btn.apply.is-ready { opacity: 1; background: #2F6B45; color: #fff; border-color: #2F6B45; animation: pd-pulse 1s ease-in-out infinite; }
         
-        .pd-sw-hint { text-align: center; font-size: 8.5px; color: #6B6357; }
-        .pd-applied { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid rgba(21,18,14,0.08); margin-top: auto; padding-top: 12px; opacity: 0.35; transition: opacity 0.3s; }
+        .pd-sw-hint { text-align: center; font-size: 8.5px; color: #7A6E60; }
+        .pd-applied { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid rgba(36,28,21,0.08); margin-top: auto; padding-top: 12px; opacity: 0.35; transition: opacity 0.3s; }
         .pd-applied.is-on { opacity: 1; }
 
         /* Scene 3: 로그북 */
         .pd-lb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .pd-lb-title { font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif; font-size: 17px; font-weight: 600; }
-        .pd-lb-new { font-size: 8.5px; font-weight: 600; background: #15120E; color: #fff; border-radius: 0; padding: 6px 10px; }
-        .pd-card { background: #fff; border: 1px solid rgba(21,18,14,0.08); border-radius: 0; overflow: hidden; opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.16,1,0.3,1); }
+        .pd-lb-new { font-size: 8.5px; font-weight: 600; background: #241C15; color: #fff; border-radius: 0; padding: 6px 10px; }
+        .pd-card { background: #fff; border: 1px solid rgba(36,28,21,0.08); border-radius: 0; overflow: hidden; opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.16,1,0.3,1); }
         .pd-card.is-in { opacity: 1; transform: none; }
-        .pd-card-cover { height: 88px; background: #DED8CD; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #0E4C7A; }
+        .pd-card-cover { height: 88px; background: #E3DCD0; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #B4532A; }
         .pd-card-body { padding: 13px 15px 6px; }
         .pd-card-body h4 { font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif; font-size: 17px; font-weight: 600; border-bottom: 1px solid #F6EDDC; padding-bottom: 7px; margin-bottom: 9px; }
-        .pd-card-body p { display: flex; justify-content: space-between; font-size: 9.5px; color: #544C41; margin-bottom: 4px; }
-        .pd-card-body p span { font-size: 8px; font-weight: 600; color: #6B6357; letter-spacing: 0.05em; }
-        .pd-stars { color: #0B3D62; font-size: 13px; letter-spacing: 2px; margin: 8px 0 6px; }
-        .pd-card-foot { display: flex; justify-content: space-between; align-items: center; background: #EAE5DC; border-top: 1px solid rgba(21,18,14,0.08); padding: 9px 15px; }
-        .pd-success { font-size: 8px; font-weight: 700; background: #E7F0E9; color: #1E6B3A; border-radius: 0; padding: 3px 7px; opacity: 0; transform: scale(0.6); transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        .pd-card-body p { display: flex; justify-content: space-between; font-size: 9.5px; color: #5A4F44; margin-bottom: 4px; }
+        .pd-card-body p span { font-size: 8px; font-weight: 600; color: #7A6E60; letter-spacing: 0.05em; }
+        .pd-stars { color: #9E421D; font-size: 13px; letter-spacing: 2px; margin: 8px 0 6px; }
+        .pd-card-foot { display: flex; justify-content: space-between; align-items: center; background: #EFE9DF; border-top: 1px solid rgba(36,28,21,0.08); padding: 9px 15px; }
+        .pd-success { font-size: 8px; font-weight: 700; background: #E9F0EB; color: #2F6B45; border-radius: 0; padding: 3px 7px; opacity: 0; transform: scale(0.6); transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
         .pd-success.is-on { opacity: 1; transform: none; }
-        .pd-card-actions { font-size: 8.5px; color: #6B6357; }
-        .pd-card-ghost { margin-top: 12px; height: 52px; border-radius: 0; border: 1px solid rgba(21,18,14,0.08); border-bottom: none; background: var(--paper-2); opacity: 0.75; display: flex; align-items: flex-end; padding: 8px 15px; color: rgba(21,18,14,0.85); font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif; font-size: 14px; }
+        .pd-card-actions { font-size: 8.5px; color: #5A4F44; }
+        .pd-card-ghost { margin-top: 12px; height: 52px; border-radius: 0; border: 1px solid rgba(36,28,21,0.08); border-bottom: none; background: var(--paper-2); opacity: 0.75; display: flex; align-items: flex-end; padding: 8px 15px; color: rgba(36,28,21,0.85); font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif; font-size: 14px; }
 
         @media (max-width: 920px) {
             .demo-layout { grid-template-columns: 1fr; justify-items: center; }
@@ -1021,12 +1021,12 @@
             margin-top: 40px;
             border: 1px solid var(--border);
             border-radius: 0;
-            background: rgba(21,18,14,0.035);
+            background: rgba(36,28,21,0.035);
             padding: clamp(24px, 4.5vw, 40px);
         }
 
         .quiz-progress { display: flex; gap: 6px; margin-bottom: 28px; }
-        .quiz-progress span { height: 2px; flex: 1; background: rgba(21,18,14,0.08); border-radius: 0; transition: background 0.35s; }
+        .quiz-progress span { height: 2px; flex: 1; background: rgba(36,28,21,0.08); border-radius: 0; transition: background 0.35s; }
         .quiz-progress span.on { background: var(--gold); }
 
         .quiz-step { animation: quiz-in 0.35s ease both; }
@@ -1046,7 +1046,7 @@
         .quiz-opts { display: flex; flex-direction: column; gap: 10px; }
         .quiz-opt {
             text-align: left;
-            background: rgba(21,18,14,0.02);
+            background: rgba(36,28,21,0.02);
             border: 1px solid var(--border);
             border-radius: 0;
             color: var(--sub);
@@ -1114,7 +1114,7 @@
         .flavor-radar { width: 100%; height: auto; display: block; }
         .flavor-radar .fr-grid { fill: none; stroke-width: 1; }
         .flavor-radar .fr-shape {
-            fill: rgba(14,76,122,0.18);
+            fill: rgba(180,83,42,0.18);
             stroke: var(--gold);
             stroke-width: 1.8;
             stroke-linejoin: round;
@@ -1146,7 +1146,7 @@
             border: 1px solid var(--border);
             border-radius: 0;
             padding: 20px;
-            background: rgba(21,18,14,0.02);
+            background: rgba(36,28,21,0.02);
             transition: border-color 0.25s, transform 0.25s ease;
         }
         .bean-card:hover { border-color: var(--gold-border); transform: translateY(-3px); }
@@ -1314,7 +1314,7 @@
             transform: translateX(-50%);
             width: min(720px, 92%);
             height: 68%;
-            background: rgba(14,76,122,0.1);
+            background: rgba(180,83,42,0.1);
             pointer-events: none;
         }
 
@@ -2492,10 +2492,10 @@
             };
             const poly = (s) => [0, 1, 2, 3].map((i) => pt(i, s).map((n) => n.toFixed(1)).join(',')).join(' ');
             const grid = [0.25, 0.5, 0.75, 1].map((s) =>
-                '<polygon points="' + poly(s) + '" fill="none" stroke="rgba(14,76,122,0.16)"/>').join('');
+                '<polygon points="' + poly(s) + '" fill="none" stroke="rgba(180,83,42,0.16)"/>').join('');
             const spokes = [0, 1, 2, 3].map((i) => {
                 const [x, y] = pt(i, 1);
-                return '<line x1="100" y1="100" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="rgba(14,76,122,0.16)"/>';
+                return '<line x1="100" y1="100" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="rgba(180,83,42,0.16)"/>';
             }).join('');
             const shape = v.map((s, i) => pt(i, s).map((n) => n.toFixed(1)).join(',')).join(' ');
             const dots = v.map((s, i) => {
