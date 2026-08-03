@@ -146,20 +146,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const timeStr   = fmtBrewTime(recipe);
             const purchase  = safeUrl(recipe.purchaseUrl);
 
+            // 기록을 스프레드시트 행이 아니라 '기억'처럼 보이게 한다(Airbnb 숙소 카드 문법).
+            // 사용자가 찍은 사진이 주인공이고, 그 아래에 제목 → 부제 → 수치 순으로 조판한다.
+            // 사진이 없으면 빈 회색 박스를 두지 않고 **핵심 수치를 타이포그래피로** 그 자리에 채운다.
+            const dose  = Number(recipe.dosing) || 0;
+            const yld   = Number(recipe.yield) || 0;
+            const ratio = dose > 0 && yld > 0 ? '1:' + (yld / dose).toFixed(1) : '—';
+            const dateStr = recipe.date
+                ? new Date(recipe.date).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US',
+                    { month: 'long', day: 'numeric' })
+                : '';
+
+            const metric = (v, unit) =>
+                `<span class="rc-metric"><b>${v}</b>${unit ? `<i>${unit}</i>` : ''}</span>`;
+
+            const hero = recipe.imageUrl
+                ? `<div class="recipe-card-photo"><img src="${esc(recipe.imageUrl)}" alt="${esc(recipe.beanName || 'Coffee')}" class="recipe-card-image" loading="lazy"></div>`
+                : `<div class="recipe-card-photo recipe-card-photo--data" aria-hidden="true">
+                       ${metric(dose ? dose.toFixed(1) : '—', dose ? 'g' : '')}
+                       ${metric(ratio, '')}
+                       ${metric(timeStr, '')}
+                   </div>`;
+
             card.innerHTML = `
-                ${recipe.imageUrl ? `<img src="${esc(recipe.imageUrl)}" alt="${esc(recipe.beanName || 'Coffee')}" class="recipe-card-image">` : ''}
+                ${hero}
                 <div class="recipe-card-content">
                     <h4>${esc(recipe.beanName) || (currentLang === 'ko' ? '원두명 미상' : 'Unknown Bean')}</h4>
-                    <p><span class="label">${i18n[currentLang].mode}</span> ${esc(safeMode)}</p>
-                    <p><span class="label">${i18n[currentLang].dosing}</span> ${Number(recipe.dosing) || 0}g</p>
-                    <p><span class="label">${i18n[currentLang].temp}</span> ${Number(recipe.temp) || 0}°C</p>
-                    <p><span class="label">${i18n[currentLang].time}</span> ${timeStr}</p>
-                    <p><span class="label">${i18n[currentLang].yield}</span> ${Number(recipe.yield) || 0}g</p>
-                    <p><span class="label">${i18n[currentLang].tasteNotes}</span> ${esc(recipe.tasteNotes) || '-'}</p>
+                    <p class="recipe-card-sub">${dateStr ? esc(dateStr) + ' · ' : ''}${esc(safeMode)}</p>
+
+                    <div class="recipe-card-metrics">
+                        <div><span class="label">${i18n[currentLang].dosing}</span>${metric(dose.toFixed(1), 'g')}</div>
+                        <div><span class="label">${i18n[currentLang].temp}</span>${metric(Number(recipe.temp) || 0, '°C')}</div>
+                        <div><span class="label">${i18n[currentLang].time}</span>${metric(timeStr, '')}</div>
+                        <div><span class="label">${i18n[currentLang].yield}</span>${metric(yld.toFixed(1), 'g')}</div>
+                    </div>
+
+                    ${recipe.tasteNotes ? `<p class="recipe-card-notes">${esc(recipe.tasteNotes)}</p>` : ''}
                     <p class="recipe-card-rating">${_stars(safeRat)}</p>
-                    ${purchase ? `<p><a href="${esc(purchase)}" target="_blank" rel="noopener">${i18n[currentLang].purchaseLink}</a></p>` : ''}
-                    <p><span class="label">${i18n[currentLang].weather}</span> ${esc(safeWeather)}</p>
-                    <p><span class="label">Date:</span> ${recipe.date ? new Date(recipe.date).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US') : '-'}</p>
+                    ${purchase ? `<p class="recipe-card-link"><a href="${esc(purchase)}" target="_blank" rel="noopener">${i18n[currentLang].purchaseLink}</a></p>` : ''}
+                    <p class="recipe-card-weather"><span class="label">${i18n[currentLang].weather}</span> ${esc(safeWeather)}</p>
                     ${recipe.sharedFrom ? '<p class="shared-badge">📨 공유받은 레시피</p>' : ''}
                 </div>
                 <div class="recipe-card-footer">

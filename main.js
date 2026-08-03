@@ -303,7 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
         vYield: document.getElementById('v-yield'),
         uTime: document.getElementById('u-time'),
         progressLabelText: document.getElementById('progress-label-text'),
-        progressFill: document.getElementById('progress-fill'),
+        progressRing: document.getElementById('progress-ring'),
+        progressItems: document.getElementById('progress-items'),
         progressPct: document.getElementById('progress-pct'),
         progressHint: document.getElementById('progress-hint'),
         qbDosing: document.getElementById('qb-dosing'),
@@ -863,10 +864,51 @@ document.addEventListener('DOMContentLoaded', () => {
         el.ratioStatus.className = `ratio-status ${ideal ? 'ideal' : 'warning'}`;
     };
 
+    // 완성도 — 예전에는 원두명 유무로 75%/100% 둘 중 하나였다. 그래선 링을 그려도
+    // 의미가 없다. 실제 기여 요인을 두고 무엇이 빠졌는지 보여준다(Oura 준비도 문법).
+    // 측정값(도징·온도·시간·수율)은 슬라이더라 항상 있으므로 기본 60점으로 깔고,
+    // 사람이 채워야 하는 네 가지가 나머지를 만든다.
+    const RING_CIRCUMFERENCE = 2 * Math.PI * 42;   // app.html의 r=42와 맞물린다
+
+    const completenessFactors = () => ([
+        { key: 'bean',   ok: !!(el.modalBeanName && el.modalBeanName.value.trim()),
+          ko: '원두 이름', en: 'Bean name' },
+        { key: 'notes',  ok: !!(el.modalTasteNotes && el.modalTasteNotes.value.trim()),
+          ko: '테이스팅 노트', en: 'Tasting notes' },
+        { key: 'photo',  ok: !!uploadedImageData,
+          ko: '사진', en: 'Photo' },
+        // 평점은 기본값 3점이 미리 체크돼 있어 항상 '완료'로 잡힌다 — 기여 요인이
+        // 되지 못한다. 사용자가 실제로 채워야 하는 원산지를 대신 넣는다.
+        { key: 'origin', ok: !!(el.modalOrigin && el.modalOrigin.value.trim()),
+          ko: '원산지', en: 'Origin' },
+    ]);
+
     const updateProgress = () => {
-        let score = (el.modalBeanName && el.modalBeanName.value.trim().length > 0) ? 100 : 75;
-        el.progressFill.style.width = `${score}%`; el.progressPct.textContent = `${score}%`;
-        el.progressHint.textContent = score === 100 ? (currentLang === 'ko' ? '완성된 레시피입니다 ✓' : 'Recipe complete ✓') : i18n[currentLang].progressHint;
+        const factors = completenessFactors();
+        const score = 60 + factors.filter((f) => f.ok).length * 10;
+
+        if (el.progressRing) {
+            // 링은 위에서 시작해 시계방향으로 찬다(CSS에서 -90도 회전).
+            el.progressRing.style.strokeDasharray = RING_CIRCUMFERENCE;
+            el.progressRing.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - score / 100);
+        }
+        if (el.progressPct) el.progressPct.textContent = `${score}%`;
+
+        if (el.progressItems) {
+            el.progressItems.textContent = '';
+            factors.forEach((f) => {
+                const li = document.createElement('li');
+                li.className = 'cmp-item' + (f.ok ? ' is-done' : '');
+                // 상태를 색으로만 말하지 않는다 — 표식과 글자가 항상 함께 간다.
+                li.textContent = (f.ok ? '✓ ' : '· ') + (currentLang === 'ko' ? f.ko : f.en);
+                el.progressItems.appendChild(li);
+            });
+        }
+        if (el.progressHint) {
+            el.progressHint.textContent = score === 100
+                ? (currentLang === 'ko' ? '완성된 레시피입니다 ✓' : 'Recipe complete ✓')
+                : '';
+        }
     };
 
     const updateLogbookBadge = async () => {

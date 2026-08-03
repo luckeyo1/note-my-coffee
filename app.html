@@ -111,15 +111,23 @@
     </div>
 
     <!-- 레시피 완성도 바 -->
+    <!-- 완성도 — Apple Fitness의 링 문법. 점수 하나가 감정을 싣고,
+         옆에 '무엇이 빠졌는지'를 목록으로 보여준다(Oura 기여 요인). -->
     <div class="progress-section">
-        <div class="progress-label">
-            <span id="progress-label-text">RECIPE COMPLETENESS</span>
-            <span class="progress-pct" id="progress-pct">75%</span>
+        <div class="completeness">
+            <div class="cmp-ring-wrap">
+                <svg class="cmp-ring" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                    <circle class="cmp-ring-track" cx="50" cy="50" r="42"></circle>
+                    <circle class="cmp-ring-fill" id="progress-ring" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <span class="progress-pct" id="progress-pct">60%</span>
+            </div>
+            <div class="cmp-body">
+                <span class="cmp-title" id="progress-label-text">RECIPE COMPLETENESS</span>
+                <ul class="cmp-items" id="progress-items"></ul>
+                <p class="progress-hint" id="progress-hint">Add bean name to complete</p>
+            </div>
         </div>
-        <div class="progress-track">
-            <div class="progress-fill" id="progress-fill" style="width: 75%"></div>
-        </div>
-        <div class="progress-hint" id="progress-hint">Add bean name to complete</div>
     </div>
 
     <!-- 메인 컨트롤 패널 -->
