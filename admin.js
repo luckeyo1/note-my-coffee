@@ -23,6 +23,13 @@ const isDemo = new URLSearchParams(location.search).get('demo') === '1';
 let allRecipes = [];
 let rangeDays = 30;
 
+// 데이터 출처. 'aggregate'는 stats_daily/users를 읽는 가벼운 경로,
+// 'scan'은 recipes 전체를 내려받는 예전 경로다(집계가 아직 없거나 권한이 없을 때).
+// docs/admin-roadmap.md Phase 1 참고.
+let dataMode = 'scan';
+let agg = null;   // { daily: Map<dayKey, obj>, users: [], beanNames: Map<id,name>, recent: [] }
+let fbRef = null; // 로드된 firebase-config 모듈. '집계 재생성' 버튼이 쓴다.
+
 /* ────────────────────────── helpers ────────────────────────── */
 
 const svg = (name, attrs = {}) => {
@@ -68,40 +75,57 @@ function makeDemoRecipes() {
         'Indonesia Mandheling', 'Ethiopia Sidamo', 'Peru Cajamarca', 'Rwanda Kivu',
     ];
     const notes = ['Floral · Peach', 'Chocolate · Nutty', 'Citrus · Bright', 'Caramel · Round', 'Berry · Juicy'];
-    const users = Array.from({ length: 34 }, (_, i) => 'demoUser' + String(i).padStart(3, '0'));
+    // 사용자마다 '합류일'을 준다. 이게 없으면(매 기록마다 무작위 배정) 모든 사용자의
+    // 첫 기록이 초반에 몰려서, 신규 유입 추이가 0으로 깔리고 리텐션 코호트도 한 줄만
+    // 생긴다 — 데모 모드로 그 카드들을 검증할 수 없다.
+    // joinDay는 '며칠 전'이며 89(가장 오래전)~0(오늘) 범위다.
+    const users = Array.from({ length: 52 }, (_, i) => ({
+        id: 'demoUser' + String(i).padStart(3, '0'),
+        // 지수를 1보다 작게 둬서 최근으로 갈수록 합류가 조금씩 늘어난다(완만한 성장)
+        joinDay: Math.floor(89 * Math.pow(rnd(), 1.25)),
+    }));
     const out = [];
     const now = Date.now();
 
-    for (let day = 89; day >= 0; day--) {
-        // 완만한 성장 + 주말 가중 + 노이즈
-        const growth = 1.1 + (89 - day) / 42;
-        const weekend = [0, 6].includes(new Date(now - day * 864e5).getDay()) ? 1.45 : 1;
-        const count = Math.max(0, Math.round((growth * weekend) * (0.55 + rnd() * 1.5)));
+    const pushRecipe = (user, day) => {
+        const d = new Date(now - day * 864e5);
+        d.setHours(6 + Math.floor(rnd() * 15), Math.floor(rnd() * 60), 0, 0);
+        const espresso = rnd() < 0.62;
+        const rr = rnd();
+        const rating = rr < 0.06 ? 1 : rr < 0.16 ? 2 : rr < 0.38 ? 3 : rr < 0.74 ? 4 : 5;
+        const bi = Math.min(beans.length - 1, Math.floor(Math.pow(rnd(), 1.7) * beans.length));
+        out.push({
+            id: 'demo-' + day + '-' + user.id + '-' + out.length,
+            userId: user.id,
+            date: d.toISOString(),
+            mode: espresso ? 'espresso' : 'drip',
+            dosing: espresso ? 17 + Math.round(rnd() * 40) / 10 : 14 + Math.round(rnd() * 60) / 10,
+            temp: 90 + Math.round(rnd() * 60) / 10,
+            time: espresso ? 24 + Math.round(rnd() * 120) / 10 : 150 + Math.round(rnd() * 900) / 10,
+            yield: espresso ? 30 + Math.round(rnd() * 150) / 10 : 220 + Math.round(rnd() * 1200) / 10,
+            beanName: beans[bi],
+            origin: '',
+            tasteNotes: notes[Math.floor(rnd() * notes.length)],
+            overallRating: rating,
+            success: rating >= 4,
+            beanStatus: 'opened',
+        });
+    };
 
-        for (let i = 0; i < count; i++) {
-            const d = new Date(now - day * 864e5);
-            d.setHours(6 + Math.floor(rnd() * 15), Math.floor(rnd() * 60), 0, 0);
-            const espresso = rnd() < 0.62;
-            const r = rnd();
-            const rating = r < 0.06 ? 1 : r < 0.16 ? 2 : r < 0.38 ? 3 : r < 0.74 ? 4 : 5;
-            // 인기 원두가 실제로 쏠리도록 앞쪽 원두에 가중치
-            const bi = Math.min(beans.length - 1, Math.floor(Math.pow(rnd(), 1.7) * beans.length));
-            out.push({
-                id: 'demo-' + day + '-' + i,
-                userId: users[Math.floor(Math.pow(rnd(), 1.4) * users.length)],
-                date: d.toISOString(),
-                mode: espresso ? 'espresso' : 'drip',
-                dosing: espresso ? 17 + Math.round(rnd() * 40) / 10 : 14 + Math.round(rnd() * 60) / 10,
-                temp: 90 + Math.round(rnd() * 60) / 10,
-                time: espresso ? 24 + Math.round(rnd() * 120) / 10 : 150 + Math.round(rnd() * 900) / 10,
-                yield: espresso ? 30 + Math.round(rnd() * 150) / 10 : 220 + Math.round(rnd() * 1200) / 10,
-                beanName: beans[bi],
-                origin: '',
-                tasteNotes: notes[Math.floor(rnd() * notes.length)],
-                overallRating: rating,
-                success: rating >= 4,
-                beanStatus: 'opened',
-            });
+    for (let day = 89; day >= 0; day--) {
+        const weekend = [0, 6].includes(new Date(now - day * 864e5).getDay()) ? 1.45 : 1;
+
+        // 1) 오늘 합류한 사람은 반드시 첫 기록을 남긴다 → 첫 기록일 = 합류일
+        for (const u of users) {
+            if (u.joinDay === day) pushRecipe(u, day);
+        }
+
+        // 2) 기존 사용자의 재방문 — 합류 후 시간이 지날수록 확률이 떨어진다(리텐션 감쇠)
+        for (const u of users) {
+            if (u.joinDay <= day) continue;              // 아직 합류 전
+            const weeksSince = (u.joinDay - day) / 7;
+            const p = 0.34 * Math.exp(-weeksSince / 5) * weekend;
+            if (rnd() < p) pushRecipe(u, day);
         }
     }
     return out;
@@ -143,6 +167,25 @@ function aggregate(recipes, days) {
     }
 
     const users = new Set(valid.map((r) => r.userId).filter(Boolean));
+
+    // 활성화 → 유지 퍼널 (Firestore 부분 퍼널).
+    // 랜딩·CTA·가입 단계는 GA4에만 있어 여기서 못 그린다(docs/funnel.md 참고).
+    // Firestore recipes로 그릴 수 있는 건 '기록을 남긴 사용자'가 얼마나 깊이
+    // 정착하는가다 — 사용자별 기록 수로 단계를 나눈다. 각 단계는 앞 단계의
+    // 부분집합이라 반드시 단조 감소한다(진짜 퍼널). 선택한 기간으로 스코프된다.
+    const perUser = new Map();
+    for (const r of valid) {
+        if (!r.userId) continue;
+        perUser.set(r.userId, (perUser.get(r.userId) || 0) + 1);
+    }
+    const perUserCounts = [...perUser.values()];
+    const funnel = [
+        { label: '기록 사용자', hint: '1건 이상 저장', min: 1 },
+        { label: '재기록', hint: '2건 이상 — 다시 돌아옴', min: 2 },
+        { label: '정착', hint: '5건 이상 — 습관화', min: 5 },
+        { label: '헤비 유저', hint: '10건 이상', min: 10 },
+    ].map((s) => ({ ...s, users: perUserCounts.filter((c) => c >= s.min).length }));
+
     const todayK = dayKey(new Date());
     const today = valid.filter((r) => dayKey(new Date(r.date)) === todayK).length;
 
@@ -181,6 +224,7 @@ function aggregate(recipes, days) {
         total: valid.length,
         series: [...byDay.entries()].map(([key, count]) => ({ key, count })),
         users: users.size,
+        funnel,
         today,
         avgRating,
         ratingCounts,
@@ -194,9 +238,424 @@ function aggregate(recipes, days) {
     };
 }
 
+/* ──────────────── 마케팅 지표: 신규 유입 · 리텐션 · 활동 시간대 ────────────────
+ *
+ * 이 블록의 계산은 **항상 전체 기록(allRecipes)을 받아야 한다.** 기간으로 자른
+ * 데이터로 '첫 기록일'을 구하면, 60일 전에 시작한 사용자가 "최근 30일" 화면에서
+ * 신규로 잡힌다 — 유입이 실제보다 부풀려지는 치명적 오독이다.
+ *
+ * 가입일 필드가 따로 없으므로 **첫 기록일을 가입 시점의 프록시**로 쓴다. 또한
+ * Firestore에는 로그인 사용자의 기록만 올라오므로 게스트는 잡히지 않는다.
+ */
+
+// 주 시작(월요일 00:00)으로 내림
+function weekStart(d) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // 월=0
+    return x;
+}
+
+// userId → 첫 기록 시각(ms)
+function firstSeenMap(allRecipes) {
+    const m = new Map();
+    for (const r of allRecipes) {
+        if (!r || !r.userId || !r.date) continue;
+        const t = new Date(r.date).getTime();
+        if (!Number.isFinite(t)) continue;
+        const prev = m.get(r.userId);
+        if (prev === undefined || t < prev) m.set(r.userId, t);
+    }
+    return m;
+}
+
+// 선택 기간의 일별 **신규** 사용자 수.
+// 기존 '사용자 수' 타일은 기간 내 기록을 남긴 계정 수라 신규와 복귀가 섞여 있다.
+// 이건 그 기간에 '처음' 기록한 사람만 센다 — 획득(acquisition) 지표.
+function newUserSeries(allRecipes, days) {
+    const firstSeen = firstSeenMap(allRecipes);
+    const times = [...firstSeen.values()];
+
+    const span = days || (() => {
+        if (!times.length) return 30;
+        const oldest = Math.min(...times);
+        return Math.min(365, Math.max(7, Math.ceil((Date.now() - oldest) / 864e5) + 1));
+    })();
+
+    const byDay = new Map();
+    for (let i = span - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        byDay.set(dayKey(d), 0);
+    }
+    for (const t of times) {
+        const k = dayKey(new Date(t));
+        if (byDay.has(k)) byDay.set(k, byDay.get(k) + 1);
+    }
+    return {
+        series: [...byDay.entries()].map(([key, count]) => ({ key, count })),
+        total: times.filter((t) => byDay.has(dayKey(new Date(t)))).length,
+    };
+}
+
+// 주간 리텐션 코호트. 첫 기록 주차로 사람을 묶고, 그 뒤 N주차에 다시 기록했는지 본다.
+// 기간 필터와 무관하게 전체 데이터로 계산한다 — 코호트는 원래 시간축 전체가 필요하다.
+function retentionCohorts(allRecipes, cohortCount, horizon) {
+    const firstSeen = firstSeenMap(allRecipes);
+
+    // userId → 활동한 주차 집합
+    const active = new Map();
+    for (const r of allRecipes) {
+        if (!r || !r.userId || !r.date) continue;
+        const d = new Date(r.date);
+        if (isNaN(d)) continue;
+        const k = dayKey(weekStart(d));
+        if (!active.has(r.userId)) active.set(r.userId, new Set());
+        active.get(r.userId).add(k);
+    }
+
+    // 코호트 주차 → 멤버 (한 번만 훑는다)
+    const byCohort = new Map();
+    for (const [uid, t] of firstSeen) {
+        const k = dayKey(weekStart(new Date(t)));
+        if (!byCohort.has(k)) byCohort.set(k, []);
+        byCohort.get(k).push(uid);
+    }
+
+    const thisWeek = weekStart(new Date());
+    const out = [];
+    for (let i = cohortCount - 1; i >= 0; i--) {
+        const ws = new Date(thisWeek);
+        ws.setDate(ws.getDate() - i * 7);
+        const key = dayKey(ws);
+        const members = byCohort.get(key) || [];
+
+        const cells = [];
+        for (let w = 0; w <= horizon; w++) {
+            const target = new Date(ws);
+            target.setDate(target.getDate() + w * 7);
+            if (target > thisWeek) { cells.push(null); continue; } // 아직 오지 않은 주는 0%가 아니라 빈칸
+            const tk = dayKey(target);
+            const n = members.filter((u) => active.get(u) && active.get(u).has(tk)).length;
+            cells.push({ n, pct: members.length ? n / members.length : 0 });
+        }
+        out.push({ key, label: shortDate(key), size: members.length, cells });
+    }
+    return out;
+}
+
+// 요일(월=0) × 시간(0~23) 기록 수. 언제 푸시·포스팅할지 정하는 데 쓴다.
+// 이건 '기간 내 활동 분포'라 스코프된 기록을 받는 게 맞다.
+function hourDowMatrix(recipes) {
+    const m = Array.from({ length: 7 }, () => new Array(24).fill(0));
+    for (const r of recipes) {
+        const d = new Date(r.date);
+        if (isNaN(d)) continue;
+        m[(d.getDay() + 6) % 7][d.getHours()] += 1;
+    }
+    return m;
+}
+
+/* ─────────────── 집계 문서에서 뷰 만들기 (Phase 1 경로) ───────────────
+ *
+ * 전체 스캔 경로의 aggregate()/newUserSeries()/retentionCohorts()/hourDowMatrix()가
+ * 만들어내는 것과 **같은 모양**을 stats_daily·users에서 만든다. 그래야 렌더러를
+ * 그대로 쓰고 화면 의미도 안 바뀐다.
+ *
+ * 기간 스코프가 유지되는 건 일별 문서에 uc(사용자별)·bn(원두별) 맵이 있기 때문이다.
+ * 이게 없으면 '기간 내 사용자 수'와 퍼널이 생애 기준으로 밀린다.
+ */
+
+// 선택 기간에 해당하는 일별 문서 키 목록(오래된 것부터). days=0이면 전체.
+function rangeDayKeys(dailyMap, days) {
+    if (!days) return [...dailyMap.keys()].sort();
+    const out = [];
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        out.push(dayKey(d));
+    }
+    return out;
+}
+
+function buildViewFromAggregates(a, days) {
+    const keys = rangeDayKeys(a.daily, days);
+    const get = (k) => a.daily.get(k) || {};
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+    const series = keys.map((k) => ({ key: k, count: num(get(k).count) }));
+    const total = series.reduce((s, d) => s + d.count, 0);
+
+    let espresso = 0, drip = 0, successCount = 0, ratedTotal = 0;
+    const ratingCounts = [0, 0, 0, 0, 0];
+    const perUser = new Map();   // 기간 내 사용자별 기록 수 → 사용자 수와 퍼널
+    const perBean = new Map();   // 기간 내 원두별 기록 수 → TOP 10
+    const hourDow = Array.from({ length: 7 }, () => new Array(24).fill(0));
+
+    for (const k of keys) {
+        const d = get(k);
+        espresso += num(d.espresso);
+        drip += num(d.drip);
+        successCount += num(d.successCount);
+        ratedTotal += num(d.ratedCount);
+        for (let r = 1; r <= 5; r++) ratingCounts[r - 1] += num(d['rating' + r]);
+
+        const dow = (new Date(k + 'T00:00:00').getDay() + 6) % 7;
+        for (let h = 0; h < 24; h++) hourDow[dow][h] += num(d['h' + h]);
+
+        for (const [uid, n] of Object.entries(d.uc || {})) {
+            perUser.set(uid, (perUser.get(uid) || 0) + num(n));
+        }
+        for (const [bid, n] of Object.entries(d.bn || {})) {
+            perBean.set(bid, (perBean.get(bid) || 0) + num(n));
+        }
+    }
+
+    const ratingSum = ratingCounts.reduce((s, c, i) => s + c * (i + 1), 0);
+    const perUserCounts = [...perUser.values()].filter((n) => n > 0);
+
+    const funnel = [
+        { label: '기록 사용자', hint: '1건 이상 저장', min: 1 },
+        { label: '재기록', hint: '2건 이상 — 다시 돌아옴', min: 2 },
+        { label: '정착', hint: '5건 이상 — 습관화', min: 5 },
+        { label: '헤비 유저', hint: '10건 이상', min: 10 },
+    ].map((s) => ({ ...s, users: perUserCounts.filter((c) => c >= s.min).length }));
+
+    const beans = [...perBean.entries()]
+        .map(([id, count]) => ({ name: a.beanNames.get(id) || '(이름 없음)', count }))
+        .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name))
+        .slice(0, 10);
+
+    const todayK = dayKey(new Date());
+
+    return {
+        total,
+        series,
+        users: perUserCounts.length,
+        today: num(get(todayK).count),
+        avgRating: ratedTotal ? ratingSum / ratedTotal : 0,
+        ratingCounts,
+        ratedTotal,
+        espresso,
+        drip,
+        successCount,
+        successRate: total ? successCount / total : 0,
+        beans,
+        recent: a.recent,
+        funnel,
+        hourDow,
+    };
+}
+
+// users 컬렉션의 firstSeenAt으로 신규 유입 시계열. 전체 스캔 경로의
+// newUserSeries()와 같은 모양을 돌려준다 — 다만 여기서는 프록시가 아니라 실제 값이다.
+function newUserSeriesFromUsers(users, days) {
+    const times = users
+        .map((u) => new Date(u.firstSeenAt).getTime())
+        .filter((t) => Number.isFinite(t));
+
+    const span = days || (() => {
+        if (!times.length) return 30;
+        return Math.min(365, Math.max(7, Math.ceil((Date.now() - Math.min(...times)) / 864e5) + 1));
+    })();
+
+    const byDay = new Map();
+    for (let i = span - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        byDay.set(dayKey(d), 0);
+    }
+    for (const t of times) {
+        const k = dayKey(new Date(t));
+        if (byDay.has(k)) byDay.set(k, byDay.get(k) + 1);
+    }
+    return {
+        series: [...byDay.entries()].map(([key, count]) => ({ key, count })),
+        total: times.filter((t) => byDay.has(dayKey(new Date(t)))).length,
+    };
+}
+
+// 코호트 — 소속은 users.firstSeenAt으로, 주차별 활동은 stats_daily.uc로 판정한다.
+function retentionFromAggregates(a, cohortCount, horizon) {
+    const byCohort = new Map();
+    for (const u of a.users) {
+        const t = new Date(u.firstSeenAt).getTime();
+        if (!Number.isFinite(t)) continue;
+        const k = dayKey(weekStart(new Date(t)));
+        if (!byCohort.has(k)) byCohort.set(k, []);
+        byCohort.get(k).push(u.id);
+    }
+
+    // uid → 활동한 주차 집합
+    const active = new Map();
+    for (const [dk, d] of a.daily) {
+        const wk = dayKey(weekStart(new Date(dk + 'T00:00:00')));
+        for (const [uid, n] of Object.entries(d.uc || {})) {
+            if (!Number(n)) continue;
+            if (!active.has(uid)) active.set(uid, new Set());
+            active.get(uid).add(wk);
+        }
+    }
+
+    const thisWeek = weekStart(new Date());
+    const out = [];
+    for (let i = cohortCount - 1; i >= 0; i--) {
+        const ws = new Date(thisWeek);
+        ws.setDate(ws.getDate() - i * 7);
+        const key = dayKey(ws);
+        const members = byCohort.get(key) || [];
+        const cells = [];
+        for (let w = 0; w <= horizon; w++) {
+            const target = new Date(ws);
+            target.setDate(target.getDate() + w * 7);
+            if (target > thisWeek) { cells.push(null); continue; }
+            const tk = dayKey(target);
+            const n = members.filter((u) => active.get(u) && active.get(u).has(tk)).length;
+            cells.push({ n, pct: members.length ? n / members.length : 0 });
+        }
+        out.push({ key, label: shortDate(key), size: members.length, cells });
+    }
+    return out;
+}
+
+/* ─────────────── Phase 2: 휴면 · 급상승 원두 · 실패율 ───────────────
+ *
+ * 세 지표 모두 집계 경로와 스캔 폴백 양쪽에서 **같은 모양**을 만들어야 한다.
+ * 그래야 규칙 게시 전후로 화면이 달라지지 않는다.
+ */
+
+// 마지막 활동 이후 경과일 구간. 리인게이지먼트 대상 규모를 본다.
+// 기간 필터와 무관한 '현재 시점 상태'다 — 코호트와 같은 성격.
+const DORMANCY_BUCKETS = [
+    { label: '활성', hint: '6일 이내', max: 6 },
+    { label: '주의', hint: '7–13일', max: 13 },
+    { label: '위험', hint: '14–29일', max: 29 },
+    { label: '휴면', hint: '30일 이상', max: Infinity },
+];
+
+function dormancyFromLastSeen(lastSeenList) {
+    const now = Date.now();
+    const buckets = DORMANCY_BUCKETS.map((b) => ({ ...b, users: 0 }));
+    for (const iso of lastSeenList) {
+        const t = new Date(iso).getTime();
+        if (!Number.isFinite(t)) continue;
+        const days = Math.floor((now - t) / 864e5);
+        for (const b of buckets) {
+            if (days <= b.max) { b.users += 1; break; }
+        }
+    }
+    return buckets;
+}
+
+// 원두별 {기간 내 건수, 직전 동일 기간 건수, 성공 건수}
+// days=0(전체)이면 직전 기간이 없으므로 prev는 전부 0이고 급상승 카드는 안내로 대체된다.
+function beanStatsFromAggregates(a, days) {
+    const cur = new Map(), prev = new Map(), suc = new Map();
+
+    const addTo = (map, obj) => {
+        for (const [id, n] of Object.entries(obj || {})) {
+            map.set(id, (map.get(id) || 0) + (Number(n) || 0));
+        }
+    };
+
+    if (!days) {
+        for (const d of a.daily.values()) { addTo(cur, d.bn); addTo(suc, d.bs); }
+    } else {
+        const inRange = (offset) => {
+            const keys = [];
+            for (let i = days - 1; i >= 0; i--) {
+                const d = new Date();
+                d.setHours(0, 0, 0, 0);
+                d.setDate(d.getDate() - i - offset);
+                keys.push(dayKey(d));
+            }
+            return keys;
+        };
+        for (const k of inRange(0)) {
+            const d = a.daily.get(k); if (!d) continue;
+            addTo(cur, d.bn); addTo(suc, d.bs);
+        }
+        for (const k of inRange(days)) {
+            const d = a.daily.get(k); if (!d) continue;
+            addTo(prev, d.bn);
+        }
+    }
+
+    return [...cur.entries()].map(([id, count]) => ({
+        name: a.beanNames.get(id) || '(이름 없음)',
+        count,
+        prev: prev.get(id) || 0,
+        success: suc.get(id) || 0,
+    }));
+}
+
+function beanStatsFromScan(allRecipes, days) {
+    const key = (r) => (r.beanName || '').trim();
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+
+    const from = (offset) => {
+        if (!days) return null;
+        const f = new Date(now); f.setDate(f.getDate() - (days - 1) - offset);
+        const t = new Date(now); t.setDate(t.getDate() + 1 - offset);
+        return [f, t];
+    };
+    const within = (r, span) => {
+        if (!span) return true;
+        const d = new Date(r.date);
+        return !isNaN(d) && d >= span[0] && d < span[1];
+    };
+
+    const curSpan = from(0), prevSpan = from(days);
+    const cur = new Map(), prev = new Map(), suc = new Map();
+
+    for (const r of allRecipes) {
+        const name = key(r);
+        if (!name) continue;
+        if (within(r, curSpan)) {
+            cur.set(name, (cur.get(name) || 0) + 1);
+            if (r.success === true) suc.set(name, (suc.get(name) || 0) + 1);
+        }
+        if (days && within(r, prevSpan)) prev.set(name, (prev.get(name) || 0) + 1);
+    }
+
+    return [...cur.entries()].map(([name, count]) => ({
+        name, count, prev: prev.get(name) || 0, success: suc.get(name) || 0,
+    }));
+}
+
+// 급상승 — 직전 기간 대비 증가분 기준. 신규 진입(prev 0)도 포함한다.
+function risingBeans(stats, topN) {
+    return stats
+        .filter((b) => b.count > b.prev)
+        .map((b) => ({
+            ...b,
+            delta: b.count - b.prev,
+            // prev가 0이면 증가율이 무한대라 숫자 대신 '신규'로 표시한다
+            pct: b.prev ? (b.count - b.prev) / b.prev : null,
+        }))
+        .sort((x, y) => y.delta - x.delta || y.count - x.count || x.name.localeCompare(y.name))
+        .slice(0, topN);
+}
+
+// 실패율 — 표본이 적으면 요동친다. 최소 표본 미만은 제외한다.
+// 이걸 안 하면 1건 기록해 1건 실패한 원두가 100%로 1위에 올라 목록이 쓸모없어진다.
+const FAILURE_MIN_SAMPLE = 5;
+
+function failingBeans(stats, topN) {
+    return stats
+        .filter((b) => b.count >= FAILURE_MIN_SAMPLE)
+        .map((b) => ({ ...b, failed: b.count - b.success, rate: (b.count - b.success) / b.count }))
+        .filter((b) => b.failed > 0)
+        .sort((x, y) => y.rate - x.rate || y.count - x.count || x.name.localeCompare(y.name))
+        .slice(0, topN);
+}
+
 /* ────────────────────────── chart: trend ────────────────────────── */
 
-function renderTrend(wrap, series) {
+function renderTrend(wrap, series, ariaLabel) {
     clear(wrap);
     const W = Math.max(320, wrap.clientWidth || 640);
     const H = 250;
@@ -210,7 +669,7 @@ function renderTrend(wrap, series) {
     const y = (v) => pad.t + ph - (v / niceMax) * ph;
 
     const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
-    s.setAttribute('aria-label', '일별 기록 추이');
+    s.setAttribute('aria-label', ariaLabel || '일별 기록 추이');
 
     // 하한선 위 격자 — 실선 헤어라인, 뒤로 물러나게
     const ticks = 4;
@@ -674,6 +1133,356 @@ function renderBeans(wrap, beans) {
     wrap.appendChild(tip);
 }
 
+/* ──────────────────── chart: 활성화·유지 퍼널 ──────────────────── */
+
+function renderFunnel(wrap, funnel) {
+    clear(wrap);
+    const top = funnel[0] ? funnel[0].users : 0;
+    if (!top) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = '기록을 남긴 사용자가 아직 없습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const W = Math.max(320, wrap.clientWidth || 640);
+    const labelW = Math.min(150, Math.max(96, W * 0.24));
+    const valueW = 96;
+    const BAR = 26;
+    const ROW = 52;
+    const H = funnel.length * ROW + 8;
+    const pw = W - labelW - valueW - 12;
+    const R = 5;
+
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
+    s.setAttribute('aria-label', '활성화·유지 퍼널 — 사용자별 기록 깊이');
+
+    const tip = document.createElement('div');
+    tip.className = 'tip';
+
+    funnel.forEach((stage, i) => {
+        const cy = i * ROW + ROW / 2;
+        // 막대 길이는 최상단(기록 사용자) 대비 비율 — 100%에서 좁아지는 퍼널
+        const share = stage.users / top;
+        const w = Math.max(2, share * pw);
+        const y0 = cy - BAR / 2;
+        const pctTop = Math.round(share * 100);
+        // 직전 단계 대비 전환율 — 어디서 사람이 빠지는지
+        const prev = i > 0 ? funnel[i - 1].users : stage.users;
+        const stepPct = prev ? Math.round((stage.users / prev) * 100) : 100;
+
+        const name = svg('text', { x: labelW - 12, y: cy - 1, 'text-anchor': 'end', 'font-size': 12.5 });
+        name.style.fill = cssVar('--ink-2');
+        name.textContent = stage.label;
+        s.appendChild(name);
+
+        const sub = svg('text', { x: labelW - 12, y: cy + 14, 'text-anchor': 'end', 'font-size': 10.5 });
+        sub.style.fill = cssVar('--muted');
+        sub.textContent = stage.hint;
+        s.appendChild(sub);
+
+        const rr = Math.min(R, w);
+        const path = `M${labelW},${y0} H${labelW + w - rr} A${rr},${rr} 0 0 1 ${labelW + w},${y0 + rr} V${y0 + BAR - rr} A${rr},${rr} 0 0 1 ${labelW + w - rr},${y0 + BAR} H${labelW} Z`;
+        const bar = svg('path', { d: path });
+        bar.style.fill = cssVar('--series-1');
+        // 단계가 깊어질수록 옅게 — 좁아지는 퍼널의 시각적 신호
+        bar.style.opacity = (1 - i * 0.16).toFixed(2);
+        s.appendChild(bar);
+
+        // 값: 사용자 수 + 최상단 대비 %
+        const v = svg('text', { x: labelW + w + 10, y: cy - 1, 'font-size': 12.5, 'font-weight': 600 });
+        v.style.fill = cssVar('--ink');
+        v.style.fontVariantNumeric = 'tabular-nums';
+        v.textContent = `${fmt(stage.users)}명 · ${pctTop}%`;
+        s.appendChild(v);
+
+        // 직전 단계 대비 전환(첫 단계 제외) — 이탈 지점 판독
+        if (i > 0) {
+            const step = svg('text', { x: labelW + w + 10, y: cy + 14, 'font-size': 10.5 });
+            step.style.fill = cssVar('--muted');
+            step.style.fontVariantNumeric = 'tabular-nums';
+            step.textContent = `직전 대비 ${stepPct}%`;
+            s.appendChild(step);
+        }
+
+        const hit = svg('rect', { x: 0, y: cy - ROW / 2, width: W, height: ROW, fill: 'transparent' });
+        hit.style.cursor = 'pointer';
+        hit.addEventListener('pointerenter', () => {
+            clear(tip);
+            const head = document.createElement('div');
+            head.className = 'tip-head';
+            head.textContent = stage.label;
+            const row = document.createElement('div');
+            row.className = 'tip-row';
+            const key = document.createElement('span');
+            key.className = 'tip-key';
+            key.style.background = cssVar('--series-1');
+            const val = document.createElement('span');
+            val.className = 'tip-val';
+            val.textContent = `${fmt(stage.users)}명 (전체의 ${pctTop}%${i > 0 ? `, 직전 대비 ${stepPct}%` : ''})`;
+            row.append(key, val);
+            tip.append(head, row);
+            tip.classList.add('on');
+            tip.style.left = Math.min(labelW + 10, W - 200) + 'px';
+            tip.style.top = Math.max(0, cy - 46) + 'px';
+        });
+        hit.addEventListener('pointerleave', () => tip.classList.remove('on'));
+        s.appendChild(hit);
+    });
+
+    wrap.appendChild(s);
+    wrap.appendChild(tip);
+}
+
+/* ──────────────────── chart: 주간 리텐션 코호트 ──────────────────── */
+
+function renderRetention(wrap, cohorts, horizon) {
+    clear(wrap);
+    const withMembers = cohorts.filter((c) => c.size > 0);
+    if (!withMembers.length) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = '아직 코호트를 만들 만큼 데이터가 쌓이지 않았습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const scroll = document.createElement('div');
+    scroll.className = 'scroll-x';
+    const t = document.createElement('table');
+    t.className = 'cohort';
+
+    const thead = document.createElement('thead');
+    const hr = document.createElement('tr');
+    ['시작 주', '유입'].concat(
+        Array.from({ length: horizon + 1 }, (_, i) => `W${i}`)
+    ).forEach((label) => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    t.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    withMembers.forEach((c) => {
+        const tr = document.createElement('tr');
+
+        const tdWeek = document.createElement('td');
+        tdWeek.textContent = c.label;
+        tr.appendChild(tdWeek);
+
+        const tdSize = document.createElement('td');
+        tdSize.className = 'num';
+        tdSize.textContent = fmt(c.size) + '명';
+        tr.appendChild(tdSize);
+
+        c.cells.forEach((cell) => {
+            const td = document.createElement('td');
+            td.className = 'num cohort-cell';
+            if (!cell) {                      // 아직 오지 않은 주 — 0%가 아니라 빈칸
+                td.textContent = '';
+                td.classList.add('cohort-future');
+            } else {
+                const pct = Math.round(cell.pct * 100);
+                td.textContent = pct + '%';
+                // 순차 램프: 잔존율이 높을수록 진하게. 값이 이미 크기를 말하므로 채도만 쓴다.
+                td.style.background = `color-mix(in srgb, var(--series-1) ${Math.round(cell.pct * 62)}%, transparent)`;
+                td.title = `${fmt(cell.n)}명 / ${fmt(c.size)}명`;
+            }
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    });
+    t.appendChild(tbody);
+    scroll.appendChild(t);
+    wrap.appendChild(scroll);
+}
+
+/* ─────────── chart: 범용 수평 막대 (Phase 2 카드 3장 공용) ───────────
+ * renderBeans의 규약(labelW · BAR · ROW · tip)을 그대로 따르되, 라벨 아래 보조
+ * 설명과 막대별 색을 받을 수 있게 일반화했다. 카드마다 차트 함수를 새로 만들면
+ * 규약이 조금씩 어긋나므로 하나로 묶는다.
+ *
+ * items: { label, sub, value, valueText, color, tip }
+ */
+function renderHBars(wrap, items, opts) {
+    const o = opts || {};
+    clear(wrap);
+    if (!items.length) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = o.emptyText || '표시할 데이터가 없습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const W = Math.max(320, wrap.clientWidth || 640);
+    const labelW = Math.min(200, Math.max(112, W * 0.28));
+    const valueW = o.valueW || 96;
+    const BAR = 18, ROW = o.sub ? 42 : 32, R = 4;
+    const H = items.length * ROW + 10;
+    const pw = W - labelW - valueW - 12;
+    const max = Math.max(1, ...items.map((d) => d.value));
+
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
+    s.setAttribute('aria-label', o.ariaLabel || '');
+
+    const tip = document.createElement('div');
+    tip.className = 'tip';
+
+    items.forEach((d, i) => {
+        const cy = i * ROW + ROW / 2;
+        const w = Math.max(2, (d.value / max) * pw);
+        const y0 = cy - BAR / 2;
+        const color = d.color || cssVar('--series-1');
+
+        const name = svg('text', {
+            x: labelW - 12, y: d.sub ? cy - 1 : cy + 4,
+            'text-anchor': 'end', 'font-size': 12.5,
+        });
+        name.style.fill = cssVar('--ink-2');
+        name.textContent = d.label.length > 22 ? d.label.slice(0, 21) + '…' : d.label;
+        const title = svg('title');
+        title.textContent = d.label;
+        name.appendChild(title);
+        s.appendChild(name);
+
+        if (d.sub) {
+            const sub = svg('text', { x: labelW - 12, y: cy + 13, 'text-anchor': 'end', 'font-size': 10.5 });
+            sub.style.fill = cssVar('--muted');
+            sub.textContent = d.sub;
+            s.appendChild(sub);
+        }
+
+        const rr = Math.min(R, w);
+        const path = `M${labelW},${y0} H${labelW + w - rr} A${rr},${rr} 0 0 1 ${labelW + w},${y0 + rr} V${y0 + BAR - rr} A${rr},${rr} 0 0 1 ${labelW + w - rr},${y0 + BAR} H${labelW} Z`;
+        const bar = svg('path', { d: path });
+        bar.style.fill = color;
+        s.appendChild(bar);
+
+        const v = svg('text', { x: labelW + w + 10, y: cy + 4, 'font-size': 12, 'font-weight': 600 });
+        v.style.fill = cssVar('--ink');
+        v.style.fontVariantNumeric = 'tabular-nums';
+        v.textContent = d.valueText;
+        s.appendChild(v);
+
+        const hit = svg('rect', { x: 0, y: cy - ROW / 2, width: W, height: ROW, fill: 'transparent' });
+        hit.style.cursor = 'pointer';
+        hit.addEventListener('pointerenter', () => {
+            clear(tip);
+            const head = document.createElement('div');
+            head.className = 'tip-head';
+            head.textContent = d.label;
+            const row = document.createElement('div');
+            row.className = 'tip-row';
+            const k = document.createElement('span');
+            k.className = 'tip-key';
+            k.style.background = color;
+            const val = document.createElement('span');
+            val.className = 'tip-val';
+            val.textContent = d.tip || d.valueText;
+            row.append(k, val);
+            tip.append(head, row);
+            tip.classList.add('on');
+            tip.style.left = Math.min(labelW + 10, W - 190) + 'px';
+            tip.style.top = Math.max(0, cy - 44) + 'px';
+        });
+        hit.addEventListener('pointerleave', () => tip.classList.remove('on'));
+        s.appendChild(hit);
+    });
+
+    wrap.appendChild(s);
+    wrap.appendChild(tip);
+}
+
+/* ──────────────── chart: 요일 × 시간대 활동 히트맵 ──────────────── */
+
+const DOW_KO = ['월', '화', '수', '목', '금', '토', '일'];
+
+function renderHeatmap(wrap, matrix) {
+    clear(wrap);
+    const max = Math.max(0, ...matrix.flat());
+    if (!max) {
+        const p = document.createElement('p');
+        p.className = 'card-sub';
+        p.textContent = '표시할 기록이 없습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+
+    const CELL = 22, GAP = 2, LABEL_W = 26, TOP_H = 16;
+    const W = LABEL_W + 24 * (CELL + GAP);
+    const H = TOP_H + 7 * (CELL + GAP) + 4;
+
+    const scroll = document.createElement('div');
+    scroll.className = 'scroll-x';
+    const s = svg('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' });
+    s.setAttribute('aria-label', '요일과 시간대별 기록 분포');
+
+    // 시간 눈금 — 3시간 간격만 적어 라벨이 뭉개지지 않게
+    for (let h = 0; h < 24; h += 3) {
+        const tx = svg('text', {
+            x: LABEL_W + h * (CELL + GAP) + CELL / 2, y: TOP_H - 5,
+            'text-anchor': 'middle', 'font-size': 9.5,
+        });
+        tx.style.fill = cssVar('--muted');
+        tx.style.fontVariantNumeric = 'tabular-nums';
+        tx.textContent = h;
+        s.appendChild(tx);
+    }
+
+    const tip = document.createElement('div');
+    tip.className = 'tip';
+
+    matrix.forEach((row, dow) => {
+        const ty = svg('text', {
+            x: LABEL_W - 8, y: TOP_H + dow * (CELL + GAP) + CELL / 2 + 3.5,
+            'text-anchor': 'end', 'font-size': 10.5,
+        });
+        ty.style.fill = cssVar('--ink-2');
+        ty.textContent = DOW_KO[dow];
+        s.appendChild(ty);
+
+        row.forEach((n, h) => {
+            const x = LABEL_W + h * (CELL + GAP);
+            const y = TOP_H + dow * (CELL + GAP);
+            const rect = svg('rect', { x, y, width: CELL, height: CELL, rx: 3 });
+            // 0은 격자만 남겨 '데이터 없음'과 '적음'을 구분한다
+            rect.style.fill = n === 0
+                ? cssVar('--grid')
+                : `color-mix(in srgb, var(--series-1) ${Math.round((n / max) * 88) + 12}%, transparent)`;
+            rect.style.cursor = 'pointer';
+            rect.addEventListener('pointerenter', () => {
+                clear(tip);
+                const head = document.createElement('div');
+                head.className = 'tip-head';
+                head.textContent = `${DOW_KO[dow]} ${String(h).padStart(2, '0')}시`;
+                const r2 = document.createElement('div');
+                r2.className = 'tip-row';
+                const k = document.createElement('span');
+                k.className = 'tip-key';
+                k.style.background = cssVar('--series-1');
+                const v = document.createElement('span');
+                v.className = 'tip-val';
+                v.textContent = fmt(n) + '건';
+                r2.append(k, v);
+                tip.append(head, r2);
+                tip.classList.add('on');
+                tip.style.left = Math.min(x, W - 150) + 'px';
+                tip.style.top = Math.max(0, y - 44) + 'px';
+            });
+            rect.addEventListener('pointerleave', () => tip.classList.remove('on'));
+            s.appendChild(rect);
+        });
+    });
+
+    scroll.appendChild(s);
+    wrap.appendChild(scroll);
+    wrap.appendChild(tip);
+}
+
 /* ────────────────────────── table views ────────────────────────── */
 
 function buildTable(cols, rows) {
@@ -713,8 +1522,11 @@ function buildTable(cols, rows) {
 /* ────────────────────────── render ────────────────────────── */
 
 function render() {
-    const scoped = sliceByRange(allRecipes, rangeDays);
-    const a = aggregate(scoped, rangeDays);
+    // 집계 경로가 살아 있으면 그걸 쓰고, 아니면 예전 전체 스캔 경로로 떨어진다.
+    // 두 경로가 같은 모양을 돌려주므로 아래 렌더 코드는 출처를 몰라도 된다.
+    const useAgg = dataMode === 'aggregate' && agg;
+    const scoped = useAgg ? null : sliceByRange(allRecipes, rangeDays);
+    const a = useAgg ? buildViewFromAggregates(agg, rangeDays) : aggregate(scoped, rangeDays);
     const label = rangeDays ? `최근 ${rangeDays}일` : '전체 기간';
 
     el('hero-label').textContent = `${label} 기록된 레시피`;
@@ -755,6 +1567,93 @@ function render() {
     renderRatings(el('rating-wrap'), a.ratingCounts);
     renderBeans(el('beans-wrap'), a.beans);
 
+    el('funnel-sub').textContent = `${label} · 기록을 남긴 사용자가 얼마나 정착하는가`;
+    renderFunnel(el('funnel-wrap'), a.funnel);
+
+    // ── 마케팅 지표 ──
+    // 신규 유입·리텐션은 **allRecipes**(전체)로 계산한다. scoped를 넘기면 기간 밖에서
+    // 시작한 사용자가 신규로 잡혀 유입이 부풀려진다.
+    const nu = useAgg
+        ? newUserSeriesFromUsers(agg.users, rangeDays)
+        : newUserSeries(allRecipes, rangeDays);
+    el('newusers-sub').textContent = `${label} · 처음 기록을 남긴 사용자 ${fmt(nu.total)}명`;
+    renderTrend(el('newusers-wrap'), nu.series, '일별 신규 사용자 추이');
+
+    const RETENTION_HORIZON = 4;
+    const cohorts = useAgg
+        ? retentionFromAggregates(agg, 6, RETENTION_HORIZON)
+        : retentionCohorts(allRecipes, 6, RETENTION_HORIZON);
+    renderRetention(el('retention-wrap'), cohorts, RETENTION_HORIZON);
+
+    const heat = useAgg ? a.hourDow : hourDowMatrix(scoped);
+    el('heatmap-sub').textContent = `${label} · 기록이 저장된 요일과 시각`;
+    renderHeatmap(el('heatmap-wrap'), heat);
+
+    // ── Phase 2 — 행동으로 이어지는 카드들 ──
+
+    // 휴면: 기간 필터와 무관한 '현재 시점' 상태다. 마지막 활동 시각만 있으면 된다.
+    const lastSeen = useAgg
+        ? agg.users.map((u) => u.lastSeenAt).filter(Boolean)
+        : [...allRecipes.reduce((m, r) => {
+            if (!r.userId || !r.date) return m;
+            const prev = m.get(r.userId);
+            if (!prev || new Date(r.date) > new Date(prev)) m.set(r.userId, r.date);
+            return m;
+        }, new Map()).values()];
+    const dormancy = dormancyFromLastSeen(lastSeen);
+    const dormancyTotal = dormancy.reduce((s, b) => s + b.users, 0);
+    el('dormancy-sub').textContent = dormancyTotal
+        ? `현재 시점 · 전체 ${fmt(dormancyTotal)}명 기준 (기간 필터와 무관)`
+        : '아직 사용자가 없습니다.';
+    // 좋음 → 나쁨 순서. 상태색은 액센트(--series-1)와 별개 체계다.
+    const DORMANCY_COLORS = ['--good', '--series-1', '--warn', '--danger'];
+    renderHBars(el('dormancy-wrap'), dormancy.map((b, i) => ({
+        label: b.label,
+        sub: b.hint,
+        value: b.users,
+        valueText: `${fmt(b.users)}명 · ${dormancyTotal ? Math.round((b.users / dormancyTotal) * 100) : 0}%`,
+        color: cssVar(DORMANCY_COLORS[i]),
+        tip: `${fmt(b.users)}명 (마지막 기록 ${b.hint})`,
+    })), { ariaLabel: '마지막 활동 이후 경과일 분포', sub: true, valueW: 108 });
+
+    // 원두 인사이트 — 급상승과 실패율은 같은 통계에서 나온다.
+    const beanStats = useAgg
+        ? beanStatsFromAggregates(agg, rangeDays)
+        : beanStatsFromScan(allRecipes, rangeDays);
+
+    const rising = rangeDays ? risingBeans(beanStats, 8) : [];
+    el('rising-sub').textContent = rangeDays
+        ? `${label} vs 직전 ${rangeDays}일 · 증가폭이 큰 순서`
+        : '전체 기간에는 비교할 직전 구간이 없습니다. 7·30·90일을 선택하세요.';
+    renderHBars(el('rising-wrap'), rising.map((b) => ({
+        label: b.name,
+        sub: b.prev ? `직전 ${fmt(b.prev)}건 → ${fmt(b.count)}건` : '직전 기간에 없던 원두',
+        value: b.delta,
+        valueText: b.pct === null ? `+${fmt(b.delta)} · 신규` : `+${fmt(b.delta)} · ${Math.round(b.pct * 100)}%`,
+        tip: `${fmt(b.prev)}건 → ${fmt(b.count)}건 (증가 ${fmt(b.delta)})`,
+    })), {
+        ariaLabel: '급상승 원두',
+        sub: true,
+        valueW: 116,
+        emptyText: rangeDays ? '직전 기간보다 늘어난 원두가 없습니다.' : '기간을 선택하면 비교합니다.',
+    });
+
+    const failing = failingBeans(beanStats, 8);
+    el('failing-sub').textContent =
+        `${label} · 표본 ${FAILURE_MIN_SAMPLE}건 이상인 원두만 (표본이 적으면 비율이 요동칩니다)`;
+    renderHBars(el('failing-wrap'), failing.map((b) => ({
+        label: b.name,
+        sub: `실패 ${fmt(b.failed)} / 총 ${fmt(b.count)}건`,
+        value: b.rate,
+        valueText: Math.round(b.rate * 100) + '%',
+        color: cssVar('--danger'),
+        tip: `실패율 ${Math.round(b.rate * 100)}% (${fmt(b.failed)}/${fmt(b.count)}건)`,
+    })), {
+        ariaLabel: '실패율이 높은 원두',
+        sub: true,
+        emptyText: `표본 ${FAILURE_MIN_SAMPLE}건 이상이면서 실패가 있는 원두가 없습니다.`,
+    });
+
     // 표 뷰 — 모든 차트는 표로도 읽을 수 있어야 한다
     clear(el('tv-trend'));
     el('tv-trend').appendChild(buildTable(
@@ -782,6 +1681,89 @@ function render() {
     el('tv-beans').appendChild(buildTable(
         [{ key: 'n', label: '원두' }, { key: 'c', label: '기록 수', num: true }],
         a.beans.map((b) => ({ n: b.name, c: fmt(b.count) }))
+    ));
+
+    clear(el('tv-newusers'));
+    el('tv-newusers').appendChild(buildTable(
+        [{ key: 'd', label: '날짜' }, { key: 'c', label: '신규 사용자', num: true }],
+        nu.series.map((s) => ({ d: s.key, c: fmt(s.count) }))
+    ));
+
+    clear(el('tv-retention'));
+    el('tv-retention').appendChild(buildTable(
+        [{ key: 'w', label: '시작 주' }, { key: 'n', label: '유입', num: true }].concat(
+            Array.from({ length: RETENTION_HORIZON + 1 }, (_, i) => ({ key: 'w' + i, label: `W${i}`, num: true }))
+        ),
+        cohorts.filter((c) => c.size > 0).map((c) => {
+            const row = { w: c.label, n: fmt(c.size) };
+            c.cells.forEach((cell, i) => {
+                row['w' + i] = cell ? Math.round(cell.pct * 100) + '%' : '—';
+            });
+            return row;
+        })
+    ));
+
+    clear(el('tv-heatmap'));
+    el('tv-heatmap').appendChild(buildTable(
+        [{ key: 'd', label: '요일' }].concat(
+            Array.from({ length: 24 }, (_, h) => ({ key: 'h' + h, label: String(h), num: true }))
+        ),
+        heat.map((row, dow) => {
+            const o = { d: DOW_KO[dow] };
+            row.forEach((n, h) => { o['h' + h] = fmt(n); });
+            return o;
+        })
+    ));
+
+    clear(el('tv-dormancy'));
+    el('tv-dormancy').appendChild(buildTable(
+        [{ key: 's', label: '상태' }, { key: 'u', label: '사용자', num: true }, { key: 'p', label: '비중', num: true }],
+        dormancy.map((b) => ({
+            s: `${b.label} (${b.hint})`,
+            u: fmt(b.users),
+            p: (dormancyTotal ? Math.round((b.users / dormancyTotal) * 100) : 0) + '%',
+        }))
+    ));
+
+    clear(el('tv-rising'));
+    el('tv-rising').appendChild(buildTable(
+        [
+            { key: 'n', label: '원두' }, { key: 'p', label: '직전', num: true },
+            { key: 'c', label: '현재', num: true }, { key: 'd', label: '증가', num: true },
+            { key: 'r', label: '증가율', num: true },
+        ],
+        rising.map((b) => ({
+            n: b.name, p: fmt(b.prev), c: fmt(b.count),
+            d: '+' + fmt(b.delta), r: b.pct === null ? '신규' : Math.round(b.pct * 100) + '%',
+        }))
+    ));
+
+    clear(el('tv-failing'));
+    el('tv-failing').appendChild(buildTable(
+        [
+            { key: 'n', label: '원두' }, { key: 'f', label: '실패', num: true },
+            { key: 't', label: '총 기록', num: true }, { key: 'r', label: '실패율', num: true },
+        ],
+        failing.map((b) => ({
+            n: b.name, f: fmt(b.failed), t: fmt(b.count), r: Math.round(b.rate * 100) + '%',
+        }))
+    ));
+
+    clear(el('tv-funnel'));
+    const funnelTop = a.funnel[0] ? a.funnel[0].users : 0;
+    el('tv-funnel').appendChild(buildTable(
+        [
+            { key: 's', label: '단계' }, { key: 'u', label: '사용자', num: true },
+            { key: 'pt', label: '전체 대비', num: true }, { key: 'sp', label: '직전 대비', num: true },
+        ],
+        a.funnel.map((stage, i) => ({
+            s: `${stage.label} (${stage.hint})`,
+            u: fmt(stage.users),
+            pt: (funnelTop ? Math.round((stage.users / funnelTop) * 100) : 0) + '%',
+            sp: i === 0
+                ? '—'
+                : (a.funnel[i - 1].users ? Math.round((stage.users / a.funnel[i - 1].users) * 100) : 0) + '%',
+        }))
     ));
 
     // 최근 기록
@@ -819,9 +1801,154 @@ function render() {
         })
     ));
 
+    // 어떤 경로로 읽었는지는 숫자를 해석할 때 중요하다 — 반드시 표기한다.
     el('foot').textContent = isDemo
         ? '데모 데이터 · 실제 Firestore를 조회하지 않았습니다.'
-        : `Firestore recipes 컬렉션 전체 ${fmt(allRecipes.length)}건을 불러와 브라우저에서 집계했습니다.`;
+        : useAgg
+            ? `집계 문서(stats_daily ${fmt(agg.daily.size)}일 · users ${fmt(agg.users.length)}명)를 읽었습니다. recipes 전체는 내려받지 않습니다.`
+            : `Firestore recipes 컬렉션 전체 ${fmt(allRecipes.length)}건을 불러와 브라우저에서 집계했습니다. 집계 문서가 준비되면 이 전체 조회는 사라집니다.`;
+}
+
+/* ──────────────────── 데이터 로딩 (Phase 1) ────────────────────
+ *
+ * 집계 문서를 먼저 시도하고, 없거나 권한이 없으면 예전 전체 스캔으로 떨어진다.
+ * 이 폴백 덕분에 보안 규칙 게시나 백필 전에도 대시보드가 그대로 뜬다.
+ */
+
+// 예전 경로. recipes를 통째로 받는다 — 사진(base64)까지 딸려와 무겁다.
+async function loadAllRecipes(fb) {
+    const snap = await fb.getDocs(fb.collection(fb.db, 'recipes'));
+    const out = [];
+    snap.forEach((d) => {
+        const data = d.data();
+        // 받은 뒤 버릴 뿐 전송은 이미 끝났다 — 클라이언트 SDK엔 필드 선택이 없다.
+        delete data.imageUrl;
+        out.push({ id: d.id, ...data });
+    });
+    return out;
+}
+
+// 집계 경로. 셋 다 작은 문서라 합쳐도 수십 KB 수준이다.
+// 집계가 비어 있으면(=아직 백필 전) null을 돌려 폴백을 유도한다.
+async function loadAggregates(fb) {
+    try {
+        const [dailySnap, usersSnap, beansSnap, recentSnap] = await Promise.all([
+            fb.getDocs(fb.collection(fb.db, 'stats_daily')),
+            fb.getDocs(fb.collection(fb.db, 'users')),
+            fb.getDocs(fb.collection(fb.db, 'stats_beans')),
+            fb.getDocs(fb.query(
+                fb.collection(fb.db, 'recipes'), fb.orderBy('date', 'desc'), fb.limit(20)
+            )),
+        ]);
+
+        if (dailySnap.empty || usersSnap.empty) return null;   // 아직 집계가 없다
+
+        const daily = new Map();
+        dailySnap.forEach((d) => daily.set(d.id, d.data()));
+
+        const users = [];
+        usersSnap.forEach((d) => users.push({ id: d.id, ...d.data() }));
+
+        const beanNames = new Map();
+        beansSnap.forEach((d) => beanNames.set(d.id, (d.data() || {}).name || ''));
+
+        const recent = [];
+        recentSnap.forEach((d) => {
+            const data = d.data();
+            delete data.imageUrl;
+            recent.push({ id: d.id, ...data });
+        });
+
+        return { daily, users, beanNames, recent };
+    } catch (e) {
+        // 권한이 없거나 컬렉션이 없다 → 폴백. 대시보드를 막지는 않는다.
+        console.warn('[Stats] 집계를 읽지 못해 전체 스캔으로 대체합니다.', e);
+        return null;
+    }
+}
+
+/**
+ * 집계 재생성(백필). recipes를 한 번 전부 읽어 stats_daily·users·stats_beans를
+ * 처음부터 다시 만든다. 과거 데이터 이관과 정합성 복구를 겸한다 —
+ * 삭제 중 집계 갱신이 실패해 원본과 어긋났을 때 되돌리는 수단이기도 하다.
+ *
+ * 평소 경로에서는 절대 부르지 않는다. 이 버튼을 누를 때만 전체를 읽는다.
+ */
+async function rebuildAggregates(fb, onProgress) {
+    const recipes = await loadAllRecipes(fb);
+    onProgress(`기록 ${fmt(recipes.length)}건을 읽었습니다. 집계를 계산합니다…`);
+
+    const daily = new Map();
+    const users = new Map();
+    const beans = new Map();
+
+    const beanId = (name) => {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < name.length; i++) {
+            h ^= name.charCodeAt(i);
+            h = Math.imul(h, 0x01000193) >>> 0;
+        }
+        return 'b' + h.toString(36);
+    };
+
+    for (const r of recipes) {
+        const d = new Date(r.date);
+        if (isNaN(d) || !r.userId) continue;
+        const k = dayKey(d);
+        if (!daily.has(k)) daily.set(k, {
+            count: 0, espresso: 0, drip: 0, successCount: 0, es: 0, ds: 0,
+            ratedCount: 0, uc: {}, bn: {}, bs: {},
+        });
+        const day = daily.get(k);
+
+        const isEspresso = r.mode === 'espresso';
+        day.count += 1;
+        if (isEspresso) day.espresso += 1; else day.drip += 1;
+        day['h' + d.getHours()] = (day['h' + d.getHours()] || 0) + 1;
+        // 필드 구성은 storage.js의 bumpAggregates와 반드시 같아야 한다 —
+        // 어긋나면 실시간 집계와 백필 결과가 달라진다.
+        if (r.success === true) {
+            day.successCount += 1;
+            if (isEspresso) day.es += 1; else day.ds += 1;
+        }
+        const rating = Number(r.overallRating);
+        if (Number.isFinite(rating) && rating >= 1 && rating <= 5) {
+            day.ratedCount += 1;
+            day['rating' + rating] = (day['rating' + rating] || 0) + 1;
+        }
+        day.uc[r.userId] = (day.uc[r.userId] || 0) + 1;
+
+        const bean = (r.beanName || '').trim();
+        if (bean) {
+            const id = beanId(bean);
+            day.bn[id] = (day.bn[id] || 0) + 1;
+            if (r.success === true) day.bs[id] = (day.bs[id] || 0) + 1;
+            beans.set(id, bean);
+        }
+
+        const u = users.get(r.userId) || { firstSeenAt: r.date, lastSeenAt: r.date, recipeCount: 0 };
+        u.recipeCount += 1;
+        if (new Date(r.date) < new Date(u.firstSeenAt)) u.firstSeenAt = r.date;
+        if (new Date(r.date) > new Date(u.lastSeenAt)) u.lastSeenAt = r.date;
+        users.set(r.userId, u);
+    }
+
+    // merge:false로 덮어써야 이전 잘못된 값이 남지 않는다(정합성 복구가 목적이므로).
+    let written = 0;
+    const total = daily.size + users.size + beans.size;
+    for (const [k, v] of daily) {
+        await fb.setDoc(fb.doc(fb.db, 'stats_daily', k), v);
+        onProgress(`집계 기록 중… ${fmt(++written)}/${fmt(total)}`);
+    }
+    for (const [uid, v] of users) {
+        await fb.setDoc(fb.doc(fb.db, 'users', uid), v, { merge: true });
+        onProgress(`집계 기록 중… ${fmt(++written)}/${fmt(total)}`);
+    }
+    for (const [id, name] of beans) {
+        await fb.setDoc(fb.doc(fb.db, 'stats_beans', id), { name });
+        onProgress(`집계 기록 중… ${fmt(++written)}/${fmt(total)}`);
+    }
+    return { recipes: recipes.length, days: daily.size, users: users.size, beans: beans.size };
 }
 
 /* ────────────────────────── wiring ────────────────────────── */
@@ -839,6 +1966,8 @@ function wireUI() {
 
     document.querySelectorAll('.card-toggle').forEach((btn) => {
         btn.addEventListener('click', () => {
+            // 같은 스타일을 쓰지만 표 토글이 아닌 버튼(집계 재생성)이 섞여 있다.
+            if (!btn.dataset.tv) return;
             const tv = el(btn.dataset.tv);
             const chart = tv.previousElementSibling;
             const showTable = !tv.classList.contains('on');
@@ -847,6 +1976,37 @@ function wireUI() {
             btn.textContent = showTable ? '차트로 보기' : '표로 보기';
         });
     });
+
+    // ── 집계 재생성 ──
+    // 평소 경로에서 사라진 '전체 읽기'를 여기서만 의도적으로 한 번 수행한다.
+    const btnRebuild = el('btn-rebuild');
+    if (btnRebuild) {
+        btnRebuild.addEventListener('click', async () => {
+            const status = el('rebuild-status');
+            if (isDemo || !fbRef) {
+                status.textContent = '데모 모드에서는 집계를 재생성할 수 없습니다.';
+                return;
+            }
+            btnRebuild.disabled = true;
+            const original = btnRebuild.textContent;
+            btnRebuild.textContent = '재생성 중…';
+            try {
+                const r = await rebuildAggregates(fbRef, (msg) => { status.textContent = msg; });
+                status.textContent =
+                    `완료 — 기록 ${fmt(r.recipes)}건에서 일별 ${fmt(r.days)}일 · 사용자 ${fmt(r.users)}명 · 원두 ${fmt(r.beans)}종을 만들었습니다. 새로고침하면 집계 경로로 열립니다.`;
+                // 방금 만든 집계로 즉시 갈아탄다 — 새로고침을 기다릴 필요가 없다.
+                agg = await loadAggregates(fbRef);
+                if (agg) { dataMode = 'aggregate'; allRecipes = []; render(); }
+            } catch (e) {
+                console.error('집계 재생성 실패', e);
+                status.textContent =
+                    `재생성에 실패했습니다 (${e.code || e.message}). 보안 규칙에서 stats_daily·users·stats_beans 쓰기를 관리자에게 허용해야 합니다.`;
+            } finally {
+                btnRebuild.disabled = false;
+                btnRebuild.textContent = original;
+            }
+        });
+    }
 
     let t;
     window.addEventListener('resize', () => {
@@ -883,6 +2043,7 @@ if (isDemo) {
 
     import('./firebase-config.js')
         .then((fb) => {
+            fbRef = fb;
             el('btn-login').addEventListener('click', async () => {
                 try {
                     await fb.signInWithPopup(fb.auth, fb.googleProvider);
@@ -925,21 +2086,29 @@ if (isDemo) {
                 el('who').textContent = user.email || user.uid;
 
                 try {
-                    const snap = await fb.getDocs(fb.collection(fb.db, 'recipes'));
-                    allRecipes = [];
-                    snap.forEach((d) => {
-                        const data = d.data();
-                        // 본문 이미지는 base64로 최대 1MB — 집계에 쓰지 않으니 들고 있지 않는다
-                        delete data.imageUrl;
-                        allRecipes.push({ id: d.id, ...data });
-                    });
+                    // ① 가벼운 경로 먼저 — 집계 문서가 있으면 recipes 전체를 안 받는다.
+                    agg = await loadAggregates(fb);
+                    if (agg) {
+                        dataMode = 'aggregate';
+                        allRecipes = [];
+                    } else {
+                        // ② 집계가 아직 없거나 권한이 없다 → 예전 전체 스캔으로 떨어진다.
+                        //    규칙 게시·백필 전에도 대시보드가 멀쩡히 뜨게 하려는 안전망이다.
+                        dataMode = 'scan';
+                        allRecipes = await loadAllRecipes(fb);
+                    }
 
                     // 랜딩의 사회적 증거용 공개 집계. recipes 자체는 비공개라
-                    // 익명 방문자가 셀 수 없으므로, 이미 전체를 읽은 여기서 숫자만 공개 문서에 남긴다.
+                    // 익명 방문자가 셀 수 없으므로 여기서 숫자만 공개 문서에 남긴다.
+                    // 집계 모드에서는 allRecipes가 비어 있으므로 일별 합계를 쓴다 —
+                    // 그냥 length를 쓰면 랜딩 숫자가 0으로 덮인다.
+                    const totalCount = dataMode === 'aggregate'
+                        ? [...agg.daily.values()].reduce((s, d) => s + (Number(d.count) || 0), 0)
+                        : allRecipes.length;
                     // 실패해도 대시보드는 그대로 동작해야 한다.
                     try {
                         await fb.setDoc(fb.doc(fb.db, 'public_stats', 'landing'), {
-                            recipeCount: allRecipes.length,
+                            recipeCount: totalCount,
                             updatedAt: new Date().toISOString()
                         });
                     } catch (statErr) {

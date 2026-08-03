@@ -1,11 +1,12 @@
 // firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { 
-    getAuth, 
-    GoogleAuthProvider, 
-    signInWithPopup, 
-    signOut, 
-    onAuthStateChanged 
+import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged,
+    getAdditionalUserInfo
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
     getFirestore,
@@ -21,7 +22,13 @@ import {
     deleteDoc,
     updateDoc,
     getDoc,
-    setDoc
+    setDoc,
+    // 집계용 — 저장 시점에 카운터를 올리고(increment), 대시보드는 원본 대신
+    // 그 집계를 읽는다. 최근 기록만 orderBy+limit로 따로 가져온다.
+    // (docs/admin-roadmap.md Phase 1)
+    increment,
+    orderBy,
+    limit
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 /**
@@ -103,11 +110,12 @@ export {
     track,
     auth, 
     db, 
-    googleProvider, 
-    signInWithPopup, 
-    signOut, 
+    googleProvider,
+    signInWithPopup,
+    getAdditionalUserInfo,
+    signOut,
     onAuthStateChanged,
-    collection, 
+    collection,
     addDoc, 
     getDocs, 
     query, 
@@ -116,5 +124,8 @@ export {
     deleteDoc,
     updateDoc,
     getDoc,
-    setDoc
+    setDoc,
+    increment,
+    orderBy,
+    limit
 };

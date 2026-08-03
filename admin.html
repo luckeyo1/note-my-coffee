@@ -34,6 +34,8 @@
             --ord-4:      #9f6900;
             --ord-5:      #835600;   /* 5 stars */
             --good:       #006300;
+            /* 휴면 단계처럼 좋음↔나쁨 사이를 나타낼 때. 액센트(--series-1)와 구분되게 붉은 쪽으로 */
+            --warn:       #A2540B;
             --danger:     #C0392B;
         }
         @media (prefers-color-scheme: dark) {
@@ -56,6 +58,7 @@
                 --ord-4:    #c38308;
                 --ord-5:    #e49a03;
                 --good:     #0ca30c;
+                --warn:     #E39A4A;
                 --danger:   #E06A5C;
             }
         }
@@ -78,6 +81,7 @@
             --ord-4:    #c38308;
             --ord-5:    #e49a03;
             --good:     #0ca30c;
+            --warn:     #E39A4A;
             --danger:   #E06A5C;
         }
 
@@ -225,6 +229,30 @@
         th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--hairline); }
         th { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
         td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+        /* 리텐션 코호트 격자 — 셀 배경 농도가 잔존율, 숫자는 항상 함께 둔다
+           (색만으로 값을 말하지 않는다). 미래 주는 0%가 아니라 빈칸이다. */
+        table.cohort { min-width: 460px; }
+        table.cohort th, table.cohort td { padding: 8px 10px; white-space: nowrap; }
+        .cohort-cell { text-align: right; font-variant-numeric: tabular-nums; }
+        .cohort-future { background: none; }
+
+        /* 측정 경계 안내 카드 — 차트가 아니라 읽는 카드라 톤을 낮춘다 */
+        .note-card .note-list {
+            margin: 12px 0 0;
+            padding-left: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--ink-2);
+        }
+        .note-card code {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+        }
 
         /* 상태 칩 — 색과 글자를 항상 함께 (색만으로 상태를 말하지 않는다) */
         .chip {
@@ -376,6 +404,123 @@
         <p class="card-sub" id="trend-sub">하루에 저장된 레시피 수</p>
         <div class="chart-wrap" id="trend-wrap"></div>
         <div class="tableview" id="tv-trend"></div>
+    </section>
+
+    <!-- 활성화·유지 퍼널: Firestore로 그릴 수 있는 부분 퍼널.
+         랜딩·CTA·가입 단계는 GA4에만 있다(docs/funnel.md). 여기서는 기록을 남긴
+         사용자가 얼마나 깊이 정착하는지를 사용자별 기록 수로 본다. -->
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">활성화 · 유지 퍼널</h2>
+            <button class="card-toggle" type="button" data-tv="tv-funnel">표로 보기</button>
+        </div>
+        <p class="card-sub" id="funnel-sub">기록을 남긴 사용자가 얼마나 정착하는가</p>
+        <div class="chart-wrap" id="funnel-wrap"></div>
+        <div class="tableview" id="tv-funnel"></div>
+    </section>
+
+    <!-- ── 마케팅 지표 ──────────────────────────────────────────────
+         '제품이 어떻게 쓰이나'와 별개로 '마케팅이 되고 있나'에 답하는 카드들.
+         신규 유입·리텐션은 기간 필터와 무관하게 전체 기록으로 계산한다(admin.js 주석 참고). -->
+
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">신규 사용자 유입</h2>
+            <button class="card-toggle" type="button" data-tv="tv-newusers">표로 보기</button>
+        </div>
+        <p class="card-sub" id="newusers-sub">처음 기록을 남긴 사용자</p>
+        <div class="chart-wrap" id="newusers-wrap"></div>
+        <div class="tableview" id="tv-newusers"></div>
+    </section>
+
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">주간 리텐션 코호트</h2>
+            <button class="card-toggle" type="button" data-tv="tv-retention">표로 보기</button>
+        </div>
+        <p class="card-sub">
+            첫 기록 주차로 묶어 이후 몇 주까지 돌아오는지 본다. W0은 유입 당주라 항상 100%다.
+            <strong>기간 필터와 무관하게 전체 기록</strong>으로 계산한다 — 코호트는 시간축 전체가 필요하다.
+        </p>
+        <div class="chart-wrap" id="retention-wrap"></div>
+        <div class="tableview" id="tv-retention"></div>
+    </section>
+
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">요일 · 시간대 활동</h2>
+            <button class="card-toggle" type="button" data-tv="tv-heatmap">표로 보기</button>
+        </div>
+        <p class="card-sub" id="heatmap-sub">기록이 저장된 요일과 시각</p>
+        <div class="chart-wrap" id="heatmap-wrap"></div>
+        <div class="tableview" id="tv-heatmap"></div>
+    </section>
+
+    <!-- ── Phase 2: 행동으로 이어지는 카드 ─────────────────────────
+         앞의 카드들이 '관찰'이라면 여기는 '그래서 뭘 할까'에 답한다. -->
+
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">휴면 위험군</h2>
+            <button class="card-toggle" type="button" data-tv="tv-dormancy">표로 보기</button>
+        </div>
+        <p class="card-sub" id="dormancy-sub">마지막 기록 이후 얼마나 지났는가</p>
+        <div class="chart-wrap" id="dormancy-wrap"></div>
+        <div class="tableview" id="tv-dormancy"></div>
+    </section>
+
+    <div class="grid-2">
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">급상승 원두</h2>
+                <button class="card-toggle" type="button" data-tv="tv-rising">표로 보기</button>
+            </div>
+            <p class="card-sub" id="rising-sub">직전 같은 길이의 기간과 비교</p>
+            <div class="chart-wrap" id="rising-wrap"></div>
+            <div class="tableview" id="tv-rising"></div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">실패율이 높은 원두</h2>
+                <button class="card-toggle" type="button" data-tv="tv-failing">표로 보기</button>
+            </div>
+            <p class="card-sub" id="failing-sub">가이드 콘텐츠 소재가 되는 구간</p>
+            <div class="chart-wrap" id="failing-wrap"></div>
+            <div class="tableview" id="tv-failing"></div>
+        </section>
+    </div>
+
+    <!-- 집계 구조 (docs/admin-roadmap.md Phase 1).
+         집계가 없으면 대시보드는 recipes 전체를 내려받는 예전 경로로 동작한다. -->
+    <section class="card note-card">
+        <div class="card-head">
+            <h2 class="card-title">데이터 출처</h2>
+            <button class="card-toggle" type="button" id="btn-rebuild">집계 재생성</button>
+        </div>
+        <p class="card-sub" id="rebuild-status">
+            아래 푸터에 이번 조회가 어느 경로였는지 표시됩니다.
+        </p>
+        <ul class="note-list">
+            <li><strong>집계 경로</strong> — <code>stats_daily</code>·<code>users</code>만 읽습니다.
+                가볍고 빠릅니다.</li>
+            <li><strong>전체 스캔(폴백)</strong> — 집계가 아직 없거나 권한이 없을 때.
+                <code>recipes</code>를 통째로 받으므로 기록이 쌓이면 매우 무거워집니다.</li>
+            <li><strong>집계 재생성</strong>은 기록 전체를 한 번 읽어 집계를 다시 만듭니다.
+                최초 1회 이관과, 집계가 원본과 어긋났을 때의 복구에 씁니다.</li>
+        </ul>
+    </section>
+
+    <!-- 측정 경계를 화면에도 명시한다. 이게 없으면 '유입이 이것뿐인가?'로 오독된다. -->
+    <section class="card note-card">
+        <h2 class="card-title">이 숫자들이 포함하지 않는 것</h2>
+        <ul class="note-list">
+            <li><strong>랜딩 방문·CTA 클릭·취향 검사</strong>는 GA4에만 있고 Firestore엔 없다.
+                유입 <em>이전</em> 단계는 GA4 탐색 보고서에서 본다(<code>docs/funnel.md</code>).</li>
+            <li><strong>게스트 기록</strong>은 localStorage에만 있어 잡히지 않는다.
+                로그인 후 이관된 것만 보인다.</li>
+            <li>가입일 필드가 없어 <strong>첫 기록일을 가입 시점의 프록시</strong>로 쓴다.</li>
+        </ul>
     </section>
 
     <div class="grid-2">

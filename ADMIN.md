@@ -72,9 +72,38 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // ── 집계 (docs/admin-roadmap.md Phase 1) ──
+    // 대시보드가 recipes를 통째로 내려받지 않게 하려고 저장 시점에 카운터를 올린다.
+    // 규칙이 없으면 집계가 조용히 실패하고 대시보드는 예전 전체 스캔으로 떨어진다.
+
+    // 일별 카운터. 로그인한 사용자가 자기 기록을 저장할 때 올린다.
+    // 읽기는 관리자만 — 문서 안에 사용자별 기록 수(uc)가 들어 있다.
+    match /stats_daily/{day} {
+      allow read: if isAdmin();
+      allow write: if request.auth != null;
+    }
+
+    // 사용자별 첫/마지막 활동과 기록 수. 본인 것만 쓰고, 관리자는 전체를 읽는다.
+    match /users/{userId} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 원두 이름 사전(집계 표시용). 개인정보가 없다.
+    match /stats_beans/{beanId} {
+      allow read: if isAdmin();
+      allow write: if request.auth != null;
+    }
   }
 }
 ```
+
+> `stats_daily`·`stats_beans`의 쓰기를 로그인 사용자 전체에게 여는 이유는, 집계가
+> **저장하는 본인의 클라이언트에서** 올라가기 때문이다(Cloud Functions를 쓰지 않는 대신
+> 치르는 비용). 카운터만 들어 있고 남의 레시피 내용은 볼 수 없지만, 악의적 사용자가
+> 카운터를 부풀릴 수는 있다. 수치가 이상하면 대시보드의 **집계 재생성**으로 원본에서
+> 다시 만들 수 있다.
 
 > **주의**: 규칙 배포는 기존 규칙을 통째로 대체한다. 지금 콘솔에 들어있는 규칙을
 > 먼저 확인하고 위 내용을 병합해서 올려야 한다. 그래서 이 저장소에는 `firestore.rules`를
@@ -108,6 +137,9 @@ service cloud.firestore {
   **다운로드 자체를 피할 수는 없다** — 클라이언트 SDK에는 필드 선택 기능이 없다.)
   기록이 쌓이면 Cloud Functions에서 일별 집계 문서를 만들어두고 대시보드는 그것만
   읽는 구조로 옮기는 게 맞다.
+  → Functions는 Blaze(유료) 플랜이 필요하다. **쓰기 시점 집계로 Functions 없이 가는
+  더 싼 경로**와 규모 추정치를 [`docs/admin-roadmap.md`](docs/admin-roadmap.md)에
+  정리해뒀다.
 - **로그인 없이 저장된 레시피는 집계에 안 잡힌다.** 게스트 기록은 localStorage에만
   있고 Firestore에 올라오지 않는다. 로그인 시 `migrateLocalToCloud()`로 넘어온
   것만 보인다.

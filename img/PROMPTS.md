@@ -353,3 +353,19 @@ black.
 | 글자가 들어갔다 | `Remove all text, letters, numbers, and symbols from the image entirely.` |
 | 광고 사진처럼 매끈하다 | `Less polished. Add surface imperfections, dust, uneven texture, and visible film grain.` |
 | 히어로/OG의 왼쪽이 안 비었다 | `The left side of the frame must be completely empty black space. Move the entire subject to the far right edge.` |
+
+---
+
+## ⚠️ 이 사진 세트는 폐기됐다 (2026-08 전면 재디자인)
+
+위 프롬프트들은 배경 `#080604` · 하이라이트 `#C8A96E` · "70% 이상 그림자"로 묶인
+다크 키아로스쿠로 세트다. 그 룩 자체가 **AI 스톡 이미지처럼 읽혀** 서비스가 "AI가
+만든 것 같다"는 인상의 절반을 차지했다.
+
+재디자인은 "계측기(러버서브 노트)" 방향 — 종이 위 잉크, 계기 블루 신호색 — 으로
+갔고 **랜딩에서 이 사진들을 걷어냈다.** 대신 실제 추출 수치 리드아웃과 데이터
+그래픽(플레이버 레이더)이 시각적 중심이다.
+
+`img/` 파일은 지우지 않았다(공유 카드·OG 등에서 참조가 남아 있을 수 있다). 다만
+**새 이미지를 이 프롬프트로 만들지 말 것.** 다크 세트를 되살리면 재디자인이
+무효가 된다. 새 자산이 필요하면 `GEMINI.md`의 디자인 원칙을 먼저 읽어라.

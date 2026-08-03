@@ -121,12 +121,32 @@ A critical function of the AI is to continuously monitor for and automatically r
 
 **Bold Definition:** The AI uses modern, interactive iconography, images, and UI components like buttons, text fields, animation, effects, gestures, sliders, carousels, navigation, etc.
 
-1. Fonts \- Choose expressive and relevant typography. Stress and emphasize font sizes to ease understanding, e.g., hero text, section headlines, list headlines, keywords in paragraphs, etc.
-2. Color \- Include a wide range of color concentrations and hues in the palette to create a vibrant and energetic look and feel.
-3. Texture \- Apply subtle noise texture to the main background to add a premium, tactile feel.
-4. Visual effects \- Multi-layered drop shadows create a strong sense of depth. Cards have a soft, deep shadow to look "lifted."
-5. Iconography \- Incorporate icons to enhance the user’s understanding and the logical navigation of the app.
-6. Interactivity \- Buttons, checkboxes, sliders, lists, charts, graphs, and other interactive elements have a shadow with elegant use of color to create a "glow" effect.
+> **주의 — 아래 원칙은 이 프로젝트에 맞게 교체됐다.**
+> 원래 여기에는 "배경에 미묘한 노이즈 텍스처", "다층 드롭섀도우로 강한 깊이감",
+> "인터랙티브 요소에 글로우 효과" 같은 범용 지침이 있었다. 그 지침대로 만든 결과
+> 서비스가 **AI가 찍어낸 것처럼 보였고**(근사 검정 + 단일 골드, 세리프 디스플레이 +
+> 산세리프 본문, 노이즈·그라디언트·섀도우·라운드 남발) 2026-08 전면 재디자인에서
+> 전부 걷어냈다. 아래 원칙을 따르라. 되돌리지 말 것.
+
+**디자인 방향: 계측기(러버서브 노트).** 이 제품은 추출을 0.1g·0.1°C 단위로 재는
+도구다. 화면도 그렇게 생겨야 한다 — 럭셔리 카페가 아니라 기록지와 계기다.
+
+1. **서체** \- `IBM Plex` 한 패밀리로 통일한다(Sans / Sans KR / Mono). Plex는 한글
+   정식 컷이 있어 라틴과 한글이 한 체계로 붙는다. **세리프 디스플레이 + 산세리프
+   본문 조합을 쓰지 말 것** — 그 조합 자체가 AI 기본값이다. 디스플레이는 Plex Sans를
+   크게·자간 좁혀 쓴다.
+2. **숫자** \- 도징·온도·시간·수율·비율 등 **모든 수치는 Plex Mono + `tabular-nums`**로
+   조판한다. 값과 단위를 분리해 계기판 리드아웃처럼 보이게 한다.
+3. **색** \- 종이(`--paper #FBFAF8`) 위 잉크(`--ink #15120E`). 신호색은 계기 블루
+   (`--signal #0E4C7A`) **하나뿐**이다. 상태색(good/bad)은 액센트와 별개 체계로 둔다.
+   팔레트를 넓히지 말 것 — 절제가 이 디자인의 성격이다.
+4. **질감·깊이 없음** \- 노이즈 텍스처, 그라디언트, 드롭섀도우, 글로우,
+   `backdrop-filter`를 **쓰지 않는다.** 종이는 평면이다.
+5. **구획은 괘선과 여백** \- 카드와 그림자 대신 1px 헤어라인(`--rule`)과 여백으로
+   나눈다. `border-radius`는 0이다(원형 뱃지 등 기능상 원이어야 하는 것만 예외).
+6. **정렬** \- 좌측 정렬이 기본이다. 중앙 정렬은 의도가 분명할 때만.
+7. **접근성** \- 본문 대비 4.5:1 이상을 지킨다. 이번 재디자인에서 세 페이지 모두
+   미달 0건으로 맞춰뒀으니 색을 바꾸면 다시 검사할 것.
 
 ## **Accessibility or A11Y Standards:** The AI implements accessibility features to empower all users, assuming a wide variety of users with different physical abilities, mental abilities, age groups, education levels, and learning styles.
 
