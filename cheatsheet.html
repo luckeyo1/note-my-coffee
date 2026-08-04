@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 검색 의도를 정면으로 겨냥한다. 이 페이지는 "다이얼링이 안 잡힐 때" 검색해서
+         들어오는 사람을 위한 자산이고, 그게 곧 유입 경로다. -->
+    <title>홈카페 다이얼링 치트시트 — 에스프레소·핸드드립 추출 기준표 | Note My Coffee</title>
+    <meta name="description" content="에스프레소·핸드드립의 도징·물온도·추출시간·수율 기준표와, 맛이 이상할 때 어느 변수를 어느 방향으로 바꿔야 하는지 진단표. 인쇄해서 쓰는 기록표까지.">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#FCFAF6">
+    <link rel="canonical" href="https://note-my-coffee.web.app/cheatsheet">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="홈카페 다이얼링 치트시트 — 추출 기준표와 맛 진단표">
+    <meta property="og:description" content="원두가 바뀌어도 헤매지 않는 법. 도징·온도·시간·수율 기준표, 맛 진단표, 인쇄용 기록표.">
+    <meta property="og:url" content="https://note-my-coffee.web.app/cheatsheet">
+    <meta property="og:image" content="https://note-my-coffee.web.app/og-image.png">
+
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <script>
+        // 랜딩과 같은 이유로 전송로를 먼저 깔아둔다. track을 export하는 firebase-config는
+        // 모듈이라 파싱이 끝난 뒤에야 실행되고, 그 사이 발생한 이벤트는 유실된다.
+        // 여기서는 쌓기만 하고 아래 모듈이 실제 track으로 교체하면서 비운다.
+        window.nmcTrackQueue = [];
+        window.nmcTrack = function (name, params) {
+            if (window.nmcTrackQueue && window.nmcTrackQueue.length < 50) {
+                window.nmcTrackQueue.push([name, params]);
+            }
+        };
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* 팔레트·서체는 현재 사이트 체계를 그대로 따른다. 다만 이 페이지는 앱 화면이
+           아니라 '읽고 인쇄하는' 문서라, 본문 폭과 행간을 읽기 쪽으로 더 연다. */
+        :root {
+            --paper: #FCFAF6;
+            --paper-2: #F4F0E8;
+            --ink: #241C15;
+            --ink-2: #5A4F44;
+            --ink-3: #7A6E60;
+            --clay: #B4532A;
+            --clay-deep: #9E421D;
+            --rule: rgba(36, 28, 21, 0.12);
+            --rule-soft: rgba(36, 28, 21, 0.07);
+            --sans: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
+            --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: var(--sans);
+            font-size: 16px;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            /* 한글은 어절 단위로 끊는다. 기본 동작은 단어 중간을 잘라
+               "확률이 높습니 / 다"처럼 읽기를 방해한다. */
+            word-break: keep-all;
+            overflow-wrap: break-word;
+        }
+
+        .wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 80px; }
+
+        /* ── 상단 바 ── */
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--rule-soft);
+            flex-wrap: wrap;
+        }
+        .topbar-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); }
+        .topbar-brand img { height: 26px; width: auto; display: block; }
+        .topbar-brand span { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+        .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+        .btn {
+            font-family: var(--sans); font-size: 13px; font-weight: 500;
+            padding: 9px 16px; border: 1px solid var(--rule); background: none;
+            color: var(--ink-2); text-decoration: none; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+        }
+        .btn:hover { background: var(--paper-2); color: var(--ink); }
+        .btn-solid { background: var(--clay-deep); border-color: var(--clay-deep); color: var(--paper); }
+        .btn-solid:hover { background: var(--clay); border-color: var(--clay); color: var(--paper); }
+        @media (pointer: coarse) { .btn { min-height: 44px; } }
+
+        /* ── 헤더 ── */
+        header.doc { padding: 54px 0 40px; border-bottom: 1px solid var(--rule); }
+        .eyebrow {
+            font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--clay-deep); margin-bottom: 16px;
+        }
+        h1 {
+            font-size: clamp(30px, 6vw, 42px); font-weight: 600;
+            letter-spacing: -0.025em; line-height: 1.18; margin-bottom: 16px;
+        }
+        .lede { font-size: 17px; color: var(--ink-2); line-height: 1.65; max-width: 56ch; }
+        .lede em { font-style: italic; color: var(--ink); }
+
+        /* ── 섹션 ── */
+        section { padding: 44px 0; border-bottom: 1px solid var(--rule-soft); }
+        section:last-of-type { border-bottom: none; }
+        .sec-num {
+            font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.12em;
+            color: var(--ink-3); margin-bottom: 9px;
+        }
+        h2 { font-size: clamp(21px, 4vw, 26px); font-weight: 600; letter-spacing: -0.018em; margin-bottom: 12px; line-height: 1.3; }
+        h3 { font-size: 16px; font-weight: 600; margin: 26px 0 6px; }
+        section > p { color: var(--ink-2); margin-bottom: 20px; max-width: 60ch; }
+
+        /* ── 표 ──
+           수치는 등폭 + tabular-nums로 조판한다. 표에서 자릿수가 세로로 맞지 않으면
+           범위를 눈으로 비교할 수 없다 — 이 문서에서 가장 중요한 조판 결정이다. */
+        .t-scroll { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 520px; }
+        caption { text-align: left; font-size: 13px; color: var(--ink-3); padding-bottom: 10px; }
+        th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+        thead th {
+            font-size: 11px; font-weight: 500; letter-spacing: 0.09em; text-transform: uppercase;
+            color: var(--ink-3); border-bottom: 1px solid var(--rule); white-space: nowrap;
+        }
+        tbody th { font-weight: 600; color: var(--ink); white-space: nowrap; }
+        td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; white-space: nowrap; }
+        .dir { font-family: var(--mono); font-size: 13px; color: var(--clay-deep); white-space: nowrap; }
+
+        .note {
+            font-size: 13.5px; color: var(--ink-3); line-height: 1.6;
+            border-left: 2px solid var(--rule); padding-left: 14px; margin-top: 18px; max-width: 60ch;
+        }
+
+        /* ── 체크리스트 ── */
+        .steps { list-style: none; counter-reset: s; margin-top: 8px; }
+        .steps li { counter-increment: s; position: relative; padding-left: 42px; margin-bottom: 22px; max-width: 60ch; }
+        .steps li::before {
+            content: counter(s); position: absolute; left: 0; top: 1px;
+            font-family: var(--mono); font-size: 12px; color: var(--clay-deep);
+            border: 1px solid var(--rule); width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .steps strong { display: block; font-size: 15.5px; margin-bottom: 3px; }
+        .steps span { color: var(--ink-2); font-size: 14.5px; }
+
+        /* ── 기록표 (인쇄해서 손으로 채우는 표) ── */
+        .logsheet td { height: 40px; }
+        .logsheet tbody tr td { border-bottom: 1px solid var(--rule); }
+
+        /* ── CTA ── */
+        .cta {
+            margin-top: 48px; padding: 34px 30px;
+            background: var(--paper-2); border: 1px solid var(--rule);
+        }
+        .cta h2 { margin-bottom: 10px; }
+        .cta p { color: var(--ink-2); margin-bottom: 22px; max-width: 52ch; font-size: 15.5px; }
+
+        footer {
+            padding: 30px 0 0; border-top: 1px solid var(--rule-soft); margin-top: 54px;
+            font-size: 13px; color: var(--ink-3); display: flex; gap: 18px; flex-wrap: wrap;
+        }
+        footer a { color: var(--ink-3); }
+
+        @media (max-width: 560px) {
+            header.doc { padding: 38px 0 30px; }
+            section { padding: 34px 0; }
+            .cta { padding: 26px 20px; }
+        }
+
+        /* ══ 인쇄 ══════════════════════════════════════════════════
+           이 문서의 핵심 용도는 '출력해서 기록표를 손으로 채우는 것'이다.
+           브라우저의 "인쇄 → PDF로 저장"이 곧 배포본이 되므로 별도 PDF 파일을
+           관리하지 않는다. 화면용 크롬은 전부 걷고, 잉크를 아끼고, 표가
+           페이지 경계에서 잘리지 않게 한다. */
+        @media print {
+            @page { margin: 14mm; }
+
+            .topbar, .cta, footer, .no-print { display: none !important; }
+
+            body { background: #fff; color: #000; font-size: 10.5pt; line-height: 1.5; }
+            .wrap { max-width: none; padding: 0; }
+
+            header.doc { padding: 0 0 14pt; border-bottom: 1pt solid #000; }
+            h1 { font-size: 20pt; margin-bottom: 6pt; }
+            .lede { font-size: 10pt; color: #333; }
+            .eyebrow { color: #555; margin-bottom: 8pt; }
+
+            section { padding: 14pt 0; border-bottom: none; break-inside: avoid; }
+            h2 { font-size: 13pt; margin-bottom: 5pt; }
+            .sec-num { color: #666; }
+            section > p { color: #333; margin-bottom: 10pt; }
+
+            /* 표가 페이지 중간에서 두 동강 나면 기준표로서 못 쓴다 */
+            .t-scroll { overflow: visible; margin: 0; padding: 0; }
+            table { min-width: 0; font-size: 9.5pt; break-inside: avoid; }
+            th, td { padding: 5pt 6pt; border-bottom: 0.5pt solid #999; }
+            thead th { color: #000; border-bottom: 1pt solid #000; }
+            td.num, .dir { color: #000; }
+            .note { color: #444; border-left: 1pt solid #999; }
+
+            /* 손글씨가 들어갈 자리다 — 화면보다 넉넉해야 한다 */
+            .logsheet td { height: 34pt; }
+            .logsheet tbody tr td { border-bottom: 0.5pt solid #000; }
+
+            .steps li { break-inside: avoid; margin-bottom: 9pt; }
+            .steps li::before { border-color: #666; color: #000; }
+            .steps span { color: #333; }
+
+            /* 인쇄물에는 출처가 남아야 자료로 돌아다닐 때 브랜드가 붙는다 */
+            .print-only { display: block !important; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+
+<body>
+<div class="wrap">
+
+    <div class="topbar">
+        <a class="topbar-brand" href="index.html">
+            <img src="logo-dark.svg" alt="">
+            <span>Note My Coffee</span>
+        </a>
+        <div class="topbar-actions">
+            <button class="btn" id="btn-print" type="button">인쇄 · PDF 저장</button>
+            <a class="btn btn-solid" href="app.html" data-cta="top">기록 시작하기</a>
+        </div>
+    </div>
+
+    <header class="doc">
+        <div class="eyebrow">Home Café · Dialing Cheat Sheet</div>
+        <h1>홈카페 다이얼링 치트시트</h1>
+        <p class="lede">
+            <em>원두가 바뀌어도, 어제와 오늘이 달라도 — 헤매지 않는 법.</em><br>
+            도징·온도·시간·수율, 이 네 가지만 기준을 잡으면 다이얼링이 훨씬 쉬워집니다.
+        </p>
+    </header>
+
+    <section>
+        <div class="sec-num">01</div>
+        <h2>SCA 기준 추출 범위표</h2>
+        <p>맛이 이상할 때 이 표부터 확인하세요. 범위를 벗어났다면 그게 원인일 확률이 높습니다.</p>
+
+        <div class="t-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>구분</th><th>도징</th><th>물 온도</th><th>추출 시간</th><th>추출 비율</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>에스프레소</th>
+                        <td class="num">18.0 – 21.0 g</td>
+                        <td class="num">90.0 – 96.0 °C</td>
+                        <td class="num">25 – 35 sec</td>
+                        <td class="num">1 : 2.0 내외</td>
+                    </tr>
+                    <tr>
+                        <th>핸드드립</th>
+                        <td class="num">15.0 – 22.0 g</td>
+                        <td class="num">88.0 – 96.0 °C</td>
+                        <td class="num">2:00 – 3:30 min</td>
+                        <td class="num">1 : 15 – 1 : 17</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="note">
+            출처: SCA(Specialty Coffee Association) 권장 기준을 일반적인 홈카페 환경에 맞게
+            정리했습니다. 원두·그라인더에 따라 최적값은 달라질 수 있습니다.
+        </p>
+    </section>
+
+    <section>
+        <div class="sec-num">02</div>
+        <h2>맛이 이상할 때 — 증상별 진단</h2>
+        <p>
+            범위 안인데도 맛이 안 나올 때가 있습니다. 그럴 땐 증상에서 거꾸로 짚습니다.
+            <strong>한 번에 하나씩만</strong> 바꾸세요.
+        </p>
+
+        <div class="t-scroll">
+            <table>
+                <caption>화살표는 조정 방향입니다. ↑ 올리기 · ↓ 내리기</caption>
+                <thead>
+                    <tr>
+                        <th>증상</th><th>대개의 원인</th><th>먼저 바꿀 것</th><th>그다음</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>쓰고 텁텁하다</th>
+                        <td>과다 추출 — 물이 너무 오래·너무 뜨겁게 닿았다</td>
+                        <td class="dir">분쇄도 ↑ (굵게)</td>
+                        <td class="dir">온도 ↓ · 시간 ↓</td>
+                    </tr>
+                    <tr>
+                        <th>시고 날카롭다</th>
+                        <td>과소 추출 — 다 녹기 전에 끝났다</td>
+                        <td class="dir">분쇄도 ↓ (곱게)</td>
+                        <td class="dir">온도 ↑ · 시간 ↑</td>
+                    </tr>
+                    <tr>
+                        <th>밍밍하고 물 같다</th>
+                        <td>농도 부족 — 물이 너무 많다</td>
+                        <td class="dir">수율 ↓ (비율 낮게)</td>
+                        <td class="dir">도징 ↑</td>
+                    </tr>
+                    <tr>
+                        <th>텁텁하고 무겁다</th>
+                        <td>농도 과다 — 물이 너무 적다</td>
+                        <td class="dir">수율 ↑ (비율 높게)</td>
+                        <td class="dir">도징 ↓</td>
+                    </tr>
+                    <tr>
+                        <th>매번 맛이 다르다</th>
+                        <td>변수가 고정돼 있지 않다</td>
+                        <td class="dir">도징을 저울로 고정</td>
+                        <td class="dir">시간 계측 · 기록</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="note">
+            쓴맛과 텁텁함은 원인이 다릅니다. <strong>과다 추출</strong>은 너무 많이 녹아 나온 것이고,
+            <strong>농도 과다</strong>는 녹아 나온 양은 적정한데 물이 적은 것입니다.
+            분쇄도를 건드릴지 비율을 건드릴지가 여기서 갈립니다.
+        </p>
+    </section>
+
+    <section>
+        <div class="sec-num">03</div>
+        <h2>원두가 바뀐 날, 3단계 체크리스트</h2>
+        <p>새 봉투를 뜯었을 때 처음부터 감으로 헤매지 않으려면 이 순서로 확인하세요.</p>
+
+        <ol class="steps">
+            <li>
+                <strong>지난 성공 세팅 확인</strong>
+                <span>이전에 비슷한 로스팅 강도의 원두에서 성공했던 도징·온도·시간을
+                출발점으로 삼습니다. 처음부터 새로 찾지 않아도 됩니다.</span>
+            </li>
+            <li>
+                <strong>한 가지 변수만 조정</strong>
+                <span>맛이 다르면 도징·온도·시간·분쇄도 중 한 번에 하나씩만 바꿔서 원인을
+                좁힙니다. 동시에 여러 개를 바꾸면 무엇이 원인인지 알 수 없습니다.</span>
+            </li>
+            <li>
+                <strong>성공한 순간, 바로 기록</strong>
+                <span>괜찮은 한 잔이 나왔다면 그 즉시 네 가지 숫자를 남깁니다.
+                '나중에 적어야지' 하면 대부분 잊혀집니다.</span>
+            </li>
+        </ol>
+    </section>
+
+    <section>
+        <div class="sec-num">04</div>
+        <h2>나의 다이얼링 기록표</h2>
+        <p>
+            오늘부터 5잔만 적어보세요. 패턴이 보이기 시작합니다.
+            <span class="no-print">위의 <strong>인쇄 · PDF 저장</strong>을 누르면 이 표만 깔끔하게 출력됩니다.</span>
+        </p>
+
+        <div class="t-scroll">
+            <table class="logsheet">
+                <thead>
+                    <tr>
+                        <th>날짜</th><th>원두명</th><th>모드</th><th>도징(g)</th>
+                        <th>온도(°C)</th><th>시간</th><th>수율(g)</th><th>평가</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p class="note print-only">
+            Note My Coffee · 바리스타가 만든 커피 기록 앱 · note-my-coffee.web.app
+        </p>
+    </section>
+
+    <div class="cta">
+        <h2>숫자 네 개, 30초.</h2>
+        <p>
+            이 표를 계속 손으로 채우는 대신, Note My Coffee가 자동으로 기록하고
+            SCA 기준과 비교해줍니다. 로그인 없이 첫 기록 무료.
+        </p>
+        <a class="btn btn-solid" href="app.html" data-cta="final">오늘 커피부터 기록해보기 →</a>
+    </div>
+
+    <footer>
+        <span>Note My Coffee</span>
+        <a href="index.html">홈</a>
+        <a href="privacy.html">개인정보처리방침</a>
+    </footer>
+
+</div>
+
+<script type="module">
+    import { track } from "./firebase-config.js";
+
+    // 큐에 쌓인 것을 비우고 전송로를 실제 track으로 교체한다(랜딩과 같은 규약).
+    const queued = window.nmcTrackQueue || [];
+    window.nmcTrack = track;
+    window.nmcTrackQueue = null;
+    queued.forEach(([n, p]) => track(n, p));
+
+    // GA4는 track() 첫 호출 때 초기화된다. 로드 시 부르지 않으면 자동 page_view조차
+    // 안 쌓여 퍼널 분모가 비어버린다 — 랜딩에서 실제로 겪은 문제라 반복하지 않는다.
+    track('cheatsheet_view');
+
+    document.querySelectorAll('[data-cta]').forEach((el) => {
+        el.addEventListener('click', () => {
+            track('cta_click', { location: 'cheatsheet', slot: el.dataset.cta });
+        });
+    });
+
+    // 인쇄는 강한 관여 신호다 — 자료를 실제로 쓰겠다는 뜻이다.
+    document.getElementById('btn-print').addEventListener('click', () => window.print());
+    window.addEventListener('beforeprint', () => track('cheatsheet_print'));
+</script>
+
+</body>
+</html>
