@@ -28,7 +28,7 @@
 | 1 | 랜딩 노출 | `landing_view` + GA4 자동 `page_view`/`session_start` | — | `landing.js` (로드 시) |
 | 2 | 참여(스크롤/상호작용) | `section_view` · `demo_view` · `quiz_start` | `section_view{id}`, `demo_step_click{scene}` | `index.html` |
 | 3 | 의도(CTA) | `cta_click` | `{location: hero\|nav\|mid\|final\|sticky\|quiz, signed_in?, profile?}` | `landing.js`, `index.html` |
-| 4 | 가입·로그인 | `sign_up` / `login` | `{source: landing\|app_header\|guest_gate}` | `landing.js`, `main.js` |
+| 4 | 가입·로그인 | `sign_up` / `login` | `{source: landing\|app_header\|guest_gate, provider: kakao\|google}` | `auth-ui.js` (세 진입점 공통) |
 | 5 | 앱 진입 | `app_page_view` | `{page: app\|logbook}` | `main.js`, `logbook.js` |
 | 6 | **활성화** | `recipe_saved` | `{mode, has_photo, guest, rated, success_flag}` | `main.js` |
 | 7 | 유지 | 재 `recipe_saved` · `logbook_opened` | `logbook_opened{from}` | `main.js` |
@@ -116,7 +116,7 @@
 | 이벤트 | 파라미터 | 발생 위치 |
 |--------|----------|-----------|
 | `recipes_load_failed` | `{page}` | `main.js`, `logbook.js` |
-| `login_failed` | `{source, code}` | `main.js` — 사용자가 팝업을 직접 닫은 건 제외 |
+| `login_failed` | `{source, provider, code}` | `auth-ui.js` — 사용자가 팝업을 직접 닫은 건 제외 |
 | `guest_gate_declined` | — | `main.js` — 게스트 게이트 **수락률의 반대편**(`guest_gate_shown`/`_accepted`와 한 세트) |
 
 **랜딩 상호작용**

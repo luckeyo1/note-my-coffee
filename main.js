@@ -1,13 +1,11 @@
 // main.js
 import {
     auth,
-    googleProvider,
-    signInWithPopup,
-    getAdditionalUserInfo,
     signOut,
     onAuthStateChanged,
     track
 } from "./firebase-config.js";
+import { signInWithChooser } from "./auth-ui.js";
 import CoffeeNotesStorage from "./storage.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -70,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherError: "📍 Weather unavailable",
             viewLogbook: "LOG BOOK",
             brandTagline: "Turn extraction into science",
-            lblLogin: "Login with Google",
+            lblLogin: "Sign in",
             modalBeanStatus: "BEAN STATUS", statusNew: "🆕 NEW BAG", statusOpen: "📦 OPENED",
             modalBeanName: "BEAN NAME", modalOrigin: "ORIGIN", modalPurchaseUrl: "PURCHASE URL",
             modalImageUrl: "COVER PHOTO", modalTasteNotes: "TASTING NOTES",
@@ -175,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             weatherError: "📍 날씨 정보 없음",
             viewLogbook: "로그북",
             brandTagline: "당신의 추출을 과학으로",
-            lblLogin: "구글 로그인",
+            lblLogin: "로그인",
             modalBeanStatus: "원두 상태", statusNew: "🆕 새 원두", statusOpen: "📦 개봉 중",
             modalBeanName: "원두 이름", modalOrigin: "원산지", modalPurchaseUrl: "구매처 URL",
             modalImageUrl: "겉표지 사진", modalTasteNotes: "테이스팅 노트",
@@ -265,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
             obSteps: [
                 { title: "추출 방식 선택", desc: "에스프레소와 핸드드립 중 오늘의 추출 방식을 고르세요. 프로 범위와 가이드가 방식에 맞춰 바뀝니다." },
                 { title: "변수 조절", desc: "도징·물 온도·추출 시간·추출량을 슬라이더로 맞추세요. ⓘ 버튼에서 SCA 가이드를 보고, 내장 스톱워치로 추출 시간을 잴 수 있어요." },
-                { title: "레시피 기록", desc: "'레시피 기록하기'를 누르고 원두 정보와 테이스팅 노트를 더하세요. 첫 잔은 로그인 없이 기록되고, 구글 로그인하면 모든 기록이 클라우드에 보관됩니다." },
+                { title: "레시피 기록", desc: "'레시피 기록하기'를 누르고 원두 정보와 테이스팅 노트를 더하세요. 첫 잔은 로그인 없이 기록되고, 카카오나 구글로 로그인하면 모든 기록이 클라우드에 보관됩니다." },
                 { title: "로그북 & 공유", desc: "기록한 레시피는 로그북에서 다시 보고 카드로 공유할 수 있어요. 이 안내는 상단 ? 버튼으로 언제든 다시 볼 수 있습니다." }
             ],
             obSkip: "건너뛰기",
@@ -396,11 +394,33 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Auth Logic ---
+
+    // 이니셜 아바타. 카카오는 프로필 사진이 없는 계정이 흔하고(동의해도 기본 이미지가
+    // 없을 수 있다), 그때 photoURL이 빈 문자열이면 브라우저가 깨진 이미지 아이콘을 그린다.
+    // 카카오 CDN 주소가 만료돼 404가 나는 경우도 있어 onerror까지 같은 자리로 떨어뜨린다.
+    const initialAvatar = (name) => {
+        const ch = (name || '?').trim().charAt(0).toUpperCase() || '?';
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">`
+            + `<rect width="64" height="64" fill="#C8A96E"/>`
+            + `<text x="32" y="43" font-family="sans-serif" font-size="30" font-weight="700"`
+            + ` fill="#17130F" text-anchor="middle">${ch.replace(/[<&>"]/g, '')}</text></svg>`;
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    };
+
+    const setUserPhoto = (user) => {
+        const fallback = initialAvatar(user.displayName);
+        el.userPhoto.onerror = () => {
+            el.userPhoto.onerror = null; // 폴백 자체가 또 실패해 무한 루프가 되지 않게
+            el.userPhoto.src = fallback;
+        };
+        el.userPhoto.src = user.photoURL || fallback;
+    };
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             el.btnLogin.style.display = 'none';
             el.userProfile.style.display = 'flex';
-            el.userPhoto.src = user.photoURL || '';
+            setUserPhoto(user);
             el.userName.textContent = user.displayName || 'User';
             CoffeeNotesStorage.setCurrentUser(user);
             await CoffeeNotesStorage.migrateLocalToCloud(); // carry any trial recipe into the account
@@ -412,19 +432,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateLogbookBadge();
     });
 
-    el.btnLogin.addEventListener('click', async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            // 첫 계정 생성과 재로그인을 나눠 센다 — 활성화 퍼널 분모는 '신규 가입'이다.
-            const isNew = getAdditionalUserInfo(result)?.isNewUser;
-            track(isNew ? 'sign_up' : 'login', { source: 'app_header' });
-        } catch (error) {
-            console.error("Login failed", error);
-            // 사용자가 팝업을 직접 닫은 건 실패로 세지 않는다 — 지표가 부풀려진다.
-            if (error && error.code !== 'auth/popup-closed-by-user') {
-                track('login_failed', { source: 'app_header', code: error.code || 'unknown' });
-            }
-        }
+    // sign_up/login 구분, 실패 계측, 팝업 닫힘 처리는 전부 signInWithChooser 안에서 한다.
+    el.btnLogin.addEventListener('click', () => {
+        signInWithChooser({ source: 'app_header', lang: currentLang });
     });
 
     el.btnLogout.addEventListener('click', async () => {
@@ -1217,34 +1227,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // ── Guest trial gate ────────────────────────────────────────
             // First-time visitors may save ONE recipe locally to try the app.
-            // Saving a second requires a Google login, which moves their data
-            // to the cloud (Firestore) where we manage it across devices.
+            // Saving a second requires a login, which moves their data to the
+            // cloud (Firestore) where we manage it across devices.
+            //
+            // 예전에는 confirm()으로 "로그인할래?"를 물었다. 제공자가 구글·카카오
+            // 둘이 된 지금은 confirm으로 선택을 받을 수 없어서 선택 시트로 바꿨다.
+            // 시트를 그냥 닫은 것과 로그인 실패는 똑같이 null로 돌아오고, 둘 다
+            // "두 번째 레시피를 저장하지 않는다"는 같은 결론이라 함께 다룬다.
             let guestFirstSave = false;
             if (!auth.currentUser) {
                 if (CoffeeNotesStorage.getLocalRecipeCount() >= 1) {
-                    const wantLogin = confirm(currentLang === 'ko'
-                        ? "무료 체험은 레시피 1개까지 저장할 수 있어요.\n레시피를 더 기록하고 모든 기기에서 동기화하려면 구글 로그인이 필요합니다. 지금 로그인할까요?"
-                        : "The free trial lets you save 1 recipe.\nLog in with Google to save more and sync across all your devices. Log in now?");
                     track('guest_gate_shown');
-                    if (!wantLogin) {
+                    const user = await signInWithChooser({
+                        source: 'guest_gate',
+                        lang: currentLang,
+                        desc: currentLang === 'ko'
+                            ? '무료 체험은 레시피 1개까지 저장할 수 있어요. 로그인하면 체험으로 남긴 기록도 계정으로 함께 옮겨갑니다.'
+                            : 'The free trial saves 1 recipe. Sign in to keep going — your trial recipe moves into your account too.'
+                    });
+                    if (!user) {
                         track('guest_gate_declined');
                         return; // declined → don't save the 2nd recipe
                     }
                     track('guest_gate_accepted');
-                    try {
-                        const result = await signInWithPopup(auth, googleProvider);
-                        const isNew = getAdditionalUserInfo(result)?.isNewUser;
-                        track(isNew ? 'sign_up' : 'login', { source: 'guest_gate' });
-                    } catch (error) {
-                        console.error("Login failed", error);
-                        alert(currentLang === 'ko' ? '로그인에 실패했어요. 다시 시도해 주세요.' : 'Login failed. Please try again.');
-                        return;
-                    }
-                    if (!auth.currentUser) return; // popup closed without signing in
                     // Point storage at the cloud now so this save lands in Firestore
                     // (don't wait on the async onAuthStateChanged callback), and
                     // carry the trial recipe into the account before saving this one.
-                    CoffeeNotesStorage.setCurrentUser(auth.currentUser);
+                    CoffeeNotesStorage.setCurrentUser(user);
                     await CoffeeNotesStorage.migrateLocalToCloud();
                 } else {
                     guestFirstSave = true; // first free recipe → save locally
@@ -1283,8 +1292,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (saved) {
                 if (guestFirstSave) {
                     alert(currentLang === 'ko'
-                        ? "체험 레시피가 저장됐어요! ☕\n레시피를 더 기록하려면 구글 로그인만 하면 됩니다."
-                        : "Your trial recipe is saved! ☕\nJust log in with Google to record more.");
+                        ? "체험 레시피가 저장됐어요! ☕\n레시피를 더 기록하려면 카카오나 구글로 로그인만 하면 됩니다."
+                        : "Your trial recipe is saved! ☕\nJust sign in to record more.");
                 } else {
                     alert(i18n[currentLang].recipeSavedSuccess);
                 }

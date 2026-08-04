@@ -1,14 +1,12 @@
 import {
     auth,
     db,
-    googleProvider,
-    signInWithPopup,
-    getAdditionalUserInfo,
     onAuthStateChanged,
     doc,
     getDoc,
     track
 } from "./firebase-config.js";
+import { signInWithChooser } from "./auth-ui.js";
 
 // 사회적 증거로 노출할 최소 기준. 숫자가 이보다 작으면 오히려 역효과라 아예 감춘다.
 const MIN_STAT_TO_SHOW = 100;
@@ -76,20 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = 'app.html';
                 return;
             }
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                // 첫 계정 생성과 재로그인을 나눠 센다 — 활성화 퍼널의 분모는
-                // '신규 가입'이지 '로그인 전체'가 아니다.
-                const isNew = getAdditionalUserInfo(result)?.isNewUser;
-                track(isNew ? 'sign_up' : 'login', { source: 'landing' });
-                window.location.href = 'app.html';
-            } catch (error) {
-                console.error("Login failed", error);
-                // 팝업을 사용자가 직접 닫은 경우를 제외하고 게스트로 진입
-                if (error.code !== 'auth/popup-closed-by-user') {
-                    window.location.href = 'app.html';
-                }
-            }
+            // 랜딩은 한국어 전용 페이지라 lang은 넘기지 않는다(기본 ko).
+            // 로그인에 성공하면 계정으로 들어간다. 시트를 그냥 닫았으면 랜딩에 남는다 —
+            // 마음이 바뀐 사람을 앱으로 밀어 넣지 않는다.
+            // 다만 인증 자체가 죽은 경우(팝업 차단·제공자 장애)에는 방문자를 랜딩에
+            // 가두지 않고 게스트로 들여보낸다. 첫 레시피 1개는 로그인 없이 저장되므로
+            // 제품을 체험하는 데 문제가 없다.
+            const user = await signInWithChooser({
+                // docs/funnel.md가 정의한 source 값(landing|app_header|guest_gate)을 따른다.
+                source: 'landing',
+                onFailure: () => { window.location.href = 'app.html'; }
+            });
+            if (user) window.location.href = 'app.html';
         });
     }
 });

@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v16';
+const VERSION = 'v17';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -19,6 +19,7 @@ const PRECACHE_ASSETS = [
   'pay-fail.html',
   'storage.js',
   'firebase-config.js',
+  'auth-ui.js',
   'logo.svg',
   'logo-dark.svg',
   'favicon.svg',
@@ -93,6 +94,11 @@ function isPassthrough(req, url) {
     url.hostname.includes('identitytoolkit') ||
     url.hostname.includes('securetoken') ||
     url.hostname.endsWith('tosspayments.com') ||
+    // 카카오 로그인(OIDC): kauth.kakao.com은 인증·토큰 엔드포인트라 절대 캐시하면 안 되고,
+    // kakaocdn.net은 프로필 사진 호스트다. 여기 없으면 network-first SW가 인증 응답을
+    // 캐시에 써두고, 오프라인이나 느린 연결에서 만료된 응답을 되돌려 로그인이 깨진다.
+    url.hostname.endsWith('kakao.com') ||
+    url.hostname.endsWith('kakaocdn.net') ||
     (url.hostname.endsWith('googleapis.com') && url.hostname !== 'fonts.googleapis.com')
   );
 }
