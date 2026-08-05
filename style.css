@@ -601,6 +601,27 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 .guide-cell-v { font-family: var(--font-mono, monospace); font-size: 16px; font-weight: 600; color: var(--ink); }
 .guide-preview-note { margin-top: 12px; font-size: 12px; color: var(--ink-muted); line-height: 1.5; text-align: center; }
 
+/* ── 섭픽 스타일 추천 레시피 메뉴 ── */
+.guide-picks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.guide-pick-card { text-align: left; width: 100%; padding: 14px 16px; border: 1.5px solid var(--border-strong); background: var(--panel); border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); }
+.guide-pick-card:hover, .guide-pick-card:focus-visible { border-color: var(--gold); background: var(--gold-pale); outline: none; }
+.guide-pick-head { display: flex; align-items: center; gap: 8px; }
+.guide-pick-emoji { font-size: 18px; line-height: 1; }
+.guide-pick-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.guide-pick-desc { font-size: 12px; color: var(--ink-muted); margin-top: 4px; line-height: 1.5; }
+.guide-pick-stats { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 10px; font-family: var(--font-mono, monospace); font-size: 12px; color: var(--ink-soft); }
+.guide-pick-bean { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--ink-muted); }
+.guide-pick-bean span { color: var(--ink-soft); font-weight: 600; }
+.guide-pick-buy { color: var(--gold); font-weight: 700; text-decoration: none; white-space: nowrap; }
+.guide-pick-buy:hover { text-decoration: underline; }
+
+/* 직접 고르기 (접이식) */
+.guide-custom-toggle { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: none; border: none; border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+.guide-custom-toggle:hover { color: var(--ink); }
+.guide-custom-caret { transition: transform 0.2s ease; font-size: 11px; }
+.guide-custom-toggle.open .guide-custom-caret { transform: rotate(180deg); }
+.guide-custom { margin-top: 8px; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
     .app-shell { padding: 16px 14px 60px; }

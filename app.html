@@ -451,40 +451,53 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content">
         <h3 id="guide-title">Recommended Recipe</h3>
-        <p class="modal-subtitle" id="guide-subtitle">Pick your beans and we'll suggest a proven starting point.</p>
+        <p class="modal-subtitle" id="guide-subtitle">Pick a signature recipe and start brewing right away.</p>
 
-        <div class="modal-form-group">
-            <label id="guide-lbl-roast">ROAST LEVEL</label>
-            <div class="guide-choice" id="guide-roast">
-                <button type="button" class="result-btn guide-opt" data-roast="light">Light</button>
-                <button type="button" class="result-btn guide-opt" data-roast="medium">Medium</button>
-                <button type="button" class="result-btn guide-opt" data-roast="medium-dark">Medium-Dark</button>
-                <button type="button" class="result-btn guide-opt" data-roast="dark">Dark</button>
+        <!-- 섭픽 스타일 추천 레시피 메뉴 — 카드는 main.js가 렌더 -->
+        <div class="guide-picks" id="guide-picks"></div>
+
+        <!-- 직접 고르기 (기존 로스팅+추출 선택). 기본은 접힘. -->
+        <button type="button" class="guide-custom-toggle" id="guide-custom-toggle" aria-expanded="false">
+            <span id="guide-custom-toggle-label">Or pick it yourself</span>
+            <span class="guide-custom-caret">▾</span>
+        </button>
+        <div class="guide-custom" id="guide-custom" hidden>
+            <div class="modal-form-group">
+                <label id="guide-lbl-roast">ROAST LEVEL</label>
+                <div class="guide-choice" id="guide-roast">
+                    <button type="button" class="result-btn guide-opt" data-roast="light">Light</button>
+                    <button type="button" class="result-btn guide-opt" data-roast="medium">Medium</button>
+                    <button type="button" class="result-btn guide-opt" data-roast="medium-dark">Medium-Dark</button>
+                    <button type="button" class="result-btn guide-opt" data-roast="dark">Dark</button>
+                </div>
             </div>
-        </div>
 
-        <div class="modal-form-group">
-            <label id="guide-lbl-method">BREW METHOD</label>
-            <div class="guide-choice" id="guide-method">
-                <button type="button" class="result-btn guide-opt" data-method="espresso">⚡ Espresso</button>
-                <button type="button" class="result-btn guide-opt" data-method="drip">🌿 Hand Drip</button>
+            <div class="modal-form-group">
+                <label id="guide-lbl-method">BREW METHOD</label>
+                <div class="guide-choice" id="guide-method">
+                    <button type="button" class="result-btn guide-opt" data-method="espresso">⚡ Espresso</button>
+                    <button type="button" class="result-btn guide-opt" data-method="drip">🌿 Hand Drip</button>
+                </div>
             </div>
-        </div>
 
-        <div class="guide-preview" id="guide-preview" hidden>
-            <div class="guide-preview-grid" id="guide-preview-grid"></div>
-            <p class="guide-preview-note" id="guide-preview-note"></p>
-        </div>
+            <div class="guide-preview" id="guide-preview" hidden>
+                <div class="guide-preview-grid" id="guide-preview-grid"></div>
+                <p class="guide-preview-note" id="guide-preview-note"></p>
+            </div>
 
-        <div class="modal-actions">
             <button class="modal-save-btn" id="guide-apply" disabled>
                 <span id="guide-lbl-apply">Use this setup →</span>
             </button>
+        </div>
+
+        <div class="modal-actions">
             <button class="modal-cancel-btn" id="guide-cancel">Cancel</button>
         </div>
     </div>
 </div>
 
+<!-- 추천 레시피가 연결 원두를 보여주기 위해 공유 카탈로그(window.COFFEE_BEANS)를 쓴다. main.js보다 먼저 로드 -->
+<script src="beans.js"></script>
 <script type="module" src="main.js" defer></script>
 
 </body>

@@ -168,17 +168,29 @@ document.addEventListener('DOMContentLoaded', () => {
             guideCtaSub: "Get a recommended recipe for your beans",
             guide: {
                 title: "Recommended Recipe",
-                subtitle: "Pick your beans and we'll suggest a proven starting point.",
+                subtitle: "Pick a signature recipe and start brewing right away.",
                 roast: "ROAST LEVEL",
                 method: "BREW METHOD",
                 apply: "Use this setup →",
                 cancel: "Cancel",
                 pickPrompt: "Pick a roast level and brew method to see a suggestion.",
+                customToggle: "Or pick it yourself",
+                forBean: "Try with",
+                buy: "Buy →",
+                applyPick: "Use this recipe →",
                 labels: { dosing: "Dosing", temp: "Water Temp", time: "Time", yield: "Yield", ratio: "Ratio" },
                 units: { dosing: "g", temp: "°C", yield: "g" },
                 roastOpts: { light: "Light", medium: "Medium", "medium-dark": "Medium-Dark", dark: "Dark" },
                 methodOpts: { espresso: "⚡ Espresso", drip: "🌿 Hand Drip" },
-                note: "A balanced SCA-based starting point — log your result and fine-tune from here."
+                note: "A balanced SCA-based starting point — log your result and fine-tune from here.",
+                recipes: {
+                    "bright-drip":   { emoji: "🍑", name: "Bright Morning Drip", desc: "Floral, fruity light-roast pour-over" },
+                    "classic-esp":   { emoji: "☕", name: "Classic Espresso",    desc: "Balanced everyday shot — acidity, sweetness, body" },
+                    "latte-base":    { emoji: "🥛", name: "Smooth Latte Base",   desc: "Nutty, chocolatey shot that stands up to milk" },
+                    "daily-drip":    { emoji: "🌿", name: "Easy Daily Drip",     desc: "Forgiving medium pour-over for any bean" },
+                    "bold-risoup":   { emoji: "🔥", name: "Bold Ristretto",      desc: "Short, intense dark shot" },
+                    "dark-drip":     { emoji: "🍫", name: "Dark Chocolate Drip", desc: "Rich, full-bodied dark pour-over" }
+                }
             }
         },
         ko: {
@@ -289,17 +301,29 @@ document.addEventListener('DOMContentLoaded', () => {
             guideCtaSub: "원두에 맞는 추천 레시피를 받아보세요",
             guide: {
                 title: "추천 레시피",
-                subtitle: "원두를 고르면 검증된 시작값을 추천해 드려요.",
+                subtitle: "이름 붙은 레시피를 하나 골라 바로 시작해 보세요.",
                 roast: "로스팅 정도",
                 method: "추출 방식",
                 apply: "이 세팅으로 시작하기 →",
                 cancel: "취소",
                 pickPrompt: "로스팅 정도와 추출 방식을 고르면 추천값이 나옵니다.",
+                customToggle: "직접 고르기",
+                forBean: "이 원두로",
+                buy: "구매 →",
+                applyPick: "이 레시피로 시작 →",
                 labels: { dosing: "도징량", temp: "물 온도", time: "시간", yield: "추출량", ratio: "비율" },
                 units: { dosing: "g", temp: "°C", yield: "g" },
                 roastOpts: { light: "라이트", medium: "미디엄", "medium-dark": "미디엄다크", dark: "다크" },
                 methodOpts: { espresso: "⚡ 에스프레소", drip: "🌿 핸드드립" },
-                note: "SCA 기준의 균형 잡힌 시작점이에요 — 내려보고 결과를 기록하며 미세 조정하세요."
+                note: "SCA 기준의 균형 잡힌 시작점이에요 — 내려보고 결과를 기록하며 미세 조정하세요.",
+                recipes: {
+                    "bright-drip":   { emoji: "🍑", name: "상큼한 아침 드립", desc: "꽃향과 과일 산미가 화사한 라이트 드립" },
+                    "classic-esp":   { emoji: "☕", name: "클래식 에스프레소", desc: "산미·단맛·바디가 고른 기본 샷" },
+                    "latte-base":    { emoji: "🥛", name: "부드러운 라떼 베이스", desc: "우유에 안 지는 고소한 초콜릿 샷" },
+                    "daily-drip":    { emoji: "🌿", name: "실패 없는 데일리 드립", desc: "어떤 원두든 무난한 미디엄 드립" },
+                    "bold-risoup":   { emoji: "🔥", name: "묵직한 리스트레토", desc: "진하고 강한 다크 샷" },
+                    "dark-drip":     { emoji: "🍫", name: "다크 초콜릿 드립", desc: "쓴맛과 바디가 살아있는 진한 드립" }
+                }
             }
         }
     };
@@ -408,6 +432,10 @@ document.addEventListener('DOMContentLoaded', () => {
         guideModal: document.getElementById('guide-modal'),
         guideTitle: document.getElementById('guide-title'),
         guideSubtitle: document.getElementById('guide-subtitle'),
+        guidePicks: document.getElementById('guide-picks'),
+        guideCustom: document.getElementById('guide-custom'),
+        guideCustomToggle: document.getElementById('guide-custom-toggle'),
+        guideCustomToggleLabel: document.getElementById('guide-custom-toggle-label'),
         guideLblRoast: document.getElementById('guide-lbl-roast'),
         guideLblMethod: document.getElementById('guide-lbl-method'),
         guideRoast: document.getElementById('guide-roast'),
@@ -1171,6 +1199,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return { dosing: p.dosing, temp: r.temp, time: r.time, yield: Math.round(p.dosing * r.ratio * 10) / 10, ratio: r.ratio };
     };
 
+    // 섭픽 스타일 큐레이션 레시피 — 초보자가 지식 없이 하나 골라 바로 따라 하도록.
+    // 모든 값은 qualityRanges(SCA 권장) 안이라 적용 시 배지가 IDEAL로 뜬다.
+    // beanId는 beans.js 카탈로그의 '이 레시피에 어울리는 원두'로 연결한다.
+    const SIGNATURE_RECIPES = [
+        { id: 'bright-drip', mode: 'drip',     dosing: 20, temp: 94, time: 210, yield: 320, beanId: 'a1' },
+        { id: 'classic-esp', mode: 'espresso', dosing: 18, temp: 93, time: 28,  yield: 36,  beanId: 'b1' },
+        { id: 'latte-base',  mode: 'espresso', dosing: 18, temp: 92, time: 27,  yield: 34,  beanId: 'c1' },
+        { id: 'daily-drip',  mode: 'drip',     dosing: 20, temp: 92, time: 180, yield: 300, beanId: 'b3' },
+        { id: 'bold-risoup', mode: 'espresso', dosing: 18, temp: 91, time: 26,  yield: 32,  beanId: 'd1' },
+        { id: 'dark-drip',   mode: 'drip',     dosing: 20, temp: 90, time: 150, yield: 300, beanId: 'd3' },
+    ];
+
+    // 프리셋을 슬라이더에 적용 — modeValues에 써 넣고 setMode로 복원시키면
+    // 슬라이더·룰러·배지·비율이 한 번에 갱신된다. 섭픽 탭과 '직접 고르기' 둘 다 이걸 쓴다.
+    const applyPreset = (mode, v) => {
+        modeValues[mode].dosing = v.dosing; modeValues[mode].temp = v.temp;
+        modeValues[mode].time = v.time; modeValues[mode].yield = v.yield;
+        setMode(mode);
+    };
+
+    const fmtGuideTime = (mode, t) => mode === 'drip'
+        ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`
+        : `${t}s`;
+
     const renderGuidePreview = () => {
         const g = i18n[currentLang].guide;
         const ready = guideState.roast && guideState.method;
@@ -1178,19 +1230,67 @@ document.addEventListener('DOMContentLoaded', () => {
         el.guideApply.disabled = !ready;
         if (!ready) return;
         const p = computeGuidePreset(guideState.method, guideState.roast);
-        const timeStr = guideState.method === 'drip'
-            ? `${Math.floor(p.time / 60)}:${String(p.time % 60).padStart(2, '0')}`
-            : `${p.time}s`;
         const rows = [
             [g.labels.dosing, `${p.dosing}${g.units.dosing}`],
             [g.labels.temp, `${p.temp}${g.units.temp}`],
-            [g.labels.time, timeStr],
+            [g.labels.time, fmtGuideTime(guideState.method, p.time)],
             [g.labels.yield, `${p.yield}${g.units.yield}`],
             [g.labels.ratio, `1 : ${p.ratio.toFixed(1)}`],
         ];
         el.guidePreviewGrid.innerHTML = rows.map(([k, v]) =>
             `<div class="guide-cell"><span class="guide-cell-k">${k}</span><span class="guide-cell-v">${v}</span></div>`).join('');
         el.guidePreviewNote.textContent = g.note;
+    };
+
+    // 섭픽 추천 레시피 카드 렌더 + 연결 원두 표시. 카드 탭 → 프리셋 적용 후 모달 닫힘.
+    const renderGuidePicks = () => {
+        if (!el.guidePicks) return;
+        const g = i18n[currentLang].guide;
+        const getBean = (id) => (window.getBeanById ? window.getBeanById(id) : null);
+        el.guidePicks.innerHTML = SIGNATURE_RECIPES.map((r) => {
+            const meta = (g.recipes && g.recipes[r.id]) || { emoji: '', name: r.id, desc: '' };
+            const ratio = (r.yield / r.dosing).toFixed(1);
+            const bean = getBean(r.beanId);
+            const beanLine = bean
+                ? `<div class="guide-pick-bean">${g.forBean}: <span>${bean.name}</span>` +
+                  (bean.url ? ` <a class="guide-pick-buy" href="${bean.url}" target="_blank" rel="noopener noreferrer" data-bean="${bean.id}">${g.buy}</a>` : '') +
+                  `</div>`
+                : '';
+            return `
+                <div class="guide-pick-card" role="button" tabindex="0" data-recipe="${r.id}">
+                    <div class="guide-pick-head">
+                        <span class="guide-pick-emoji">${meta.emoji}</span>
+                        <span class="guide-pick-name">${meta.name}</span>
+                    </div>
+                    <div class="guide-pick-desc">${meta.desc}</div>
+                    <div class="guide-pick-stats">
+                        <span>${g.methodOpts[r.mode] || r.mode}</span>
+                        <span>${r.dosing}${g.units.dosing}</span>
+                        <span>1:${ratio}</span>
+                        <span>${fmtGuideTime(r.mode, r.time)}</span>
+                    </div>
+                    ${beanLine}
+                </div>`;
+        }).join('');
+
+        const applyCard = (card) => {
+            const r = SIGNATURE_RECIPES.find((x) => x.id === card.dataset.recipe);
+            if (!r) return;
+            applyPreset(r.mode, r);
+            track('guide_pick_applied', { recipe: r.id, mode: r.mode });
+            closeGuide();
+        };
+        el.guidePicks.querySelectorAll('.guide-pick-card').forEach((card) => {
+            card.addEventListener('click', (e) => {
+                // 원두 '구매' 링크 클릭은 레시피 적용/모달 닫힘 없이 링크만 연다
+                const buy = e.target.closest('.guide-pick-buy');
+                if (buy) { e.stopPropagation(); try { track('guide_pick_bean_click', { bean_id: buy.dataset.bean }); } catch (err) { /* noop */ } return; }
+                applyCard(card);
+            });
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); applyCard(card); }
+            });
+        });
     };
 
     // 정적 가이드 문구를 현재 언어로 채운다(진입 배너 + 모달 라벨/옵션). setLang에서 호출.
@@ -1206,25 +1306,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.guideCancel) el.guideCancel.textContent = g.cancel;
         el.guideRoast?.querySelectorAll('.guide-opt').forEach(b => { b.textContent = g.roastOpts[b.dataset.roast]; });
         el.guideMethod?.querySelectorAll('.guide-opt').forEach(b => { b.textContent = g.methodOpts[b.dataset.method]; });
+        if (el.guideCustomToggleLabel) el.guideCustomToggleLabel.textContent = g.customToggle;
+        renderGuidePicks();
         renderGuidePreview();
     };
 
     const applyGuidePreset = () => {
         if (!guideState.roast || !guideState.method) return;
-        const p = computeGuidePreset(guideState.method, guideState.roast);
-        const m = guideState.method;
-        // modeValues에 프리셋을 써 넣고 setMode로 복원시키면 슬라이더·룰러·배지·비율이 한 번에 갱신된다
-        modeValues[m].dosing = p.dosing; modeValues[m].temp = p.temp;
-        modeValues[m].time = p.time; modeValues[m].yield = p.yield;
-        setMode(m);
-        track('guide_applied', { method: m, roast: guideState.roast });
+        applyPreset(guideState.method, computeGuidePreset(guideState.method, guideState.roast));
+        track('guide_applied', { method: guideState.method, roast: guideState.roast });
         closeGuide();
+    };
+
+    const collapseCustom = () => {
+        if (!el.guideCustom) return;
+        el.guideCustom.hidden = true;
+        el.guideCustomToggle.setAttribute('aria-expanded', 'false');
+        el.guideCustomToggle.classList.remove('open');
     };
 
     const openGuide = () => {
         guideState.roast = null; guideState.method = currentMode;
         el.guideRoast.querySelectorAll('.guide-opt').forEach(b => b.classList.remove('active'));
         el.guideMethod.querySelectorAll('.guide-opt').forEach(b => b.classList.toggle('active', b.dataset.method === currentMode));
+        collapseCustom();
+        renderGuidePicks();
         renderGuidePreview();
         el.guideModal.classList.add('active');
         track('guide_opened', { from_mode: currentMode });
@@ -1247,6 +1353,12 @@ document.addEventListener('DOMContentLoaded', () => {
         el.btnGuide.addEventListener('click', openGuide);
         el.guideCancel.addEventListener('click', closeGuide);
         el.guideApply.addEventListener('click', applyGuidePreset);
+        el.guideCustomToggle.addEventListener('click', () => {
+            const open = el.guideCustom.hidden;   // 지금 숨김이면 → 펼침
+            el.guideCustom.hidden = !open;
+            el.guideCustomToggle.setAttribute('aria-expanded', String(open));
+            el.guideCustomToggle.classList.toggle('open', open);
+        });
         el.guideModal.querySelector('.modal-backdrop').addEventListener('click', closeGuide);
     }
 
