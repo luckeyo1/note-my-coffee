@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Note My Coffee — 당신의 커피 레시피를 기록하세요</title>
-    <meta name="description" content="도징·온도·시간·수율만 기록하면 어제의 완벽한 한 잔을 오늘 그대로. 바리스타가 만든 커피 레시피 기록 앱 — 추출당 30초, 설치 없이 브라우저에서 바로.">
+    <meta name="description" content="어제는 맛있었는데 오늘은 아니라면, 기억이 아니라 기록의 문제입니다. 도징·온도·시간·수율 네 개의 숫자만 남기세요. 바리스타가 만든 커피 레시피 기록 앱 — 추출당 30초, 설치 없이 브라우저에서 바로.">
     <link rel="canonical" href="https://note-my-coffee.web.app/">
 
     <!-- 공유 카드. 카카오톡·트위터·슬랙에 링크를 붙였을 때 회색 빈 박스로 뜨지 않게 한다.
@@ -14,15 +14,15 @@
     <meta property="og:site_name" content="Note My Coffee">
     <meta property="og:locale" content="ko_KR">
     <meta property="og:url" content="https://note-my-coffee.web.app/">
-    <meta property="og:title" content="Note My Coffee — 어제의 완벽한 한 잔을, 오늘 그대로.">
+    <meta property="og:title" content="Note My Coffee — 어제는 맛있었는데, 오늘은 아니다.">
     <meta property="og:description" content="도징·온도·시간·수율만 기록하면 다음 다이얼링의 출발점이 남습니다. 추출당 30초, 설치 없이 브라우저에서 바로.">
     <meta property="og:image" content="https://note-my-coffee.web.app/og-image.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Note My Coffee — 어제의 완벽한 한 잔을, 오늘 그대로.">
+    <meta property="og:image:alt" content="Note My Coffee — 어제는 맛있었는데, 오늘은 아니다.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Note My Coffee — 어제의 완벽한 한 잔을, 오늘 그대로.">
+    <meta name="twitter:title" content="Note My Coffee — 어제는 맛있었는데, 오늘은 아니다.">
     <meta name="twitter:description" content="도징·온도·시간·수율만 기록하면 다음 다이얼링의 출발점이 남습니다. 추출당 30초, 설치 없이 브라우저에서 바로.">
     <meta name="twitter:image" content="https://note-my-coffee.web.app/og-image.png">
 
@@ -42,7 +42,7 @@
           "browserRequirements": "최신 브라우저 (설치 불필요)",
           "inLanguage": "ko",
           "image": "https://note-my-coffee.web.app/og-image.png",
-          "description": "도징·온도·시간·수율만 기록하면 어제의 완벽한 한 잔을 오늘 그대로. 바리스타가 만든 커피 레시피 기록 앱 — 추출당 30초, 설치 없이 브라우저에서 바로.",
+          "description": "어제는 맛있었는데 오늘은 아니라면, 기억이 아니라 기록의 문제입니다. 도징·온도·시간·수율 네 개의 숫자만 남기세요. 바리스타가 만든 커피 레시피 기록 앱 — 추출당 30초, 설치 없이 브라우저에서 바로.",
           "featureList": [
             "에스프레소·핸드드립 레시피 기록",
             "SCA 기준 실시간 추출 피드백",
@@ -1438,14 +1438,20 @@
     <section class="hero">
         <div class="hero-grid">
             <div class="hero-copy">
-                <div class="hero-eyebrow">커피 레시피 기록 앱</div>
+                <!-- 히어로는 약속이 아니라 '인식'으로 연다.
+                     예전 헤드라인("어제의 완벽한 한 잔을, 오늘 그대로")은 좋은 약속이지만
+                     읽는 사람이 아직 아픔을 못 느낀 상태라 남의 이야기로 지나간다.
+                     반면 "어제는 맛있었는데 오늘은 아니다"는 이 제품의 사용자가 실제로
+                     겪은 순간이라 첫 줄에서 "내 얘기다"가 걸린다.
+                     (이 문장은 원래 4번째 섹션 페르소나 카드에 묻혀 있었다.) -->
+                <div class="hero-eyebrow">홈카페 다이얼링 기록</div>
                 <h1 class="hero-title">
-                    어제의 완벽한 한 잔을,<br>
-                    오늘 <em>그대로</em>.
+                    어제는 맛있었는데,<br>
+                    오늘은 <em>아니다</em>.
                 </h1>
                 <p class="hero-body">
-                    도징·온도·시간·수율 네 가지만 맞추면 기록이 끝납니다. 추출당 30초.
-                    원두가 바뀌어도 어제 성공한 세팅이 남아, 다음 다이얼링의 출발점이 됩니다.
+                    무엇을 바꿨는지 기억나지 않으면, 좋았던 한 잔은 되돌릴 수 없습니다.
+                    도징·온도·시간·수율 — <strong>네 개의 숫자만 남기면 됩니다. 추출당 30초.</strong>
                 </p>
                 <div>
                     <div class="hero-actions">
@@ -1563,6 +1569,15 @@
                 하지만 <em>기억</em>은 흐려진다.
             </h2>
             <div class="story-text">
+                <!-- 문제를 '개인의 실수'가 아니라 '구조'로 규정한다.
+                     기억 못 한 걸 자기 탓으로 두면 읽는 사람은 더 노력하겠다고 결심하고
+                     페이지를 떠난다. 원인을 변수 개수 쪽으로 옮겨야 도구가 답이 된다. -->
+                <p>
+                    커피 한 잔에는 최소 네 개의 변수가 있다. 도징·온도·시간·수율.
+                    여기에 원두와 분쇄도까지 더하면 조합은 수백 가지가 된다.
+                    사람의 기억은 그걸 버티지 못한다 — 사흘이면 흐려지고, 원두가 바뀌면 처음으로 돌아간다.
+                    <strong>맛이 들쭉날쭉한 건 실력이 부족해서가 아니라, 기억에 맡겼기 때문이다.</strong>
+                </p>
                 <p>
                     바리스타로 일하면서 매일 추출을 반복했다.
                     어떤 원두는 17.5g에서 완벽했고, 어떤 건 19g이어야 했다.
@@ -1655,16 +1670,21 @@
          dark-section을 쓰지 않는다 — 02가 이미 dark라 붙이면 한 패널로 뭉친다. -->
     <section class="story-section reveal" id="persona">
         <div class="section-tag">누구에게</div>
-        <h2 class="section-title" style="max-width:620px;">이런 분들이<br><em>매일</em> 씁니다.</h2>
+        <!-- "이런 분들이 매일 씁니다"는 관찰문이라 읽는 사람이 구경꾼으로 남는다.
+             질문으로 바꿔 스스로 손을 들게 만든다. -->
+        <h2 class="section-title" style="max-width:620px;">혹시 이 중<br><em>하나</em>인가요?</h2>
 
         <div class="features-grid">
             <div class="feat-card">
                 <div class="feat-icon">
                     <svg aria-hidden="true" focusable="false"><use href="#i-bean"/></svg>
                 </div>
+                <!-- 원래 여기 있던 "어제는 맛있었는데 오늘은 아닌 사람"은 이 페이지에서
+                     가장 강한 인식 문장이라 히어로로 올렸다. 이 카드는 그 대신 가장
+                     구체적인 손실 — 이미 쓴 장비값 — 을 건드린다. -->
                 <div class="persona-when">홈카페를 막 시작했다면</div>
-                <div class="feat-title">어제는 맛있었는데 오늘은 아닌 사람</div>
-                <div class="feat-desc">무엇을 바꿨는지 몰라 되돌릴 수 없던 한 잔. 네 가지 숫자만 남겨두면 다음 잔은 처음이 아니라 어제에서 출발합니다.</div>
+                <div class="feat-title">장비는 갖췄는데 맛이 안 잡히는 사람</div>
+                <div class="feat-desc">그라인더도 머신도 샀는데 어제와 오늘이 다릅니다. 장비를 더 사도 해결되지 않습니다 — 무엇을 바꿨는지 남기는 것부터입니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">
@@ -1897,7 +1917,9 @@
          story-section이 아니라 독립 배너라서 dark-section 교대 리듬을 건드리지 않고,
          최종 CTA보다 작고 낮게 둬서 절정은 여전히 마지막에 있다. -->
     <section class="mid-cta reveal">
-        <p class="mid-cta-text">지금 내리는 한 잔부터 기록해보세요.<br>
+        <!-- 중간 CTA는 아직 설득 중인 사람을 잡는 자리다. 절정(최종 CTA)과 경쟁하지
+             않도록 약속을 크게 말하지 않고, 문턱이 낮다는 사실만 반복한다. -->
+        <p class="mid-cta-text">오늘 내린 한 잔부터 남겨보세요.<br>
             <span>첫 기록은 로그인 없이, 30초면 끝납니다.</span></p>
         <button class="btn-primary" id="btn-mid-cta">
             <span>무료로 시작하기</span>
@@ -2058,11 +2080,13 @@
 
     <!-- FINAL CTA -->
     <section class="final-cta reveal">
+        <!-- 히어로에서 던진 문제("어제는 맛있었는데 오늘은 아니다")를 여기서 닫는다.
+             수미상관으로 묶어야 페이지 전체가 하나의 논증으로 읽힌다. -->
         <h2 class="final-title">
-            오늘 아침 커피부터<br>
-            <em>기록</em>해보세요.
+            내일은 처음이<br>
+            <em>아니게</em>.
         </h2>
-        <p class="final-sub">30초면 충분합니다. 첫 기록은 로그인 없이, 설치도 결제도 없습니다.</p>
+        <p class="final-sub">오늘 한 잔만 남겨두면 내일은 어제에서 출발합니다. 30초 · 로그인 없이 · 설치도 결제도 없이.</p>
         <button class="btn-primary" id="btn-final-cta" style="margin: 0 auto;">
             <span>무료로 시작하기</span>
             <span>→</span>
