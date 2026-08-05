@@ -52,7 +52,13 @@ const firebaseConfig = {
     appId: "1:755801853184:web:fed55e6029b3f8c23eb7e5",
     measurementId: "G-Q0HWKB2MBP"
 };
-    
+
+// App Check용 reCAPTCHA v3 사이트 키(공개 값 — Firebase 콘솔 App Check에서 발급).
+// firebaseConfig.apiKey와 같은 성격이라 코드에 두어도 안전하다(진짜 비밀은 콘솔에만 있는
+// reCAPTCHA secret 키). 배포 시 이 한 줄만 채우면 AI 원두 추천이 App Check로 보호된다.
+// 비워두면 App Check 없이 동작한다(개발/미설정 단계 — AI 실패 시 규칙 기반으로 폴백).
+const APP_CHECK_SITE_KEY = "";  // 예: "6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -131,13 +137,13 @@ function track(name, params) {
 // 초과해도 이 모듈과 앱 전체가 죽지 않고, 호출부(bean-ai.js)가 throw를 받아
 // 규칙 기반 추천으로 폴백한다.
 //
-// App Check 사이트 키는 window.APP_CHECK_SITE_KEY로 주입한다(HTML의 인라인
-// 스크립트). 키가 없으면 App Check 없이 진행 — 개발/미설정 단계에서도 막히지 않게.
+// App Check 사이트 키는 위의 APP_CHECK_SITE_KEY 상수로 넣는다(전역 window.APP_CHECK_SITE_KEY
+// 주입도 폴백으로 허용). 키가 없으면 App Check 없이 진행 — 개발/미설정 단계에서도 막히지 않게.
 let appCheckStarted = false;
 async function ensureAppCheck() {
     if (appCheckStarted) return;
     appCheckStarted = true;
-    const siteKey = (typeof window !== 'undefined' && window.APP_CHECK_SITE_KEY) || '';
+    const siteKey = APP_CHECK_SITE_KEY || (typeof window !== 'undefined' && window.APP_CHECK_SITE_KEY) || '';
     if (!siteKey) return;
     try {
         const m = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js");
