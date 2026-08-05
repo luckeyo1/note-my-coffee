@@ -184,8 +184,9 @@ The AI's workflow is iterative, transparent, and responsive to user input.
 - 취향 프로필과 맛 방향을 맞춘다: A 라이트·플로럴/산미, B 미디엄·밸런스, C 고소·초콜릿(라떼), D 다크·묵직.
 - 항목의 `name`(상품명)·`roaster`(로스터리 · 판매처)·`desc`(맛 설명)·`url`을 함께 고쳐 서로 어긋나지 않게 한다.
   `profile`·`roastLevel`·`flavorTags`·`brewFit`은 그대로 유지해 취향 프로필과 맛 방향을 지킨다.
-- 시즌 한정·디카페인·드립백 상품은 피하고 스테디셀러 원두를 고른다.
-- 교체 URL은 커밋 전에 반드시 `curl`로 HTTP 200을 확인하고, `node scripts/check-bean-links.mjs`로 재검증한다.
+- 시즌 한정·콜라보·디카페인·드립백 상품은 피하고 스테디셀러 원두를 고른다(품절이 잦다).
+- **품절도 죽은 링크로 간주한다.** 콜라보/한정처럼 품절이 잦은 상품은 개별 상품 URL(컬리 goodsNo·홈바리스타클럽 goodsNo) 대신, 품절로 죽지 않는 **네이버 쇼핑 검색 링크**(`naverSearch('<브랜드+상품명>')`)로 교체한다.
+- 교체 URL은 커밋 전에 반드시 `curl`로 HTTP 200을 확인하고 **품절이 아닌지**(페이지에 '품절/SOLD OUT' 없음) 확인한 뒤, `node scripts/check-bean-links.mjs`로 재검증한다.
 - `beans.js`의 카탈로그 데이터 외의 코드는 수정하지 않는다.
 
 **상품 탐색 방법**

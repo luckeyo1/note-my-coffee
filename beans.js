@@ -1,7 +1,10 @@
 // 원두 카탈로그 — 취향 검사(#quiz)·AI 추천·레시피 가이드가 공유하는 단일 소스.
-// 여기 상품 링크가 실제 구매처(컬리·홈바리스타클럽·네이버)로 살아있어야 "실제 구매 가능한
-// 원두 추천"이 성립한다. .github/workflows/bean-link-check.yml + scripts/check-bean-links.mjs
-// 가 이 파일의 컬리/홈바리스타클럽 URL을 매주 점검하고, 죽으면 Gemini가 교체 PR을 올린다.
+// 여기 상품 링크가 실제 구매처(컬리·네이버)로 살아있어야 "실제 구매 가능한 원두 추천"이
+// 성립한다. .github/workflows/bean-link-check.yml + scripts/check-bean-links.mjs 가 이 파일의
+// 컬리/홈바리스타클럽 상품 URL을 매주 점검하고(404·삭제·품절 감지), 죽으면 Gemini가 교체 PR을 올린다.
+//
+// 홈바리스타클럽 콜라보 원두는 한정 상품이라 품절이 잦아, 개별 goodsNo 대신 품절로 죽지 않는
+// 네이버 쇼핑 검색 링크로 대체했다. 앞으로도 품절이 잦은 콜라보/한정 상품은 네이버 검색을 쓴다.
 //
 // 클래식 스크립트로 로드되어 window.COFFEE_BEANS 전역을 노출한다(퀴즈는 index.html의
 // 클래식 스크립트, 로그북/앱은 ES 모듈 — 양쪽 다 전역으로 읽어 로더 종류에 얽매이지 않는다).
@@ -25,11 +28,11 @@
         },
         {
             id: 'a2', profile: 'A',
-            name: '나무사이로 × 홈바리스타클럽 원두', roaster: '나무사이로 · 홈바리스타클럽',
-            desc: '산미 좋은 라이트 로스팅으로 정평난 로스터리의 콜라보 원두',
+            name: '나무사이로 싱글 오리진 원두', roaster: '나무사이로 · 네이버 쇼핑',
+            desc: '산미 좋은 라이트 로스팅으로 정평난 로스터리의 싱글 오리진',
             flavorTags: ['floral', 'fruity', 'acidic'],
             roastLevel: 'light', brewFit: ['drip'],
-            store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000613',
+            store: '네이버 쇼핑', url: naverSearch('나무사이로 원두'),
         },
         {
             id: 'a3', profile: 'A',
@@ -51,11 +54,11 @@
         },
         {
             id: 'b2', profile: 'B',
-            name: '필그림 × 홈바리스타클럽 원두', roaster: '필그림 커피로스터스 · 홈바리스타클럽',
-            desc: '밸런스로 사랑받는 로스터리의 콜라보 원두',
+            name: '필그림 커피로스터스 원두', roaster: '필그림 커피로스터스 · 네이버 쇼핑',
+            desc: '밸런스로 사랑받는 로스터리의 데일리 원두',
             flavorTags: ['sweet', 'balanced', 'caramel'],
             roastLevel: 'medium', brewFit: ['drip', 'espresso'],
-            store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000617',
+            store: '네이버 쇼핑', url: naverSearch('필그림 커피 원두'),
         },
         {
             id: 'b3', profile: 'B',
@@ -77,11 +80,11 @@
         },
         {
             id: 'c2', profile: 'C',
-            name: '커피리브레 × 홈바리스타클럽 원두', roaster: '커피리브레 · 홈바리스타클럽',
-            desc: '국내 스페셜티 1세대 로스터리의 콜라보 원두',
-            flavorTags: ['nutty', 'chocolate', 'sweet'],
+            name: '폴 바셋 시그니처 블렌드 원두', roaster: '폴 바셋 · 네이버 쇼핑',
+            desc: '고소한 단맛과 부드러운 바디로 라떼에 특히 잘 어울리는 대중적 블렌드',
+            flavorTags: ['nutty', 'chocolate', 'sweet', 'milky'],
             roastLevel: 'medium-dark', brewFit: ['espresso', 'latte'],
-            store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000575',
+            store: '네이버 쇼핑', url: naverSearch('폴바셋 원두'),
         },
         {
             id: 'c3', profile: 'C',
@@ -103,11 +106,11 @@
         },
         {
             id: 'd2', profile: 'D',
-            name: '리사르 커피 × 홈바리스타클럽 원두', roaster: '리사르커피 · 홈바리스타클럽',
-            desc: '나폴리식 진한 에스프레소로 이름난 로스터리의 콜라보',
+            name: '리사르커피 에스프레소 블렌드 원두', roaster: '리사르커피 · 네이버 쇼핑',
+            desc: '나폴리식 진한 에스프레소로 이름난 로스터리의 블렌드',
             flavorTags: ['bitter', 'dark-chocolate', 'heavy'],
             roastLevel: 'dark', brewFit: ['espresso'],
-            store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000597',
+            store: '네이버 쇼핑', url: naverSearch('리사르커피 원두'),
         },
         {
             id: 'd3', profile: 'D',
