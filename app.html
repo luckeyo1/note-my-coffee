@@ -110,6 +110,16 @@
         </button>
     </div>
 
+    <!-- 레시피 가이드 진입: 처음부터 세팅을 구상하기 어려운 사용자에게 시작값을 추천 -->
+    <button type="button" class="guide-cta" id="btn-guide">
+        <span class="guide-cta-icon">🧭</span>
+        <span class="guide-cta-text">
+            <strong id="guide-cta-title">Not sure where to start?</strong>
+            <span id="guide-cta-sub">Get a recommended recipe for your beans</span>
+        </span>
+        <span class="guide-cta-arrow">→</span>
+    </button>
+
     <!-- 레시피 완성도 바 -->
     <!-- 완성도 — Apple Fitness의 링 문법. 점수 하나가 감정을 싣고,
          옆에 '무엇이 빠졌는지'를 목록으로 보여준다(Oura 기여 요인). -->
@@ -432,6 +442,45 @@
         <div class="ob-actions">
             <button type="button" class="ob-skip" id="ob-skip"></button>
             <button type="button" class="ob-next" id="ob-next"></button>
+        </div>
+    </div>
+</div>
+
+<!-- 레시피 가이드: 로스팅 + 추출방식 선택 → SCA 권장 시작값 프리셋 추천. 콘텐츠는 main.js가 렌더 -->
+<div id="guide-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <h3 id="guide-title">Recommended Recipe</h3>
+        <p class="modal-subtitle" id="guide-subtitle">Pick your beans and we'll suggest a proven starting point.</p>
+
+        <div class="modal-form-group">
+            <label id="guide-lbl-roast">ROAST LEVEL</label>
+            <div class="guide-choice" id="guide-roast">
+                <button type="button" class="result-btn guide-opt" data-roast="light">Light</button>
+                <button type="button" class="result-btn guide-opt" data-roast="medium">Medium</button>
+                <button type="button" class="result-btn guide-opt" data-roast="medium-dark">Medium-Dark</button>
+                <button type="button" class="result-btn guide-opt" data-roast="dark">Dark</button>
+            </div>
+        </div>
+
+        <div class="modal-form-group">
+            <label id="guide-lbl-method">BREW METHOD</label>
+            <div class="guide-choice" id="guide-method">
+                <button type="button" class="result-btn guide-opt" data-method="espresso">⚡ Espresso</button>
+                <button type="button" class="result-btn guide-opt" data-method="drip">🌿 Hand Drip</button>
+            </div>
+        </div>
+
+        <div class="guide-preview" id="guide-preview" hidden>
+            <div class="guide-preview-grid" id="guide-preview-grid"></div>
+            <p class="guide-preview-note" id="guide-preview-note"></p>
+        </div>
+
+        <div class="modal-actions">
+            <button class="modal-save-btn" id="guide-apply" disabled>
+                <span id="guide-lbl-apply">Use this setup →</span>
+            </button>
+            <button class="modal-cancel-btn" id="guide-cancel">Cancel</button>
         </div>
     </div>
 </div>

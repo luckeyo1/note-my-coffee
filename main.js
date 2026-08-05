@@ -163,7 +163,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ],
             obSkip: "Skip",
             obNext: "Next →",
-            obDone: "Start Brewing ☕"
+            obDone: "Start Brewing ☕",
+            guideCtaTitle: "Not sure where to start?",
+            guideCtaSub: "Get a recommended recipe for your beans",
+            guide: {
+                title: "Recommended Recipe",
+                subtitle: "Pick your beans and we'll suggest a proven starting point.",
+                roast: "ROAST LEVEL",
+                method: "BREW METHOD",
+                apply: "Use this setup →",
+                cancel: "Cancel",
+                pickPrompt: "Pick a roast level and brew method to see a suggestion.",
+                labels: { dosing: "Dosing", temp: "Water Temp", time: "Time", yield: "Yield", ratio: "Ratio" },
+                units: { dosing: "g", temp: "°C", yield: "g" },
+                roastOpts: { light: "Light", medium: "Medium", "medium-dark": "Medium-Dark", dark: "Dark" },
+                methodOpts: { espresso: "⚡ Espresso", drip: "🌿 Hand Drip" },
+                note: "A balanced SCA-based starting point — log your result and fine-tune from here."
+            }
         },
         ko: {
             dosing: "도징량", temp: "물 온도", time: "추출 시간", yield: "추출 량",
@@ -268,7 +284,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ],
             obSkip: "건너뛰기",
             obNext: "다음 →",
-            obDone: "시작하기 ☕"
+            obDone: "시작하기 ☕",
+            guideCtaTitle: "어디서부터 시작할지 막막하다면?",
+            guideCtaSub: "원두에 맞는 추천 레시피를 받아보세요",
+            guide: {
+                title: "추천 레시피",
+                subtitle: "원두를 고르면 검증된 시작값을 추천해 드려요.",
+                roast: "로스팅 정도",
+                method: "추출 방식",
+                apply: "이 세팅으로 시작하기 →",
+                cancel: "취소",
+                pickPrompt: "로스팅 정도와 추출 방식을 고르면 추천값이 나옵니다.",
+                labels: { dosing: "도징량", temp: "물 온도", time: "시간", yield: "추출량", ratio: "비율" },
+                units: { dosing: "g", temp: "°C", yield: "g" },
+                roastOpts: { light: "라이트", medium: "미디엄", "medium-dark": "미디엄다크", dark: "다크" },
+                methodOpts: { espresso: "⚡ 에스프레소", drip: "🌿 핸드드립" },
+                note: "SCA 기준의 균형 잡힌 시작점이에요 — 내려보고 결과를 기록하며 미세 조정하세요."
+            }
         }
     };
 
@@ -369,6 +401,23 @@ document.addEventListener('DOMContentLoaded', () => {
         obDesc: document.getElementById('ob-desc'),
         obSkip: document.getElementById('ob-skip'),
         obNext: document.getElementById('ob-next'),
+        // Recipe guide (초보자 시작값 추천)
+        btnGuide: document.getElementById('btn-guide'),
+        guideCtaTitle: document.getElementById('guide-cta-title'),
+        guideCtaSub: document.getElementById('guide-cta-sub'),
+        guideModal: document.getElementById('guide-modal'),
+        guideTitle: document.getElementById('guide-title'),
+        guideSubtitle: document.getElementById('guide-subtitle'),
+        guideLblRoast: document.getElementById('guide-lbl-roast'),
+        guideLblMethod: document.getElementById('guide-lbl-method'),
+        guideRoast: document.getElementById('guide-roast'),
+        guideMethod: document.getElementById('guide-method'),
+        guidePreview: document.getElementById('guide-preview'),
+        guidePreviewGrid: document.getElementById('guide-preview-grid'),
+        guidePreviewNote: document.getElementById('guide-preview-note'),
+        guideApply: document.getElementById('guide-apply'),
+        guideLblApply: document.getElementById('guide-lbl-apply'),
+        guideCancel: document.getElementById('guide-cancel'),
         // Stopwatch
         btnStopwatch: document.getElementById('btn-stopwatch'),
         lblStopwatch: document.getElementById('lbl-stopwatch'),
@@ -1088,6 +1137,119 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     el.onboardingModal.querySelector('.modal-backdrop').addEventListener('click', closeOnboarding);
 
+    // ─────────────────────────────────────────────────────────────
+    // 레시피 가이드: 로스팅 + 추출방식 → SCA 권장 시작값 프리셋 추천.
+    // 처음부터 세팅을 구상하기 어려운 사용자에게 검증된 출발점을 제공한다.
+    // 값은 qualityRanges(SCA 권장 범위) 안에 들도록 잡아 적용 시 배지가 IDEAL로 뜬다.
+    // 라이트는 추출이 어려워 온도·시간·물을 조금 더, 다크는 쓴맛을 피해 온도·시간을 줄인다.
+    // ─────────────────────────────────────────────────────────────
+    const guideState = { roast: null, method: null };
+    const GUIDE_PRESETS = {
+        espresso: {
+            dosing: 18,
+            byRoast: {
+                light:         { temp: 95, time: 30, ratio: 2.2 },
+                medium:        { temp: 93, time: 28, ratio: 2.0 },
+                'medium-dark': { temp: 92, time: 27, ratio: 1.9 },
+                dark:          { temp: 91, time: 26, ratio: 1.8 },
+            },
+        },
+        drip: {
+            dosing: 20,
+            byRoast: {
+                light:         { temp: 94, time: 210, ratio: 16 },
+                medium:        { temp: 92, time: 180, ratio: 15.5 },
+                'medium-dark': { temp: 91, time: 165, ratio: 15 },
+                dark:          { temp: 90, time: 150, ratio: 15 },
+            },
+        },
+    };
+
+    const computeGuidePreset = (method, roast) => {
+        const p = GUIDE_PRESETS[method];
+        const r = p.byRoast[roast];
+        return { dosing: p.dosing, temp: r.temp, time: r.time, yield: Math.round(p.dosing * r.ratio * 10) / 10, ratio: r.ratio };
+    };
+
+    const renderGuidePreview = () => {
+        const g = i18n[currentLang].guide;
+        const ready = guideState.roast && guideState.method;
+        el.guidePreview.hidden = !ready;
+        el.guideApply.disabled = !ready;
+        if (!ready) return;
+        const p = computeGuidePreset(guideState.method, guideState.roast);
+        const timeStr = guideState.method === 'drip'
+            ? `${Math.floor(p.time / 60)}:${String(p.time % 60).padStart(2, '0')}`
+            : `${p.time}s`;
+        const rows = [
+            [g.labels.dosing, `${p.dosing}${g.units.dosing}`],
+            [g.labels.temp, `${p.temp}${g.units.temp}`],
+            [g.labels.time, timeStr],
+            [g.labels.yield, `${p.yield}${g.units.yield}`],
+            [g.labels.ratio, `1 : ${p.ratio.toFixed(1)}`],
+        ];
+        el.guidePreviewGrid.innerHTML = rows.map(([k, v]) =>
+            `<div class="guide-cell"><span class="guide-cell-k">${k}</span><span class="guide-cell-v">${v}</span></div>`).join('');
+        el.guidePreviewNote.textContent = g.note;
+    };
+
+    // 정적 가이드 문구를 현재 언어로 채운다(진입 배너 + 모달 라벨/옵션). setLang에서 호출.
+    const renderGuideLabels = () => {
+        const t = i18n[currentLang], g = t.guide;
+        if (el.guideCtaTitle) el.guideCtaTitle.textContent = t.guideCtaTitle;
+        if (el.guideCtaSub) el.guideCtaSub.textContent = t.guideCtaSub;
+        if (el.guideTitle) el.guideTitle.textContent = g.title;
+        if (el.guideSubtitle) el.guideSubtitle.textContent = g.subtitle;
+        if (el.guideLblRoast) el.guideLblRoast.textContent = g.roast;
+        if (el.guideLblMethod) el.guideLblMethod.textContent = g.method;
+        if (el.guideLblApply) el.guideLblApply.textContent = g.apply;
+        if (el.guideCancel) el.guideCancel.textContent = g.cancel;
+        el.guideRoast?.querySelectorAll('.guide-opt').forEach(b => { b.textContent = g.roastOpts[b.dataset.roast]; });
+        el.guideMethod?.querySelectorAll('.guide-opt').forEach(b => { b.textContent = g.methodOpts[b.dataset.method]; });
+        renderGuidePreview();
+    };
+
+    const applyGuidePreset = () => {
+        if (!guideState.roast || !guideState.method) return;
+        const p = computeGuidePreset(guideState.method, guideState.roast);
+        const m = guideState.method;
+        // modeValues에 프리셋을 써 넣고 setMode로 복원시키면 슬라이더·룰러·배지·비율이 한 번에 갱신된다
+        modeValues[m].dosing = p.dosing; modeValues[m].temp = p.temp;
+        modeValues[m].time = p.time; modeValues[m].yield = p.yield;
+        setMode(m);
+        track('guide_applied', { method: m, roast: guideState.roast });
+        closeGuide();
+    };
+
+    const openGuide = () => {
+        guideState.roast = null; guideState.method = currentMode;
+        el.guideRoast.querySelectorAll('.guide-opt').forEach(b => b.classList.remove('active'));
+        el.guideMethod.querySelectorAll('.guide-opt').forEach(b => b.classList.toggle('active', b.dataset.method === currentMode));
+        renderGuidePreview();
+        el.guideModal.classList.add('active');
+        track('guide_opened', { from_mode: currentMode });
+    };
+    const closeGuide = () => el.guideModal.classList.remove('active');
+
+    if (el.guideModal) {
+        const wireGuideChoice = (container, key) => {
+            container.querySelectorAll('.guide-opt').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    container.querySelectorAll('.guide-opt').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    guideState[key] = btn.dataset[key];
+                    renderGuidePreview();
+                });
+            });
+        };
+        wireGuideChoice(el.guideRoast, 'roast');
+        wireGuideChoice(el.guideMethod, 'method');
+        el.btnGuide.addEventListener('click', openGuide);
+        el.guideCancel.addEventListener('click', closeGuide);
+        el.guideApply.addEventListener('click', applyGuidePreset);
+        el.guideModal.querySelector('.modal-backdrop').addEventListener('click', closeGuide);
+    }
+
     const renderTagCloud = (container, tags, inputEl) => {
         if (!container || !inputEl) return;
 
@@ -1157,6 +1319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateProHints(); updateProgress(); updateBrewRatio(); refreshScaPopover(); fetchWeather();
         if (el.onboardingModal.classList.contains('active')) renderObStep();
+        renderGuideLabels();
     };
 
     // --- Events ---

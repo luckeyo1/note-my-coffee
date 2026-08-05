@@ -124,8 +124,65 @@ function track(name, params) {
         .catch(() => {});
 }
 
+// ── Firebase AI Logic (Gemini) ─────────────────────────────────────────────
+// 브라우저에서 API 키 노출 없이 Gemini를 호출한다. 무료 Spark 요금제 + Gemini
+// Developer API 무료 티어로 동작하고, App Check(reCAPTCHA v3)로 호출을 보호한다.
+// analytics와 같은 원칙: 동적 import + 실패 삼킴. AI 번들이 차단되거나 쿼터를
+// 초과해도 이 모듈과 앱 전체가 죽지 않고, 호출부(bean-ai.js)가 throw를 받아
+// 규칙 기반 추천으로 폴백한다.
+//
+// App Check 사이트 키는 window.APP_CHECK_SITE_KEY로 주입한다(HTML의 인라인
+// 스크립트). 키가 없으면 App Check 없이 진행 — 개발/미설정 단계에서도 막히지 않게.
+let appCheckStarted = false;
+async function ensureAppCheck() {
+    if (appCheckStarted) return;
+    appCheckStarted = true;
+    const siteKey = (typeof window !== 'undefined' && window.APP_CHECK_SITE_KEY) || '';
+    if (!siteKey) return;
+    try {
+        const m = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js");
+        m.initializeAppCheck(app, {
+            provider: new m.ReCaptchaV3Provider(siteKey),
+            isTokenAutoRefreshEnabled: true,
+        });
+    } catch (e) {
+        console.warn('[AppCheck] 초기화 실패 — App Check 없이 계속합니다.', e);
+    }
+}
+
+let aiModelReady = null;
+function loadAIModel() {
+    if (!aiModelReady) {
+        aiModelReady = (async () => {
+            await ensureAppCheck();
+            const mod = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-ai.js");
+            const ai = mod.getAI(app, { backend: new mod.GoogleAIBackend() });
+            return mod.getGenerativeModel(ai, {
+                model: "gemini-2.5-flash",
+                generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
+            });
+        })();
+        // 실패는 캐시하지 않는다 — 일시적 차단 뒤 다음 호출에서 재시도할 수 있게.
+        aiModelReady.catch(() => { aiModelReady = null; });
+    }
+    return aiModelReady;
+}
+
+/**
+ * Gemini에 프롬프트를 보내고 응답 텍스트(JSON 문자열)를 돌려준다.
+ * AI Logic 미설정·네트워크 차단·쿼터 초과 시 reject — 호출부에서 폴백한다.
+ * @param {string} prompt
+ * @returns {Promise<string>}
+ */
+async function aiGenerateJSON(prompt) {
+    const model = await loadAIModel();
+    const res = await model.generateContent(prompt);
+    return res.response.text();
+}
+
 export {
     track,
+    aiGenerateJSON,
     auth,
     db,
     googleProvider,

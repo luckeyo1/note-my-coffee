@@ -58,6 +58,10 @@
                 <button class="lang-btn active" id="l-en">EN</button>
                 <button class="lang-btn" id="l-ko">KO</button>
             </div>
+            <!-- 기록 기반 AI 원두 추천 -->
+            <button id="btn-ai-beans" class="logbook-btn">
+                <span id="lbl-ai-beans">✨ AI BEANS</span>
+            </button>
             <!-- PC용 새 레시피 버튼 (헤더에 위치) -->
             <button id="btn-new-recipe" class="logbook-btn primary-action-btn">
                 <span id="lbl-new-recipe">+ NEW RECIPE</span>
@@ -78,6 +82,8 @@
     <span>+</span>
 </button>
 
+<!-- AI 추천이 공유하는 원두 카탈로그(window.COFFEE_BEANS). logbook.js보다 먼저 로드 -->
+<script src="beans.js"></script>
 <script type="module" src="logbook.js" defer></script>
 </body>
 </html>

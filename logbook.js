@@ -4,6 +4,7 @@ import {
     track
 } from "./firebase-config.js";
 import CoffeeNotesStorage from "./storage.js";
+import { openBeanRecommender } from "./bean-ai.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentLang = 'en';
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const i18n = {
         en: {
             newRecipe: "NEW RECIPE",
+            aiBeans: "✨ AI BEANS",
             logbookTitle: "MY RECIPE LOGBOOK",
             noRecipes: "No recipes logged yet. Go create one!",
             deleteConfirm: "Are you sure you want to delete this recipe?",
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         ko: {
             newRecipe: "새 레시피",
+            aiBeans: "✨ AI 원두 추천",
             logbookTitle: "나의 레시피 기록",
             noRecipes: "아직 기록된 레시피가 없습니다. 지금 바로 레시피를 만들어보세요!",
             deleteConfirm: "정말로 이 레시피를 삭제하시겠습니까?",
@@ -42,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const elements = {
         btnNewRecipe: document.getElementById('btn-new-recipe'),
+        btnAiBeans: document.getElementById('btn-ai-beans'),
+        lblAiBeans: document.getElementById('lbl-ai-beans'),
         mobileFab: document.getElementById('mobile-fab'),
         btnLangEn: document.getElementById('l-en'),
         btnLangKo: document.getElementById('l-ko'),
@@ -62,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnLangEn.classList.toggle('active', lang === 'en');
         elements.btnLangKo.classList.toggle('active', lang === 'ko');
         elements.btnNewRecipe.innerText = i18n[lang].newRecipe;
+        if (elements.lblAiBeans) elements.lblAiBeans.innerText = i18n[lang].aiBeans;
         elements.logbookTitle.innerText = i18n[lang].logbookTitle;
         renderRecipeCards();
     };
@@ -216,6 +222,14 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.btnNewRecipe.addEventListener('click', () => { window.location.href = 'app.html'; });
     if (elements.mobileFab) {
         elements.mobileFab.addEventListener('click', () => { window.location.href = 'app.html'; });
+    }
+    if (elements.btnAiBeans) {
+        elements.btnAiBeans.addEventListener('click', async () => {
+            // 캐시가 비어있으면(첫 진입 등) 한 번 읽어온다. null(읽기 실패)은 빈 배열로 취급.
+            let recipes = recipesCache;
+            if (!recipes || !recipes.length) recipes = (await CoffeeNotesStorage.getRecipes()) || [];
+            openBeanRecommender({ recipes, lang: currentLang });
+        });
     }
     elements.btnLangEn.addEventListener('click', () => { track('language_changed', { lang: 'en', page: 'logbook' }); setLang('en'); });
     elements.btnLangKo.addEventListener('click', () => { track('language_changed', { lang: 'ko', page: 'logbook' }); setLang('ko'); });
