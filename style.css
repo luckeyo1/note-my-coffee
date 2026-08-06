@@ -17,6 +17,10 @@
        밝게 두면 텍스트로도(크림 바탕 3.43:1) 버튼 배경으로도 대비가 무너진다.
        진하게 잡아야 양쪽 용도가 모두 산다. */
     --gold-light: #9E421D;
+    /* 어두운 표면(--ink 배경) 전용 클레이. --gold/--gold-light는 **밝은 배경 전용**이라
+       어두운 카드 위에 얹으면 각각 3.36:1 / 2.60:1로 무너진다.
+       #241C15 위에서 5.40:1 — 4.5를 넘기는 가장 절제된 값이다. */
+    --clay-on-dark: #D8794E;
     --gold-pale: #F7EDE7;
     --gold-border: #E4CBBE;
     --accent: #B4532A;
@@ -386,7 +390,9 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 .sca-pop-card {
     position: relative;
     background: var(--ink);
-    color: rgba(21,18,14,0.82);
+    /* 재디자인 때 배경만 --ink(어두움)로 바뀌고 이 값은 옛 팔레트의 검정이 남아
+       실측 1.08:1 — 사실상 보이지 않았다. 어두운 배경 기준으로 다시 잡는다(14.1:1). */
+    color: #F0EBE3;
     border-radius: var(--radius-md);
     padding: 14px 16px;
     font-size: 12px;
@@ -407,7 +413,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--gold-light);
+    color: var(--clay-on-dark);   /* 어두운 카드 위 — --gold-light는 2.60:1로 무너진다 */
     margin-bottom: 6px;
 }
 .sca-pop-std {
@@ -416,20 +422,20 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
     color: #fff;
     padding-bottom: 8px;
     margin-bottom: 10px;
-    border-bottom: 1px solid rgba(21,18,14,0.12);
+    border-bottom: 1px solid rgba(240,235,227,0.18);   /* 어두운 배경이라 밝은 선이어야 보인다 */
 }
 .sca-pop-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .sca-pop-row:last-child { margin-bottom: 0; }
 .sca-pop-row strong { color: #fff; font-weight: 600; }
 .sca-dir { flex-shrink: 0; font-size: 10px; padding-top: 2px; }
-.sca-dir.up { color: var(--gold-light); }
+.sca-dir.up { color: var(--clay-on-dark); }
 .sca-dir.down { color: #7FB3D9; }
 .sca-pop-note {
     font-size: 10.5px;
-    color: rgba(21,18,14,0.5);
+    color: #D6CCC0;                                    /* 본문보다 한 단 낮추되 10.6:1 확보 */
     margin-top: 10px;
     padding-top: 8px;
-    border-top: 1px dashed rgba(21,18,14,0.18);
+    border-top: 1px dashed rgba(240,235,227,0.22);
 }
 
 /* ===== BREW RATIO ===== */
