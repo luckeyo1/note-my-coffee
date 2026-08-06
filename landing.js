@@ -6,7 +6,8 @@ import {
     getDoc,
     track
 } from "./firebase-config.js";
-import { signInWithChooser } from "./auth-ui.js";
+// auth-ui의 signInWithChooser는 더 이상 랜딩에서 쓰지 않는다 — 주 CTA가 로그인
+// 시트 없이 앱으로 직행하도록 바뀌었다. 로그인은 앱 헤더와 게스트 게이트가 담당한다.
 
 // 사회적 증거로 노출할 최소 기준. 숫자가 이보다 작으면 오히려 역효과라 아예 감춘다.
 const MIN_STAT_TO_SHOW = 100;
@@ -39,8 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (span) span.textContent = text;
     };
 
+    // 비로그인 라벨이 동작과 일치해야 한다. 예전엔 "지금 무료로 기록 시작하기"였는데
+    // 정작 누르면 로그인 시트가 떴고, 버튼 바로 아래엔 "로그인 없이 첫 기록"이라고
+    // 적혀 있었다 — 페이지와 버튼이 서로 다른 말을 했다. 사용자 제보로 확인된 혼란이다.
     onAuthStateChanged(auth, (user) => {
-        updateCtaText(user ? '콘솔로 이동하기' : '지금 무료로 기록 시작하기');
+        updateCtaText(user ? '콘솔로 이동하기' : '로그인 없이 바로 기록해보기');
     });
 
     // ====== 사회적 증거: 누적 기록 수 ======
@@ -70,22 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.isTrusted) {
                 track('cta_click', { location: 'hero', signed_in: !!auth.currentUser });
             }
-            if (auth.currentUser) {
-                window.location.href = 'app.html';
-                return;
-            }
-            // 랜딩은 한국어 전용 페이지라 lang은 넘기지 않는다(기본 ko).
-            // 로그인에 성공하면 계정으로 들어간다. 시트를 그냥 닫았으면 랜딩에 남는다 —
-            // 마음이 바뀐 사람을 앱으로 밀어 넣지 않는다.
-            // 다만 인증 자체가 죽은 경우(팝업 차단·제공자 장애)에는 방문자를 랜딩에
-            // 가두지 않고 게스트로 들여보낸다. 첫 레시피 1개는 로그인 없이 저장되므로
-            // 제품을 체험하는 데 문제가 없다.
-            const user = await signInWithChooser({
-                // docs/funnel.md가 정의한 source 값(landing|app_header|guest_gate)을 따른다.
-                source: 'landing',
-                onFailure: () => { window.location.href = 'app.html'; }
-            });
-            if (user) window.location.href = 'app.html';
+            // 로그인 여부와 무관하게 앱으로 바로 보낸다.
+            //
+            // 예전에는 비로그인 방문자에게 로그인 시트를 먼저 띄웠다. 그런데 이 버튼
+            // 바로 아래 신뢰 문구가 "로그인 없이 첫 기록"이라, 페이지는 로그인이
+            // 필요 없다고 말하면서 주 버튼은 로그인을 요구하는 모순이었다.
+            // 앱은 첫 레시피 1개를 실제로 로그인 없이 저장하므로(게스트 게이트)
+            // 약속을 지킬 수 있는데 랜딩이 그 경로를 막고 있었다.
+            //
+            // 로그인 경로가 사라지는 게 아니다 — 앱 헤더와 게스트 게이트(첫 기록 후)
+            // 두 곳에 그대로 있다. 가입 발생 지점이 랜딩에서 게이트로 옮겨갈 뿐이고,
+            // 그 구간은 guest_gate_* 이벤트로 이미 계측돼 있다(docs/funnel.md).
+            window.location.href = 'app.html';
         });
     }
 });
