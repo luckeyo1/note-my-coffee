@@ -1,4 +1,8 @@
 {
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
   "hosting": {
     "public": ".",
     "cleanUrls": true,
@@ -13,6 +17,8 @@
       "scripts/**",
       "package.json",
       "package-lock.json",
+      "firestore.rules",
+      "firestore.indexes.json",
       "생성된 이미지*.png"
     ]
   }

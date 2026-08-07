@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// Note My Coffee — Firestore 보안 규칙
+//
+// 데이터 모델은 docs/db-schema.md 참조. 요지:
+//  - recipes  : 본인 것만 읽기/쓰기 (userId == 로그인 uid)
+//  - users    : 본인만 읽기/쓰기, 관리자는 읽기
+//  - stats_*  : 로그인 사용자가 집계를 직접 갱신(현 클라이언트 집계 구조), 읽기는 관리자만
+//
+// 주의(집계 무결성): stats_daily/stats_beans는 클라이언트가 직접 쓰므로, 로그인 사용자가
+// 카운터를 조작할 여지가 있다(분석 전용이라 민감도 낮음). 무결성이 필요하면 집계를
+// Cloud Functions(Admin SDK)로 옮기고 아래 create/update를 `if false`로 막는다.
+//
+// 배포: Firebase 콘솔이 최종 소스다. 배포 전 콘솔의 현재 규칙과 비교하고, Rules Playground나
+// `firebase emulators:start`로 시뮬레이션한 뒤 `firebase deploy --only firestore:rules`.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    // 관리자 = 구글로 로그인한 지정 이메일(카카오 사용자는 이메일 클레임이 없어 자동 제외).
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email == 'qorlgh1994@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    // 레시피 원본 — 본인 것만 CRUD. userId를 남의 것으로 바꾸는 것도 막는다.
+    match /recipes/{recipeId} {
+      allow read:   if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      allow update: if isOwner(resource.data.userId)
+                    && isOwner(request.resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // 사용자별 카운터 — 본인만 읽기/쓰기, 관리자는 대시보드용 읽기.
+    match /users/{uid} {
+      allow read:  if isOwner(uid) || isAdmin();
+      allow write: if isOwner(uid);
+    }
+
+    // 일별 집계 — 로그인 사용자가 increment로 갱신, 읽기는 관리자만. 삭제 금지.
+    match /stats_daily/{day} {
+      allow read:          if isAdmin();
+      allow create, update: if isSignedIn();
+      allow delete:        if false;
+    }
+
+    // 원두 이름 사전 — 로그인 사용자가 등록, 읽기는 관리자만. 삭제 금지.
+    match /stats_beans/{beanId} {
+      allow read:          if isAdmin();
+      allow create, update: if isSignedIn();
+      allow delete:        if false;
+    }
+
+    // 그 밖의 경로는 기본 거부.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
