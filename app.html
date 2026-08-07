@@ -329,6 +329,12 @@
 <div id="recipe-modal" class="modal">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
+        <!-- 스크롤해도 늘 닿는 닫기 X (시트 상단 고정). 백드롭 탭·Esc로도 닫힌다. -->
+        <div class="modal-closebar">
+            <button type="button" class="modal-close-x" id="modal-close" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        </div>
         <div class="modal-progress-steps">
             <div class="step active">1</div>
             <div class="step-line"></div>

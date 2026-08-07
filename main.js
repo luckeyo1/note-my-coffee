@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalBeanName: "BEAN NAME", modalOrigin: "ORIGIN", modalPurchaseUrl: "PURCHASE URL",
             modalImageUrl: "COVER PHOTO", modalTasteNotes: "TASTING NOTES",
             modalOverallRating: "RATING", modalSuccessFail: "RESULT",
-            modalSave: "Save Recipe →", modalCancel: "Cancel",
+            modalSave: "Save Recipe →", modalCancel: "Cancel", modalClose: "Close",
             recipeSavedSuccess: "Recipe logged! Opening logbook...",
             recipeSavedFail: "Failed to save recipe.",
             confirmExitModal: "Discard this recipe?",
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalBeanName: "원두 이름", modalOrigin: "원산지", modalPurchaseUrl: "구매처 URL",
             modalImageUrl: "겉표지 사진", modalTasteNotes: "테이스팅 노트",
             modalOverallRating: "평점", modalSuccessFail: "결과",
-            modalSave: "레시피 저장하기 →", modalCancel: "취소",
+            modalSave: "레시피 저장하기 →", modalCancel: "취소", modalClose: "닫기",
             recipeSavedSuccess: "레시피가 기록되었습니다! 로그북으로 이동합니다...",
             recipeSavedFail: "레시피 저장 실패.",
             confirmExitModal: "이 레시피를 버리겠습니까?",
@@ -384,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalSuccessFail: document.getElementById('modal-success-fail'),
         modalSaveRecipe: document.getElementById('modal-save-recipe'),
         modalCancel: document.getElementById('modal-cancel'),
+        modalClose: document.getElementById('modal-close'),
         lblModalBeanName: document.getElementById('lbl-modal-bean-name'),
         lblModalOrigin: document.getElementById('lbl-modal-origin'),
         lblModalPurchaseUrl: document.getElementById('lbl-modal-purchase-url'),
@@ -1414,6 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ['lblModalBeanName','lblModalOrigin','lblModalPurchaseUrl','lblModalImageUrl','lblModalTasteNotes','lblModalOverallRating','lblModalSuccessFail','lblModalSave','modalTitle','modalSubtitle','lblLogin','lblModalBeanStatus'].forEach(k => {
             if (el[k]) el[k].textContent = t[k.replace('lbl','').charAt(0).toLowerCase() + k.replace('lbl','').slice(1)] || t[k];
         });
+        if (el.modalClose) { el.modalClose.setAttribute('aria-label', t.modalClose); el.modalClose.title = t.modalClose; }
         if (el.btnStatusNew) el.btnStatusNew.textContent = t.statusNew;
         if (el.btnStatusOpen) el.btnStatusOpen.textContent = t.statusOpen;
         if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
@@ -1486,7 +1488,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => el.modalBeanName.focus(), 400);
     });
 
-    el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));
+    // 레시피 모달 닫기 — 편의를 위해 여러 경로를 모두 연다: 상단 X · 하단 취소 ·
+    // 백드롭 탭 · Esc. 예전엔 맨 아래 '취소'까지 스크롤해야만 닫혔다.
+    const closeRecipeModal = () => el.recipeModal.classList.remove('active');
+    el.modalCancel.addEventListener('click', closeRecipeModal);
+    if (el.modalClose) el.modalClose.addEventListener('click', closeRecipeModal);
+    el.recipeModal.querySelector('.modal-backdrop').addEventListener('click', closeRecipeModal);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && el.recipeModal.classList.contains('active')) closeRecipeModal();
+    });
     el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
     el.btnSuccess.addEventListener('click', () => { successResult = true; el.modalSuccessFail.checked = true; el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active'); });
 
