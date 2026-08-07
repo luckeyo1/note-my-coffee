@@ -579,6 +579,44 @@
                 #FCFAF6;
         }
 
+        /* ── SHARE SHOWCASE: 사진 배경 공유 카드 ── */
+        .share-showcase {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: clamp(28px, 5vw, 60px);
+            align-items: center;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .share-figure { display: flex; justify-content: center; }
+        .share-card-frame {
+            width: min(330px, 76vw);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -20px rgba(36,28,21,0.45), 0 0 0 1px var(--rule);
+            transform: rotate(-2deg);
+            transition: transform .45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .share-card-frame:hover { transform: rotate(0deg) translateY(-4px); }
+        .share-card-frame img { display: block; width: 100%; height: auto; }
+        .share-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+        .share-badge {
+            font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+            font-size: 11px;
+            letter-spacing: 0.03em;
+            color: var(--sub);
+            border: 1px solid var(--rule);
+            border-radius: 999px;
+            padding: 6px 12px;
+        }
+        @media (max-width: 760px) {
+            .share-showcase { grid-template-columns: 1fr; gap: 32px; }
+            .share-figure { order: -1; }   /* 모바일: 카드를 먼저 보여준다 */
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .share-card-frame { transition: none; }
+        }
+
         /* ── FEATURES ── */
         .features-grid {
             display: grid;
@@ -1948,6 +1986,40 @@
                 </div>
                 <div class="feat-title">어디서든 접속</div>
                 <div class="feat-desc">설치 없이 모든 기기에서. 로그인하면 카페 PC에서도 그대로 이어집니다.</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="rule"></div>
+
+    <!-- SHARE SHOWCASE: 로그북의 사진 배경 공유 카드(logbook.js drawStoryCard)를 랜딩에서 미리 보여준다.
+         기록→공유의 마지막 보람을 시각적으로 제시해 최종 CTA 직전 몰입을 높인다. -->
+    <section class="story-section reveal" id="share">
+        <div class="share-showcase">
+            <div class="share-copy">
+                <div class="section-tag">공유</div>
+                <h2 class="section-title">완성한 한 잔을,<br><em>사진 카드</em>로.</h2>
+                <div class="story-text">
+                    <p>
+                        내가 내린 커피 사진 위에 레시피가 얹힌 카드가 만들어집니다.
+                        도징·온도·시간·수율에 테이스팅 노트와 별점까지 —
+                        로그북의 기록 하나가 그대로 한 장이 됩니다.
+                    </p>
+                    <p>인스타 스토리에도, 카톡에도 이미지로 바로 공유하세요.</p>
+                </div>
+                <div class="share-badges">
+                    <span class="share-badge">📷 사진 배경</span>
+                    <span class="share-badge">🗂️ 카드 스타일</span>
+                    <span class="share-badge">↓ 이미지 저장</span>
+                    <span class="share-badge">🔗 링크 공유</span>
+                </div>
+            </div>
+            <div class="share-figure">
+                <div class="share-card-frame">
+                    <img src="img/share-card-example.webp" width="900" height="1125"
+                         alt="사진을 배경으로 도징·온도·시간·수율·별점 같은 레시피가 얹힌 Note My Coffee 공유 카드 예시"
+                         loading="lazy" decoding="async">
+                </div>
             </div>
         </div>
     </section>
