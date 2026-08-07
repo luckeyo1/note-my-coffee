@@ -328,6 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalSuccessFail: document.getElementById('modal-success-fail'),
         modalSaveRecipe: document.getElementById('modal-save-recipe'),
         modalCancel: document.getElementById('modal-cancel'),
+        modalClose: document.getElementById('modal-close'),
         lblModalBeanName: document.getElementById('lbl-modal-bean-name'),
         lblModalOrigin: document.getElementById('lbl-modal-origin'),
         lblModalPurchaseUrl: document.getElementById('lbl-modal-purchase-url'),
@@ -1031,6 +1032,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key !== 'Escape') return;
         closeScaPopovers();
         if (el.onboardingModal.classList.contains('active')) closeOnboarding();
+        // 레시피 모달도 ESC로 닫는다 — 온보딩이 이미 그렇고 모달의 보편적 기대다.
+        //
+        // 다만 **백드롭 클릭으로는 닫지 않는다.** 온보딩 모달은 백드롭 클릭을 받지만
+        // 이 모달은 원두 이름·테이스팅 노트를 직접 타이핑하는 폼이다. 바깥을 잘못
+        // 눌러 입력이 통째로 날아가면 편의가 아니라 사고다. 온보딩이 안전한 건
+        // 규약이 같아서가 아니라 잃을 데이터가 없기 때문이다.
+        if (el.recipeModal.classList.contains('active')) el.recipeModal.classList.remove('active');
     });
 
     // --- Onboarding Tour ---
@@ -1211,7 +1219,11 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => el.modalBeanName.focus(), 400);
     });
 
-    el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));
+    // 닫는 방법이 늘었으므로 동작을 한 곳에 모은다. 하단 Cancel과 상단 X, ESC가
+    // 전부 이걸 부른다 — 각자 remove('active')를 흩뿌리면 나중에 어긋난다.
+    const closeRecipeModal = () => el.recipeModal.classList.remove('active');
+    el.modalCancel.addEventListener('click', closeRecipeModal);
+    if (el.modalClose) el.modalClose.addEventListener('click', closeRecipeModal);
     el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
     el.btnSuccess.addEventListener('click', () => { successResult = true; el.modalSuccessFail.checked = true; el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active'); });
 
