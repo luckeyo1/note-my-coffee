@@ -507,6 +507,34 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 .modal.active .modal-content { transform: translateY(0); }
 .modal-content::before { content: ""; display: block; width: 44px; height: 5px; border-radius: 0; background: var(--cream-dark); margin: -6px auto 18px; }
 
+/* 상단 닫기 버튼.
+   .modal-content가 max-height:92vh로 스크롤되는 컨테이너라, position:absolute면
+   폼을 내렸을 때 버튼이 위로 흘러가 버린다. sticky로 붙여 스크롤과 무관하게
+   같은 자리에 남게 한다. 높이 0으로 두어 아래 콘텐츠를 밀지 않는다. */
+.modal-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    z-index: 2;
+    margin: -8px -6px 0 0;
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    /* 배경 없이 두면 스크롤 시 아래 입력란 위에 겹쳐 그 필드의 지우기 버튼처럼
+       보인다(실제로 "e.g. Africa" 칸 안에 있는 것처럼 읽혔다).
+       자기 바탕과 테두리를 줘서 콘텐츠 위에 떠 있는 별개의 컨트롤로 읽히게 한다. */
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.modal-close:hover { color: var(--ink); background: var(--cream-dark); border-color: var(--border-strong); }
+.modal-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* 손가락 입력에서만 44px. 보이는 크기(32px)는 그대로다 — 세션 내내 지킨 규약. */
+@media (pointer: coarse) {
+    .modal-close { width: 44px; height: 44px; margin: -10px -10px 0 0; }
+}
+
 .modal-progress-steps { display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
 .step { width: 28px; height: 28px; border-radius: 50%; background: var(--cream-dark); color: var(--ink-ghost); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
 .step.active { background: var(--ink); color: #fff; }

@@ -328,6 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalSuccessFail: document.getElementById('modal-success-fail'),
         modalSaveRecipe: document.getElementById('modal-save-recipe'),
         modalCancel: document.getElementById('modal-cancel'),
+        modalClose: document.getElementById('modal-close'),
         lblModalBeanName: document.getElementById('lbl-modal-bean-name'),
         lblModalOrigin: document.getElementById('lbl-modal-origin'),
         lblModalPurchaseUrl: document.getElementById('lbl-modal-purchase-url'),
@@ -1031,6 +1032,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key !== 'Escape') return;
         closeScaPopovers();
         if (el.onboardingModal.classList.contains('active')) closeOnboarding();
+        // 레시피 모달도 ESC로 닫는다 — 온보딩이 이미 그렇고 모달의 보편적 기대다.
+        //
+        // 다만 **백드롭 클릭으로는 닫지 않는다.** 온보딩 모달은 백드롭 클릭을 받지만
+        // 이 모달은 원두 이름·테이스팅 노트를 직접 타이핑하는 폼이다. 바깥을 잘못
+        // 눌러 입력이 통째로 날아가면 편의가 아니라 사고다. 온보딩이 안전한 건
+        // 규약이 같아서가 아니라 잃을 데이터가 없기 때문이다.
+        if (el.recipeModal.classList.contains('active')) closeRecipeModal();
     });
 
     // --- Onboarding Tour ---
@@ -1069,11 +1077,63 @@ document.addEventListener('DOMContentLoaded', () => {
             d.addEventListener('click', () => { ob.step = parseInt(d.dataset.step, 10); renderObStep(); }));
     };
 
-    const openOnboarding = () => { ob.step = 0; renderObStep(); el.onboardingModal.classList.add('active'); };
-    const closeOnboarding = () => {
+    // ── 모달과 안드로이드 뒤로가기 ──────────────────────────────────
+    // 하드웨어 뒤로가기는 모달의 존재를 모른다. 히스토리에 항목을 밀어 넣지 않으면
+    // 모달이 열린 상태에서 뒤로가기를 눌렀을 때 모달만 닫히는 게 아니라 페이지를
+    // 통째로 빠져나가 랜딩으로 돌아간다(사용자 제보).
+    //
+    // 경로를 하나로 둔다: 여는 쪽은 pushState, **닫는 쪽은 무조건 history.back()**만
+    // 부르고 실제 DOM 닫기는 popstate 핸들러 한 곳에서만 한다.
+    // 처음에는 "버튼으로 닫을 때 DOM을 직접 닫고 밀어 넣은 항목을 따로 회수"하는
+    // 이중 경로로 짰는데, 회수용 back()이 실제로 먹지 않아 항목이 남았다
+    // (history.state가 계속 {nmcModal:1}이었다). 경로가 하나면 그런 어긋남이 없다.
+    let modalHistoryDepth = 0;
+
+    const pushModalHistory = () => {
+        modalHistoryDepth++;
+        history.pushState({ nmcModal: modalHistoryDepth }, '');
+    };
+
+    // 버튼·ESC로 닫을 때 쓴다.
+    // 히스토리 항목이 있으면 back()만 부르고 DOM 닫기는 popstate에 맡긴다 — 경로가
+    // 하나여야 어긋나지 않는다. 다만 어떤 이유로든 항목 없이 모달이 열려 있으면
+    // back()이 페이지를 떠나보내거나 아무 일도 안 하므로, 그때는 직접 닫는다.
+    // (이 방어가 없으면 항목이 없는 순간 닫기 버튼이 통째로 죽는다 — 실제로 겪었다.)
+    const closeTopModalViaHistory = (closeDirect) => {
+        if (modalHistoryDepth > 0) { history.back(); return; }
+        if (closeDirect) closeDirect();
+    };
+
+    // 닫기 함수 스택을 쓰지 않는다. 스택은 모달이 스택 밖에서 닫히는 순간
+    // 엉뚱한 것을 닫게 된다(온보딩이 자동으로 열려 항목을 밀어 넣은 뒤 다른 경로로
+    // 닫히면, 레시피 모달을 닫으려던 뒤로가기가 온보딩을 닫아버렸다).
+    // 지금 실제로 열려 있는 것을 닫는 편이 어긋나지 않는다.
+    const closeAnyOpenModal = () => {
+        if (el.recipeModal.classList.contains('active')) { closeRecipeModalDirect(); return; }
+        if (el.onboardingModal.classList.contains('active')) { closeOnboardingDirect(); }
+    };
+
+    window.addEventListener('popstate', () => {
+        // 우리가 밀어 넣은 게 없으면 진짜 페이지 이탈이다 — 막지 않는다.
+        if (modalHistoryDepth === 0) return;
+        modalHistoryDepth--;
+        closeAnyOpenModal();
+    });
+
+    const closeRecipeModalDirect = () => el.recipeModal.classList.remove('active');
+
+    // closeDirect는 히스토리를 건드리지 않는다 — popstate가 부를 때 쓰인다.
+    // 사용자가 버튼으로 닫을 때만 밀어 넣은 항목을 회수한다.
+    const closeOnboardingDirect = () => {
         el.onboardingModal.classList.remove('active');
         try { localStorage.setItem(OB_SEEN_KEY, '1'); } catch (e) { /* private mode 등 저장 불가 시 무시 */ }
     };
+    const openOnboarding = () => {
+        ob.step = 0; renderObStep();
+        el.onboardingModal.classList.add('active');
+        pushModalHistory();
+    };
+    const closeOnboarding = () => closeTopModalViaHistory(closeOnboardingDirect);
 
     el.btnHelp.addEventListener('click', () => { track('onboarding_reopened'); openOnboarding(); });
     el.obSkip.addEventListener('click', () => {
@@ -1200,6 +1260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     el.btnSave.addEventListener('click', () => {
         el.recipeModal.classList.add('active');
+        pushModalHistory();
         el.modalBeanName.value = ''; 
         el.modalOrigin.value = ''; el.modalOrigin.dispatchEvent(new Event('input'));
         el.modalPurchaseUrl.value = ''; 
@@ -1211,7 +1272,11 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => el.modalBeanName.focus(), 400);
     });
 
-    el.modalCancel.addEventListener('click', () => el.recipeModal.classList.remove('active'));
+    // 닫는 방법이 늘었으므로 동작을 한 곳에 모은다. 하단 Cancel과 상단 X, ESC가
+    // 전부 이걸 부른다 — 각자 remove('active')를 흩뿌리면 나중에 어긋난다.
+    const closeRecipeModal = () => closeTopModalViaHistory(closeRecipeModalDirect);
+    el.modalCancel.addEventListener('click', closeRecipeModal);
+    if (el.modalClose) el.modalClose.addEventListener('click', closeRecipeModal);
     el.btnFail.addEventListener('click', () => { successResult = false; el.modalSuccessFail.checked = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); });
     el.btnSuccess.addEventListener('click', () => { successResult = true; el.modalSuccessFail.checked = true; el.btnFail.classList.remove('active'); el.btnSuccess.classList.add('active'); });
 

@@ -319,6 +319,13 @@
 <div id="recipe-modal" class="modal">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
+        <!-- 이 폼은 원두 상태·이름·노트·평점·사진·산지·구매처까지 길어서
+             .modal-content가 92vh에서 스크롤된다. 하단 Cancel만 있으면 닫으려고
+             끝까지 내려가야 했다(사용자 제보). 카드 안쪽 절대 위치라 스크롤과
+             무관하게 항상 같은 자리에 남는다. -->
+        <button type="button" class="modal-close" id="modal-close" aria-label="닫기">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
         <div class="modal-progress-steps">
             <div class="step active">1</div>
             <div class="step-line"></div>
