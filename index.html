@@ -2066,7 +2066,8 @@
 
     <div class="rule"></div>
 
-    <!-- TASTE QUIZ: 취향 검사 → 추천 원두. 링크는 일반 검색 URL — 제휴 전환 시 JS의 storeLinks만 교체.
+    <!-- TASTE QUIZ: 취향 검사 → 추천 원두. 링크는 스토어 검색 URL — 제휴 전환 시
+         JS의 kurlySearch/naverSearch 빌더만 교체한다(개별 상품 URL 금지, 아래 주석 참고).
          15초 데모로 제품을 본 직후가 참여 의향이 가장 높아 기능 섹션 앞으로 올렸다. -->
     <section class="story-section dark-section reveal" id="quiz">
         <div class="story-inner">
@@ -2578,10 +2579,19 @@
             ]},
         ];
 
-        // 추천 상품: 유명 로스터리의 실판매 상품. 컬리·홈바리스타클럽은 검증된 상품 페이지,
-        // 네이버는 상품명 검색 결과로 연결(스마트스토어 개별 URL은 변동이 잦아 검색이 안전).
-        // 제휴 전환 시 각 url만 제휴 딥링크(쇼핑 커넥트/링크프라이스)로 교체하면 된다.
-        const naverSearch = (q) => 'https://search.shopping.naver.com/search/all?query=' + encodeURIComponent(q);
+        // ⚠️ 개별 상품 URL(/goods/1234, goodsNo=…)은 절대 다시 넣지 말 것.
+        // 한 번 그렇게 넣었다가 링크가 통째로 죽었다 — 상품은 품절되고, 번호는
+        // 재입고 때마다 새로 발급되고, 공동구매 상품은 아예 영구 품절로 남는다.
+        // 검색 결과 페이지는 상품이 사라져도 페이지 자체가 죽지 않는다.
+        // 네이버도 쇼핑 검색(search.shopping.naver.com)은 봇 차단·경로 이전으로
+        // 안 열리는 경우가 있어 통합검색으로 보낸다.
+        // 제휴 전환 시엔 이 빌더 두 개만 딥링크로 교체하면 된다.
+        const kurlySearch = (q) => 'https://www.kurly.com/search?sword=' + encodeURIComponent(q);
+        const naverSearch = (q) => 'https://search.naver.com/search.naver?query=' + encodeURIComponent(q);
+        const STORES = [
+            { store: '컬리',   url: kurlySearch },
+            { store: '네이버', url: naverSearch },
+        ];
 
         const RESULTS = {
             A: {
@@ -2590,15 +2600,15 @@
                 flavor: [0.95, 0.60, 0.35, 0.20],
                 desc: '꽃향과 과일 산미가 살아있는 라이트 로스팅이 잘 맞는 타입입니다. 핸드드립으로 내리면 향이 가장 잘 피어납니다.',
                 beans: [
-                    { name: '센터커피 싱글 오리진 (에티오피아 아리차)', roaster: '센터커피 · 컬리',
+                    { name: '센터커피 싱글 오리진 (에티오피아 아리차)', roaster: '센터커피',
                       desc: '재스민과 복숭아, 홍차 같은 여운 — 서울숲 로스터리의 워시드 에티오피아',
-                      store: '컬리', url: 'https://www.kurly.com/goods/1000257734' },
-                    { name: '나무사이로 × 홈바리스타클럽 원두', roaster: '나무사이로 · 홈바리스타클럽',
-                      desc: '산미 좋은 라이트 로스팅으로 정평난 로스터리의 콜라보 원두',
-                      store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000613' },
-                    { name: '프릳츠 싱글오리진 원두', roaster: '프릳츠커피컴퍼니 · 네이버 쇼핑',
+                      query: '센터커피 싱글오리진 원두' },
+                    { name: '나무사이로 원두', roaster: '나무사이로',
+                      desc: '산미 좋은 라이트 로스팅으로 정평난 로스터리의 상시 판매 원두',
+                      query: '나무사이로 원두' },
+                    { name: '프릳츠 싱글오리진 원두', roaster: '프릳츠커피컴퍼니',
                       desc: '서울 대표 로스터리의 화사한 싱글오리진 라인업',
-                      store: '네이버 쇼핑', url: naverSearch('프릳츠 싱글오리진 원두') },
+                      query: '프릳츠 싱글오리진 원두' },
                 ],
             },
             B: {
@@ -2607,15 +2617,15 @@
                 flavor: [0.60, 0.75, 0.60, 0.50],
                 desc: '단맛·산미·바디가 고르게 잡힌 미디엄 로스팅 취향입니다. 어떤 추출 방식으로도 실패가 적어 데일리 원두로 제격입니다.',
                 beans: [
-                    { name: '프릳츠 블렌딩 원두 3종 (택1)', roaster: '프릳츠커피컴퍼니 · 컬리',
+                    { name: '프릳츠 블렌딩 원두', roaster: '프릳츠커피컴퍼니',
                       desc: "'잘 되어가시나' 등 균형 좋기로 유명한 시그니처 블렌드",
-                      store: '컬리', url: 'https://www.kurly.com/goods/1002076410' },
-                    { name: '필그림 × 홈바리스타클럽 원두', roaster: '필그림 커피로스터스 · 홈바리스타클럽',
-                      desc: '밸런스로 사랑받는 로스터리의 콜라보 원두',
-                      store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000617' },
-                    { name: '테라로사 강릉블렌드 원두', roaster: '테라로사 · 네이버 쇼핑',
+                      query: '프릳츠 블렌딩 원두' },
+                    { name: '필그림 커피로스터스 원두', roaster: '필그림 커피로스터스',
+                      desc: '밸런스로 사랑받는 로스터리의 데일리 라인업',
+                      query: '필그림 커피 원두' },
+                    { name: '테라로사 강릉블렌드 원두', roaster: '테라로사',
                       desc: '강릉 대표 로스터리의 대표 데일리 블렌드',
-                      store: '네이버 쇼핑', url: naverSearch('테라로사 강릉블렌드 원두') },
+                      query: '테라로사 강릉블렌드 원두' },
                 ],
             },
             C: {
@@ -2624,15 +2634,15 @@
                 flavor: [0.30, 0.85, 0.70, 0.65],
                 desc: '견과와 초콜릿의 고소한 단맛을 즐기는 타입입니다. 우유와 만나면 더 빛나서 라떼 베이스로 특히 좋습니다.',
                 beans: [
-                    { name: '모모스커피 블렌드 원두 8종 (택1)', roaster: '모모스커피 · 컬리',
+                    { name: '모모스커피 블렌드 원두', roaster: '모모스커피',
                       desc: '월드 바리스타 챔피언을 배출한 부산 로스터리의 블렌드 셀렉션',
-                      store: '컬리', url: 'https://www.kurly.com/goods/5052567' },
-                    { name: '커피리브레 × 홈바리스타클럽 원두', roaster: '커피리브레 · 홈바리스타클럽',
-                      desc: '국내 스페셜티 1세대 로스터리의 콜라보 원두',
-                      store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000575' },
-                    { name: '커피리브레 배드블러드 블렌드', roaster: '커피리브레 · 네이버 쇼핑',
+                      query: '모모스커피 블렌드 원두' },
+                    { name: '폴바셋 시그니처 블렌드', roaster: '폴바셋',
+                      desc: '우유와 만났을 때 가장 빛나는 고소한 라떼 베이스',
+                      query: '폴바셋 원두' },
+                    { name: '커피리브레 배드블러드 블렌드', roaster: '커피리브레',
                       desc: '초콜릿과 견과의 단맛으로 유명한 리브레 대표 블렌드',
-                      store: '네이버 쇼핑', url: naverSearch('커피리브레 배드블러드 원두') },
+                      query: '커피리브레 배드블러드 원두' },
                 ],
             },
             D: {
@@ -2641,15 +2651,15 @@
                 flavor: [0.15, 0.50, 0.95, 0.95],
                 desc: '진한 바디와 긴 여운을 사랑하는 타입입니다. 에스프레소나 모카포트로 진하게 내려 그 힘을 그대로 즐겨보세요.',
                 beans: [
-                    { name: '앤트러사이트 다크 블렌딩 원두 3종 (택1)', roaster: '앤트러사이트 · 컬리',
+                    { name: '앤트러사이트 다크 블렌딩 원두', roaster: '앤트러사이트',
                       desc: '묵직한 다크 로스팅으로 이름난 로스터리의 다크 블렌드',
-                      store: '컬리', url: 'https://www.kurly.com/goods/5061872' },
-                    { name: '리사르 커피 × 홈바리스타클럽 원두', roaster: '리사르커피 · 홈바리스타클럽',
-                      desc: '나폴리식 진한 에스프레소로 이름난 로스터리의 콜라보',
-                      store: '홈바리스타클럽', url: 'https://www.homebaristashop.com/goods/goods_view.php?goodsNo=1000000597' },
-                    { name: '빈브라더스 다크 블렌드 원두', roaster: '빈브라더스 · 네이버 쇼핑',
+                      query: '앤트러사이트 원두' },
+                    { name: '리사르커피 원두', roaster: '리사르커피',
+                      desc: '나폴리식 진한 에스프레소로 이름난 로스터리의 원두',
+                      query: '리사르커피 원두' },
+                    { name: '빈브라더스 다크 블렌드 원두', roaster: '빈브라더스',
                       desc: '진하고 묵직한 바디의 블렌드로 사랑받는 브랜드',
-                      store: '네이버 쇼핑', url: naverSearch('빈브라더스 원두') },
+                      query: '빈브라더스 원두' },
                 ],
             },
         };
@@ -2748,13 +2758,17 @@
                 flavorRadar(r.flavor) +
                 '</div>' +
                 '<div class="bean-grid">' +
-                r.beans.map((b) =>
+                r.beans.map((b, bi) =>
                     '<div class="bean-card">' +
                     '<div class="bean-name">' + b.name + '</div>' +
                     '<div class="bean-origin">' + b.roaster + '</div>' +
                     '<div class="bean-desc">' + b.desc + '</div>' +
                     '<div class="bean-links">' +
-                    '<a class="bean-link" href="' + b.url + '" target="_blank" rel="noopener noreferrer">' + b.store + '에서 구매 →</a>' +
+                    // 스토어 한 곳이 품절이어도 다른 곳이 남는다 — 그래서 두 개다.
+                    STORES.map((s) =>
+                        '<a class="bean-link" href="' + s.url(b.query) + '"' +
+                        ' data-bean="' + bi + '" data-store="' + s.store + '"' +
+                        ' target="_blank" rel="noopener noreferrer">' + s.store + ' 검색 →</a>').join('') +
                     '</div>' +
                     '</div>').join('') +
                 '</div>' +
@@ -2771,7 +2785,7 @@
                 '<span>결과 카드 공유</span></button>' +
                 '<button type="button" class="quiz-restart" id="quiz-restart">다시 검사하기 ↺</button>' +
                 '</div>' +
-                '<p class="quiz-note">컬리·홈바리스타클럽은 상품 페이지로, 네이버는 상품 검색 결과로 연결됩니다. 판매 상황에 따라 상품 구성이 바뀔 수 있습니다.</p>' +
+                '<p class="quiz-note">각 스토어의 검색 결과로 연결됩니다. 판매처·가격·재고는 그때그때 다를 수 있고, 로스팅 날짜가 가까운 상품을 고르시면 좋습니다.</p>' +
                 '</div>';
 
             // 아트가 아직 없으면 빈 박스를 남기지 않고 요소째로 걷어낸다.
@@ -2781,14 +2795,14 @@
             window.nmcTrack?.('quiz_complete', { profile: key, profile_title: r.title });
 
             // 원두 링크 클릭 수는 제휴 수익화 판단에 직접 쓰이는 지표다.
-            // .bean-link는 원두 카드마다 정확히 하나라 순서가 r.beans와 일치한다.
-            card.querySelectorAll('.bean-link').forEach((a, i) => {
-                const b = r.beans[i];
+            // 원두마다 링크가 여러 개라 인덱스를 셀 수 없다 — data-bean으로 되짚는다.
+            card.querySelectorAll('.bean-link').forEach((a) => {
+                const b = r.beans[Number(a.dataset.bean)];
                 if (!b) return;
                 a.addEventListener('click', () => {
                     window.nmcTrack?.('bean_link_click', {
                         profile: key,
-                        store: b.store,
+                        store: a.dataset.store,
                         bean_name: b.name,
                     });
                 });

@@ -172,43 +172,44 @@ The AI's workflow is iterative, transparent, and responsive to user input.
 
 # 취향 검사 추천 원두 링크 유지보수
 
-`index.html`의 취향 검사 섹션(`#quiz`)에는 프로필(A~D) 4종 × 상품 3개(컬리·홈바리스타클럽·네이버)의
-추천 원두 데이터(`RESULTS`)가 있다. `.github/workflows/bean-link-check.yml`이 매주 링크를 점검하고,
-죽은 링크가 있으면 Gemini가 이 규칙에 따라 대체 상품을 찾아 PR을 올린다.
+`index.html`의 취향 검사 섹션(`#quiz`)에는 프로필(A~D) 4종 × 원두 3개의 추천
+데이터(`RESULTS`)가 있다. 원두마다 **컬리·네이버 검색 링크 두 개**가 붙는다.
 
-**교체 규칙**
+**개별 상품 URL은 쓰지 않는다 — 규칙이 아니라 이미 실패한 방식이다.**
+한때 컬리 `/goods/<no>`, 홈바리스타클럽 `goodsNo=<no>`로 상품을 직접 걸었다가
+링크가 통째로 죽었다. 상품은 품절되고, 상품번호는 재입고마다 새로 발급되고,
+홈바리스타클럽 콜라보 원두는 공동구매 일회성이라 영구 품절로 남는다.
+지금은 각 원두의 `query`(검색어)만 두고 빌더가 URL을 만든다:
 
-- 대체 상품은 반드시 **인지도 있는 국내 로스터리/브랜드**로 고른다
-  (예: 프릳츠, 커피리브레, 모모스커피, 테라로사, 앤트러사이트, 나무사이로, 센터커피, 빈브라더스, 블루보틀, 폴 바셋).
-- 취향 프로필과 맛 방향을 맞춘다: A 라이트·플로럴/산미, B 미디엄·밸런스, C 고소·초콜릿(라떼), D 다크·묵직.
-- 카드의 `name`(상품명)·`roaster`(로스터리 · 판매처)·`desc`(맛 설명)·`url`을 함께 고쳐 서로 어긋나지 않게 한다.
-- 시즌 한정·디카페인·드립백 상품은 피하고 스테디셀러 원두를 고른다.
-- 교체 URL은 커밋 전에 반드시 `curl`로 HTTP 200을 확인하고, `node scripts/check-bean-links.mjs`로 재검증한다.
-- `#quiz` 데이터 외의 코드는 수정하지 않는다.
+```js
+const kurlySearch = (q) => 'https://www.kurly.com/search?sword=' + encodeURIComponent(q);
+const naverSearch = (q) => 'https://search.naver.com/search.naver?query=' + encodeURIComponent(q);
+```
 
-**상품 탐색 방법**
+네이버는 **통합검색**이다. `search.shopping.naver.com`은 봇 차단·경로 이전으로
+안 열리는 경우가 있어 쓰지 않는다.
 
-- 컬리 — 게스트 토큰 발급 후 검색 API 사용, 상품 URL은 `https://www.kurly.com/goods/<no>`:
+**주간 점검**: `.github/workflows/bean-link-check.yml` → `scripts/check-bean-links.mjs`.
+검사하는 것은 (1) 검색 진입점 두 개가 열리는지, (2) 금지된 상품 URL 형태가
+`index.html`에 다시 들어왔는지 두 가지다. 실패 시 `dead-links.json`이 생긴다.
 
-  ```bash
-  TOKEN=$(curl -s -X POST https://api.kurly.com/v3/auth/guest -H "Content-Type: application/json" | jq -r .data.access_token)
-  curl -s -H "Authorization: Bearer $TOKEN" \
-    "https://api.kurly.com/search/v4/sites/market/normal-search?keyword=%EC%9B%90%EB%91%90&page=1"
-  # listSections[].data.items[] 의 no / name 사용
-  ```
+**원두를 교체할 때**
 
-- 홈바리스타클럽 — 커피 카테고리 HTML에서 `goodsNo`와 상품명 추출,
-  상품 URL은 `https://www.homebaristashop.com/goods/goods_view.php?goodsNo=<번호>`:
+- **인지도 있는 국내 로스터리/브랜드**로 고른다 (프릳츠, 커피리브레, 모모스커피,
+  테라로사, 앤트러사이트, 나무사이로, 센터커피, 빈브라더스, 블루보틀, 폴 바셋 등).
+- 취향 프로필과 맛 방향을 맞춘다: A 라이트·플로럴/산미, B 미디엄·밸런스,
+  C 고소·초콜릿(라떼), D 다크·묵직.
+- `name`(상품명)·`roaster`(로스터리)·`desc`(맛 설명)·`query`(검색어)를 함께 고쳐
+  서로 어긋나지 않게 한다.
+- `query`는 **브랜드 + 원두**처럼 넓게 잡는다. 특정 상품명으로 좁히면 그 상품이
+  빠졌을 때 검색 결과가 비어버려, 상품 URL을 쓰던 때와 같은 문제가 된다.
+- 시즌 한정·디카페인·드립백은 피하고 상시 판매 라인을 고른다.
+  **공동구매·콜라보 상품은 절대 넣지 않는다.**
+- 커밋 전 `node scripts/check-bean-links.mjs` 통과 확인. `#quiz` 데이터 외의 코드는
+  수정하지 않는다.
 
-  ```bash
-  curl -s "https://www.homebaristashop.com/goods/goods_list.php?cateCd=003"
-  ```
-
-- 네이버 — 개별 스마트스토어 URL은 변동이 잦으므로 상품명 검색 URL을 유지한다:
-  `https://search.shopping.naver.com/search/all?query=<브랜드+상품명+원두>`
-
-**제휴 전환 예정**: 제휴(쇼핑 커넥트/링크프라이스) 승인 후에는 `url`이 제휴 딥링크로 바뀐다.
-그 경우에도 최종 도착 상품 페이지가 살아있는지가 판정 기준이며, 결과 하단 `.quiz-note` 고지 문구를 함께 관리한다.
+**제휴 전환 예정**: 제휴(쇼핑 커넥트/링크프라이스) 승인 후에는 위 빌더 두 개만
+제휴 딥링크로 교체한다. 결과 하단 `.quiz-note` 고지 문구도 함께 맞춘다.
 
 # Firebase MCP
 
