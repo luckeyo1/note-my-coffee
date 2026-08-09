@@ -68,7 +68,7 @@
 |------|--------|----------|
 | 검사 시작 | `quiz_start` | — |
 | 검사 완주 | `quiz_complete` | `{profile, profile_title}` |
-| 원두 링크 클릭 | `bean_link_click` | `{profile, store, bean_name}` |
+| 원두 링크 클릭 | `bean_link_click` | `{profile, store, bean_name}` — `store`는 `컬리`/`네이버`. 원두마다 링크가 두 개라 같은 `bean_name`이 두 값으로 들어온다 |
 | 외부 구매 | (측정 불가 — 외부 스토어) | — |
 | 결과 공유(바이럴) | `quiz_share` | `{profile, method}` |
 | 재검사 | `quiz_restart` | `{profile}` |
