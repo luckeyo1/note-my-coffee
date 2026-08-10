@@ -22,6 +22,7 @@ const isDemo = new URLSearchParams(location.search).get('demo') === '1';
 
 let allRecipes = [];
 let rangeDays = 30;
+let userSort = 'count';   // 사용자 목록 정렬: 'count'(기록순) | 'recent'(최근순)
 
 // 데이터 출처. 'aggregate'는 stats_daily/users를 읽는 가벼운 경로,
 // 'scan'은 recipes 전체를 내려받는 예전 경로다(집계가 아직 없거나 권한이 없을 때).
@@ -1519,6 +1520,271 @@ function buildTable(cols, rows) {
     return scroll;
 }
 
+/* ─────────────────── 사용자 목록 · 드릴다운 ───────────────────
+ *
+ * 목록은 기간 필터와 무관한 '누적 로스터'다(휴면 카드와 같은 현재 시점 관점).
+ * 집계 경로면 users 컬렉션에서, 폴백/데모면 recipes를 사용자별로 묶어 만든다.
+ * 행을 누르면 그 사용자의 개인 지표 + 레시피 이력을 모달로 연다.
+ */
+
+const shortUid = (u) => (u && u.length > 12 ? u.slice(0, 10) + '…' : (u || '—'));
+const fmtDate = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d) ? '—' : dayKey(d).replace(/-/g, '.');
+};
+const agoText = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d)) return '—';
+    const days = Math.floor((Date.now() - d.getTime()) / 864e5);
+    return days <= 0 ? '오늘' : `${fmt(days)}일 전`;
+};
+const numTd = (txt) => { const td = document.createElement('td'); td.className = 'num'; td.textContent = txt; return td; };
+const txtTd = (txt) => { const td = document.createElement('td'); td.textContent = txt; return td; };
+
+function userRows() {
+    if (dataMode === 'aggregate' && agg) {
+        return agg.users.map((u) => ({
+            uid: u.id,
+            name: u.displayName || '',
+            email: u.email || '',
+            count: Number(u.recipeCount) || 0,
+            first: u.firstSeenAt || null,
+            last: u.lastSeenAt || null,
+        }));
+    }
+    // 스캔/데모: recipes를 사용자별로 묶는다 (이름/이메일은 없다 — uid로 표시)
+    const m = new Map();
+    for (const r of allRecipes) {
+        if (!r.userId) continue;
+        const e = m.get(r.userId) || { uid: r.userId, name: '', email: '', count: 0, first: r.date, last: r.date };
+        e.count += 1;
+        if (r.date) {
+            if (!e.first || new Date(r.date) < new Date(e.first)) e.first = r.date;
+            if (!e.last || new Date(r.date) > new Date(e.last)) e.last = r.date;
+        }
+        m.set(r.userId, e);
+    }
+    return [...m.values()];
+}
+
+function sortedUserRows() {
+    const rows = userRows();
+    const lastT = (r) => (r.last ? new Date(r.last).getTime() : 0);
+    if (userSort === 'recent') rows.sort((a, b) => lastT(b) - lastT(a) || b.count - a.count);
+    else rows.sort((a, b) => b.count - a.count || lastT(b) - lastT(a));
+    return rows;
+}
+
+function renderUsers(wrap, rows) {
+    clear(wrap);
+    el('users-sub').textContent = rows.length
+        ? `전체 ${fmt(rows.length)}명 · 누적 기준(기간 필터와 무관) · 행을 눌러 상세 보기`
+        : '아직 기록을 남긴 사용자가 없습니다.';
+    if (!rows.length) return;
+
+    const scroll = document.createElement('div');
+    scroll.className = 'scroll-x';
+    const t = document.createElement('table');
+
+    const thead = document.createElement('thead');
+    const htr = document.createElement('tr');
+    [['사용자', ''], ['기록', 'num'], ['첫 기록', ''], ['마지막', ''], ['경과', 'num'], ['', 'num']]
+        .forEach(([label, cls]) => {
+            const th = document.createElement('th');
+            if (cls) th.className = cls;
+            th.textContent = label;
+            htr.appendChild(th);
+        });
+    thead.appendChild(htr);
+    t.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    rows.forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.className = 'user-row';
+        tr.tabIndex = 0;
+        tr.setAttribute('role', 'button');
+        const open = () => openUserDetail(row);
+        tr.addEventListener('click', open);
+        tr.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        });
+
+        const tdU = document.createElement('td');
+        const nameEl = document.createElement('div');
+        nameEl.className = 'user-name';
+        nameEl.textContent = row.name || row.email || '익명 사용자';
+        const subEl = document.createElement('div');
+        subEl.className = 'user-uid';
+        // 이름이 있으면 아래에 이메일을, 없으면 uid를 병기해 서로 구분되게 한다
+        subEl.textContent = (row.email && row.name) ? row.email : shortUid(row.uid);
+        tdU.appendChild(nameEl);
+        tdU.appendChild(subEl);
+        tr.appendChild(tdU);
+
+        tr.appendChild(numTd(fmt(row.count)));
+        tr.appendChild(txtTd(fmtDate(row.first)));
+        tr.appendChild(txtTd(fmtDate(row.last)));
+        tr.appendChild(numTd(agoText(row.last)));
+        const cta = numTd('›');
+        cta.classList.add('user-cta');
+        tr.appendChild(cta);
+
+        tbody.appendChild(tr);
+    });
+    t.appendChild(tbody);
+    scroll.appendChild(t);
+    wrap.appendChild(scroll);
+}
+
+// 스캔/데모엔 이미 전체 레시피가 있으니 거기서 거른다(추가 조회 없음).
+// 집계 경로에서만 그 사용자 것만 라이브로 읽는다 — 단일 필드 조건이라 인덱스 불필요.
+async function loadUserRecipes(uid) {
+    if (allRecipes.length) {
+        return allRecipes.filter((r) => r.userId === uid)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+    if (!fbRef) return [];
+    const snap = await fbRef.getDocs(fbRef.query(
+        fbRef.collection(fbRef.db, 'recipes'),
+        fbRef.where('userId', '==', uid)
+    ));
+    const out = [];
+    snap.forEach((d) => {
+        const data = d.data();
+        delete data.imageUrl;   // 받은 뒤 버린다 — 상세엔 사진을 쓰지 않는다
+        out.push({ id: d.id, ...data });
+    });
+    return out.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+async function openUserDetail(row) {
+    const modal = el('user-modal');
+    el('um-title').textContent = row.name || row.email || '익명 사용자';
+    el('um-sub').textContent = [
+        (row.email && row.name) ? row.email : null,
+        'UID ' + row.uid,
+    ].filter(Boolean).join(' · ');
+
+    const body = el('um-body');
+    clear(body);
+    const loading = document.createElement('p');
+    loading.className = 'modal-empty';
+    loading.textContent = '기록을 불러오는 중…';
+    body.appendChild(loading);
+    modal.classList.remove('hidden');
+    el('um-close').focus();
+
+    let recipes;
+    try {
+        recipes = await loadUserRecipes(row.uid);
+    } catch (e) {
+        clear(body);
+        const p = document.createElement('p');
+        p.className = 'modal-empty';
+        p.textContent = `기록을 불러오지 못했습니다 (${e.code || e.message}).`;
+        body.appendChild(p);
+        return;
+    }
+    renderUserDetail(body, recipes);
+}
+
+function renderUserDetail(body, recipes) {
+    clear(body);
+    const total = recipes.length;
+    const rated = recipes.filter((r) => {
+        const n = Number(r.overallRating);
+        return Number.isFinite(n) && n >= 1 && n <= 5;
+    });
+    const avg = rated.length ? rated.reduce((s, r) => s + Number(r.overallRating), 0) / rated.length : 0;
+    const successCount = recipes.filter((r) => r.success === true).length;
+    const espresso = recipes.filter((r) => r.mode === 'espresso').length;
+    const drip = total - espresso;
+    const beanCount = new Map();
+    recipes.forEach((r) => {
+        const b = (r.beanName || '').trim();
+        if (b) beanCount.set(b, (beanCount.get(b) || 0) + 1);
+    });
+    const topBean = [...beanCount.entries()].sort((a, b) => b[1] - a[1])[0];
+
+    const stats = document.createElement('div');
+    stats.className = 'modal-stats';
+    const tile = (label, value, sub) => {
+        const d = document.createElement('div');
+        d.className = 'tile';
+        const l = document.createElement('div'); l.className = 'tile-label'; l.textContent = label;
+        const v = document.createElement('div'); v.className = 'tile-value'; v.textContent = value;
+        d.appendChild(l); d.appendChild(v);
+        if (sub) { const s = document.createElement('div'); s.className = 'tile-sub'; s.textContent = sub; d.appendChild(s); }
+        return d;
+    };
+    stats.appendChild(tile('총 기록', fmt(total)));
+    stats.appendChild(tile('평균 평점', rated.length ? avg.toFixed(2) : '—', rated.length ? `${fmt(rated.length)}건 평가` : '평가 없음'));
+    stats.appendChild(tile('성공률', total ? Math.round((successCount / total) * 100) + '%' : '—', `${fmt(successCount)}/${fmt(total)}건`));
+    stats.appendChild(tile('에스프레소 비중', total ? Math.round((espresso / total) * 100) + '%' : '—', `ES ${fmt(espresso)} · 드립 ${fmt(drip)}`));
+    body.appendChild(stats);
+
+    if (total) {
+        const meta = document.createElement('p');
+        meta.className = 'card-sub';
+        meta.textContent = `${fmtDate(recipes[recipes.length - 1].date)} ~ ${fmtDate(recipes[0].date)}`
+            + (topBean ? ` · 자주 쓴 원두 ${topBean[0]} (${fmt(topBean[1])}건)` : '');
+        body.appendChild(meta);
+    }
+
+    const title = document.createElement('div');
+    title.className = 'modal-section-title';
+    title.textContent = `레시피 이력 (${fmt(total)}건)`;
+    body.appendChild(title);
+
+    if (!total) {
+        const p = document.createElement('p');
+        p.className = 'modal-empty';
+        p.textContent = '이 사용자의 클라우드 레시피가 없습니다.';
+        body.appendChild(p);
+        return;
+    }
+
+    body.appendChild(buildTable(
+        [
+            { key: 'd', label: '날짜' }, { key: 'b', label: '원두' }, { key: 'm', label: '모드' },
+            { key: 'do', label: '도징', num: true }, { key: 'tp', label: '온도', num: true },
+            { key: 'ti', label: '시간', num: true }, { key: 'y', label: '수율', num: true },
+            { key: 'r', label: '평점', num: true },
+            {
+                key: 's', label: '결과',
+                render: (ok) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'chip ' + (ok ? 'chip-good' : 'chip-bad');
+                    chip.textContent = ok ? '성공' : '실패';
+                    return chip;
+                },
+            },
+        ],
+        recipes.map((r) => {
+            const d = new Date(r.date);
+            return {
+                d: isNaN(d) ? '—' : `${dayKey(d).slice(5)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+                b: r.beanName || '—',
+                m: r.mode === 'espresso' ? '에스프레소' : '핸드드립',
+                do: r.dosing != null ? r.dosing + 'g' : '—',
+                tp: r.temp != null ? r.temp + '°C' : '—',
+                ti: r.time != null ? r.time + 's' : '—',
+                y: r.yield != null ? r.yield + 'g' : '—',
+                r: r.overallRating != null ? r.overallRating : '—',
+                s: r.success === true,
+            };
+        })
+    ));
+}
+
+function closeUserModal() {
+    el('user-modal').classList.add('hidden');
+    clear(el('um-body'));
+}
+
 /* ────────────────────────── render ────────────────────────── */
 
 function render() {
@@ -1569,6 +1835,9 @@ function render() {
 
     el('funnel-sub').textContent = `${label} · 기록을 남긴 사용자가 얼마나 정착하는가`;
     renderFunnel(el('funnel-wrap'), a.funnel);
+
+    // 사용자 목록 — 누적 로스터라 기간과 무관하지만, 렌더 흐름상 여기서 함께 그린다.
+    renderUsers(el('users-wrap'), sortedUserRows());
 
     // ── 마케팅 지표 ──
     // 신규 유입·리텐션은 **allRecipes**(전체)로 계산한다. scoped를 넘기면 기간 밖에서
@@ -1976,6 +2245,25 @@ function wireUI() {
             btn.textContent = showTable ? '차트로 보기' : '표로 보기';
         });
     });
+
+    // ── 사용자 목록 정렬 토글 + 상세 모달 닫기 ──
+    const sortBtn = el('users-sort');
+    if (sortBtn) {
+        sortBtn.addEventListener('click', () => {
+            userSort = userSort === 'count' ? 'recent' : 'count';
+            sortBtn.textContent = userSort === 'count' ? '기록순' : '최근순';
+            renderUsers(el('users-wrap'), sortedUserRows());
+        });
+    }
+    const modal = el('user-modal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target.closest('[data-close]')) closeUserModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeUserModal();
+        });
+    }
 
     // ── 집계 재생성 ──
     // 평소 경로에서 사라진 '전체 읽기'를 여기서만 의도적으로 한 번 수행한다.
