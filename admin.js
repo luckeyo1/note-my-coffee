@@ -23,6 +23,7 @@ const isDemo = new URLSearchParams(location.search).get('demo') === '1';
 let allRecipes = [];
 let rangeDays = 30;
 let userSort = 'count';   // 사용자 목록 정렬: 'count'(기록순) | 'recent'(최근순)
+let leads = [];           // 리드마그넷으로 수집된 이메일 (leads 컬렉션)
 
 // 데이터 출처. 'aggregate'는 stats_daily/users를 읽는 가벼운 경로,
 // 'scan'은 recipes 전체를 내려받는 예전 경로다(집계가 아직 없거나 권한이 없을 때).
@@ -1785,6 +1786,89 @@ function closeUserModal() {
     clear(el('um-body'));
 }
 
+/* ─────────────────── 리드 (이메일 수집) ───────────────────
+ *
+ * 취향 검사 결과의 옵트인이 leads 컬렉션에 쌓는다(landing.js). 여기선 관리자만
+ * 읽어 목록으로 보여주고 CSV로 내보낸다. 발송 백엔드는 없다 — 리스트만 모은다.
+ */
+
+const SOURCE_KO = { quiz: '취향 검사' };
+
+async function loadLeads(fb) {
+    try {
+        const snap = await fb.getDocs(fb.collection(fb.db, 'leads'));
+        const out = [];
+        snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+        return out.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    } catch (e) {
+        // 규칙에 leads가 없거나 권한이 없다 → 카드만 비운다(대시보드는 정상).
+        console.warn('[Leads] 리드를 읽지 못했습니다 (규칙에 leads가 있는지 확인).', e);
+        return [];
+    }
+}
+
+function renderLeads(wrap, rows) {
+    clear(wrap);
+    el('leads-sub').textContent = rows.length
+        ? `총 ${fmt(rows.length)}명 · 취향 검사 결과에서 이메일을 남긴 방문자`
+        : '아직 수집된 이메일이 없습니다. (취향 검사 결과 화면의 옵트인으로 쌓입니다)';
+    el('leads-export').disabled = !rows.length;
+    if (!rows.length) return;
+
+    wrap.appendChild(buildTable(
+        [
+            { key: 'email', label: '이메일' },
+            { key: 'src', label: '출처' },
+            { key: 'when', label: '수집일' },
+        ],
+        rows.map((r) => ({
+            email: r.email || '—',
+            src: (SOURCE_KO[r.source] || r.source || '—') + (r.profileTitle ? ` · ${r.profileTitle}` : ''),
+            when: fmtDate(r.createdAt),
+        }))
+    ));
+}
+
+function exportLeadsCsv(rows) {
+    if (!rows.length) return;
+    const cols = ['email', 'source', 'profile', 'profileTitle', 'createdAt'];
+    const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const csv = [cols.join(',')]
+        .concat(rows.map((r) => cols.map((k) => esc(r[k])).join(',')))
+        .join('\r\n');
+    // 앞의 BOM은 엑셀이 UTF-8 한글을 깨지 않게 한다.
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads-${dayKey(new Date())}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+// 데모용 가짜 리드 — 시드 고정이라 새로고침해도 같은 화면.
+function makeDemoLeads() {
+    const rnd = mulberry32(20260728);
+    const titles = ['화사한 향미 탐험가', '밸런스의 클래식', '고소한 위로 한 잔', '묵직한 바디 애호가'];
+    const profs = ['A', 'B', 'C', 'D'];
+    const out = [];
+    const n = 14;
+    for (let i = 0; i < n; i++) {
+        const p = Math.floor(rnd() * 4);
+        out.push({
+            id: 'demo-lead-' + i,
+            email: `taster${String(i + 1).padStart(2, '0')}@example.com`,
+            source: 'quiz',
+            profile: profs[p],
+            profileTitle: titles[p],
+            createdAt: new Date(Date.now() - Math.floor(rnd() * 60) * 864e5).toISOString(),
+        });
+    }
+    return out.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
 /* ────────────────────────── render ────────────────────────── */
 
 function render() {
@@ -1838,6 +1922,8 @@ function render() {
 
     // 사용자 목록 — 누적 로스터라 기간과 무관하지만, 렌더 흐름상 여기서 함께 그린다.
     renderUsers(el('users-wrap'), sortedUserRows());
+    // 리드 — 누적. 부팅 때 한 번 읽어둔 leads를 그린다.
+    renderLeads(el('leads-wrap'), leads);
 
     // ── 마케팅 지표 ──
     // 신규 유입·리텐션은 **allRecipes**(전체)로 계산한다. scoped를 넘기면 기간 밖에서
@@ -2265,6 +2351,10 @@ function wireUI() {
         });
     }
 
+    // 리드 CSV 내보내기
+    const leadsExport = el('leads-export');
+    if (leadsExport) leadsExport.addEventListener('click', () => exportLeadsCsv(leads));
+
     // ── 집계 재생성 ──
     // 평소 경로에서 사라진 '전체 읽기'를 여기서만 의도적으로 한 번 수행한다.
     const btnRebuild = el('btn-rebuild');
@@ -2322,6 +2412,7 @@ function showGate(title, msg, node) {
 
 if (isDemo) {
     allRecipes = makeDemoRecipes();
+    leads = makeDemoLeads();
     el('demo-banner').classList.remove('hidden');
     el('who').textContent = '데모 모드';
     el('btn-logout').classList.add('hidden');
@@ -2385,6 +2476,10 @@ if (isDemo) {
                         dataMode = 'scan';
                         allRecipes = await loadAllRecipes(fb);
                     }
+
+                    // 리드는 데이터 경로와 무관하게 항상 시도한다(관리자만 읽음).
+                    // 규칙에 leads가 없으면 조용히 빈 배열로 떨어진다.
+                    leads = await loadLeads(fb);
 
                     // 랜딩의 사회적 증거용 공개 집계. recipes 자체는 비공개라
                     // 익명 방문자가 셀 수 없으므로 여기서 숫자만 공개 문서에 남긴다.

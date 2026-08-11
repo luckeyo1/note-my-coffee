@@ -1325,6 +1325,65 @@
             margin-bottom: 20px;
         }
 
+        /* ── 리드마그넷: 취향 검사 결과 하단 이메일 옵트인 ── */
+        .quiz-lead {
+            margin-top: 28px;
+            padding: 22px;
+            border: 1px solid var(--gold-border);
+            border-radius: 14px;
+            background: var(--gold-dim);
+        }
+        .quiz-lead-head {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .quiz-lead-desc {
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--sub);
+            margin-bottom: 16px;
+        }
+        .quiz-lead-form { display: flex; gap: 8px; flex-wrap: wrap; }
+        .quiz-lead-input {
+            flex: 1 1 200px;
+            min-width: 0;
+            font: inherit;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            transition: border-color 0.18s;
+        }
+        .quiz-lead-input::placeholder { color: var(--muted); }
+        .quiz-lead-input:focus { outline: none; border-color: var(--gold); }
+        .quiz-lead-btn {
+            flex: 0 0 auto;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--gold);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 22px;
+            cursor: pointer;
+            transition: filter 0.18s, opacity 0.18s;
+        }
+        .quiz-lead-btn:hover:not(:disabled) { filter: brightness(1.06); }
+        .quiz-lead-btn:disabled { opacity: 0.6; cursor: default; }
+        .quiz-lead-msg { font-size: 12.5px; margin-top: 10px; min-height: 1em; color: var(--sub); }
+        .quiz-lead-msg.err { color: #c0392b; }
+        .quiz-lead-done {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
         /* ── FAQ ── <details>라 JS가 0줄이고 기본 접힘이라 페이지 길이 부담이 없다. */
         .faq-list { margin-top: 42px; border-top: 1px solid var(--border); }
         .faq-item { border-bottom: 1px solid var(--border); }
@@ -2772,6 +2831,17 @@
                     '</div>' +
                     '</div>').join('') +
                 '</div>' +
+                // 리드마그넷 — 몰입 절정(결과 직후)에서 이메일 옵트인. 추천은 이미
+                // 무료로 줬고, 여기서는 '앞으로도' 받아볼지를 묻는다(관계의 연장).
+                '<div class="quiz-lead" id="quiz-lead">' +
+                '<div class="quiz-lead-head">☕ 취향에 맞는 원두, 계속 받아보시겠어요?</div>' +
+                '<p class="quiz-lead-desc">새로 나온 추천 원두와 다이얼링 팁을 이메일로 보내드립니다. 스팸 없이, 언제든 해지할 수 있어요.</p>' +
+                '<form class="quiz-lead-form" id="quiz-lead-form" novalidate>' +
+                '<input type="email" class="quiz-lead-input" id="quiz-lead-email" placeholder="이메일 주소" autocomplete="email" inputmode="email" required>' +
+                '<button type="submit" class="quiz-lead-btn" id="quiz-lead-btn">받아보기</button>' +
+                '</form>' +
+                '<p class="quiz-lead-msg" id="quiz-lead-msg" role="status" aria-live="polite"></p>' +
+                '</div>' +
                 // 검사를 끝낸 사람이 페이지에서 가장 몰입도가 높다. 제품으로 돌려보낸다.
                 '<div class="quiz-cta">' +
                 '<p class="quiz-cta-text">추천 원두를 받았다면, 첫 추출부터 기록해보세요.<br>' +
@@ -2843,6 +2913,43 @@
                 answers.length = 0;
                 renderQuestion();
             });
+
+            // 리드 옵트인 — 이메일을 leads 컬렉션에 남긴다(landing.js의 nmcSaveLead).
+            // 실패해도 결과 화면은 그대로다. 성공/오류를 폼 아래 문구로만 알린다.
+            const leadForm = document.getElementById('quiz-lead-form');
+            if (leadForm) {
+                leadForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const input = document.getElementById('quiz-lead-email');
+                    const btn = document.getElementById('quiz-lead-btn');
+                    const msg = document.getElementById('quiz-lead-msg');
+                    const email = (input.value || '').trim();
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        msg.textContent = '올바른 이메일 주소를 입력해주세요.';
+                        msg.className = 'quiz-lead-msg err';
+                        input.focus();
+                        return;
+                    }
+                    btn.disabled = true;
+                    const original = btn.textContent;
+                    btn.textContent = '보내는 중…';
+                    msg.textContent = '';
+                    msg.className = 'quiz-lead-msg';
+                    try {
+                        if (!window.nmcSaveLead) throw new Error('not-ready');
+                        await window.nmcSaveLead({ email, source: 'quiz', profile: key, profileTitle: r.title });
+                        window.nmcTrack?.('lead_capture', { source: 'quiz', profile: key });
+                        document.getElementById('quiz-lead').innerHTML =
+                            '<div class="quiz-lead-done">✓ 등록됐어요. 좋은 원두 소식이 생기면 보내드릴게요.</div>';
+                    } catch (err) {
+                        console.error('[Quiz] 리드 저장 실패', err);
+                        msg.textContent = '잠시 후 다시 시도해주세요.';
+                        msg.className = 'quiz-lead-msg err';
+                        btn.disabled = false;
+                        btn.textContent = original;
+                    }
+                });
+            }
         }
 
         renderQuestion();

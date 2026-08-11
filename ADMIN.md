@@ -101,6 +101,16 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if request.auth != null;
     }
+
+    // 리드마그넷 이메일. 랜딩 방문자는 로그인 상태가 아니므로 create는 공개로
+    // 열되(최소 검증), 읽기·삭제는 관리자만. 이메일(PII)은 관리자만 본다.
+    match /leads/{leadId} {
+      allow create, update: if request.resource.data.email is string
+                            && request.resource.data.email.size() > 3
+                            && request.resource.data.email.size() < 200
+                            && request.resource.data.source is string;
+      allow read, delete: if isAdmin();
+    }
   }
 }
 ```
@@ -160,6 +170,21 @@ service cloud.firestore {
   않는다(백필은 `recipes`만 읽어 이름을 알 수 없으므로).
 - **개인정보 주의**: `users` 문서에 이메일이 담기지만 읽기는 관리자와 본인뿐이다
   (규칙의 `users` read = `isAdmin() || 본인`).
+
+## 리드마그넷 (이메일 수집)
+
+랜딩의 **취향 검사 결과** 화면 하단에 이메일 옵트인이 있다. 추천 원두는 이미
+무료로 주고, 그 몰입 절정에서 "앞으로도 받아볼지"를 물어 이메일을 모은다.
+
+- 방문자가 이메일을 남기면 `leads` 컬렉션에 쌓인다(`landing.js`의 `window.nmcSaveLead`).
+  인라인 퀴즈 스크립트는 모듈 import를 못 써서, `nmcTrack`처럼 전역으로 노출한다.
+- 문서 ID는 **이메일의 FNV-1a 해시**(`l`+해시)라 같은 사람이 다시 남겨도 중복되지
+  않는다. 필드: `email`·`source`(quiz)·`profile`(A~D)·`profileTitle`·`createdAt`·`path`.
+- 관리자 페이지의 **리드 카드**에서 목록을 보고 **CSV로 내보낸다**(BOM 포함 — 엑셀
+  한글 안전). 발송 백엔드는 없다 — 리스트만 모으고, 발송은 나중 과제다.
+- **규칙이 전제다.** 위 규칙 블록에 `leads`가 없으면 옵트인은 `permission-denied`로
+  실패하고 리드 카드도 빈다. 콘솔에 규칙을 다시 게시해야 한다.
+- 계측: 옵트인 성공 시 `lead_capture`(source·profile) 이벤트를 보낸다.
 
 ## 알아둘 한계
 

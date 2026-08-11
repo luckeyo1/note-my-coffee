@@ -4,6 +4,7 @@ import {
     onAuthStateChanged,
     doc,
     getDoc,
+    setDoc,
     track
 } from "./firebase-config.js";
 // auth-ui의 signInWithChooser는 더 이상 랜딩에서 쓰지 않는다 — 주 CTA가 로그인
@@ -25,6 +26,33 @@ const queuedEvents = Array.isArray(window.nmcTrackQueue) ? window.nmcTrackQueue 
 window.nmcTrack = track;
 window.nmcTrackQueue = null;
 queuedEvents.forEach(([name, params]) => track(name, params));
+
+// 취향 검사 결과의 이메일 옵트인(리드마그넷)이 부르는 전역. 인라인 클래식
+// 스크립트는 모듈 import를 못 쓰므로 track과 같은 방식으로 하나 걸어둔다.
+// 리드는 leads 컬렉션에 쌓이고(규칙상 누구나 생성, 관리자만 읽음), 이메일을
+// 해시한 값을 문서 ID로 삼아 같은 사람이 다시 남겨도 중복 문서가 생기지 않는다.
+window.nmcSaveLead = async (lead) => {
+    const email = String((lead && lead.email) || '').trim().toLowerCase();
+    // 서버 규칙에서도 검증하지만, 헛된 쓰기를 줄이려 클라이언트에서 먼저 막는다.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 190) {
+        throw new Error('invalid-email');
+    }
+    // FNV-1a — 원두 ID(beanDocId)와 같은 방식. 이메일을 그대로 ID로 쓰면
+    // 금지 문자·길이 문제가 있어 짧고 안정적인 해시로 바꾼다.
+    let h = 0x811c9dc5;
+    for (let i = 0; i < email.length; i++) {
+        h ^= email.charCodeAt(i);
+        h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    await setDoc(doc(db, 'leads', 'l' + h.toString(36)), {
+        email,
+        source: (lead && lead.source) || 'unknown',
+        profile: (lead && lead.profile) || '',
+        profileTitle: (lead && lead.profileTitle) || '',
+        createdAt: new Date().toISOString(),
+        path: location.pathname,
+    }, { merge: true });
+};
 
 document.addEventListener('DOMContentLoaded', () => {
 
