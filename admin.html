@@ -424,6 +424,18 @@
         </div>
     </section>
 
+    <!-- 사이트 방문: stats_visits(익명 카운터). 기록을 남기지 않고 떠난 방문자까지
+         포함하는 유일한 카드라, 기록 추이 앞에 둬서 '유입 → 기록' 순서로 읽힌다. -->
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">사이트 방문</h2>
+            <button class="card-toggle" type="button" data-tv="tv-visits">표로 보기</button>
+        </div>
+        <p class="card-sub" id="visits-sub">하루에 다녀간 방문자</p>
+        <div class="chart-wrap" id="visits-wrap"></div>
+        <div class="tableview" id="tv-visits"></div>
+    </section>
+
     <!-- 일별 추이: 단일 시리즈 → 범례 없음 (제목이 무엇인지 말해준다) -->
     <section class="card">
         <div class="card-head">
@@ -566,8 +578,12 @@
     <section class="card note-card">
         <h2 class="card-title">이 숫자들이 포함하지 않는 것</h2>
         <ul class="note-list">
-            <li><strong>랜딩 방문·CTA 클릭·취향 검사</strong>는 GA4에만 있고 Firestore엔 없다.
-                유입 <em>이전</em> 단계는 GA4 탐색 보고서에서 본다(<code>docs/funnel.md</code>).</li>
+            <li><strong>방문자의 신원</strong>은 알 수 없다. 위 방문 카드는 익명 카운터라
+                "몇 명이 왔나"만 말하고, 로그인하지 않은 방문자가 <em>누구인지</em>는
+                저장하지 않는다. 순 방문자는 브라우저·하루 기준이라
+                시크릿 모드·다른 기기는 새로 센다.</li>
+            <li><strong>CTA 클릭·취향 검사 단계별 이탈</strong>은 GA4에만 있다.
+                화면 안에서 어디까지 갔는지는 GA4 탐색 보고서에서 본다(<code>docs/funnel.md</code>).</li>
             <li><strong>게스트 기록</strong>은 localStorage에만 있어 잡히지 않는다.
                 로그인 후 이관된 것만 보인다.</li>
             <li>가입일 필드가 없어 <strong>첫 기록일을 가입 시점의 프록시</strong>로 쓴다.</li>

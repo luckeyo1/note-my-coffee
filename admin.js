@@ -24,6 +24,7 @@ let allRecipes = [];
 let rangeDays = 30;
 let userSort = 'count';   // 사용자 목록 정렬: 'count'(기록순) | 'recent'(최근순)
 let leads = [];           // 리드마그넷으로 수집된 이메일 (leads 컬렉션)
+let visits = new Map();   // dayKey → { sessions, visitors, p_* } (stats_visits 컬렉션)
 
 // 데이터 출처. 'aggregate'는 stats_daily/users를 읽는 가벼운 경로,
 // 'scan'은 recipes 전체를 내려받는 예전 경로다(집계가 아직 없거나 권한이 없을 때).
@@ -1869,6 +1870,82 @@ function makeDemoLeads() {
     return out.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
+/* ─────────────────── 사이트 방문 (stats_visits) ───────────────────
+ *
+ * 기록을 남기지 않고 떠난 방문자까지 잡는 유일한 카드다. 개인은 식별하지 않는다 —
+ * 익명 카운터일 뿐이고, 누가 왔는지는 애초에 저장하지 않는다(firebase-config.js).
+ *
+ * visitors는 '브라우저·하루당 1회'라 순 방문자의 근사치다. 시크릿 모드·캐시 삭제·
+ * 다른 기기는 새로 센다. sessions는 세션당 1회다.
+ */
+
+const PAGE_KO = { landing: '랜딩', app: '기록 화면', logbook: '로그북' };
+
+async function loadVisits(fb) {
+    try {
+        const snap = await fb.getDocs(fb.collection(fb.db, 'stats_visits'));
+        const m = new Map();
+        snap.forEach((d) => m.set(d.id, d.data()));
+        return m;
+    } catch (e) {
+        // 규칙에 stats_visits가 없거나 권한이 없다 → 카드만 비운다.
+        console.warn('[Visits] 방문 집계를 읽지 못했습니다 (규칙 확인).', e);
+        return new Map();
+    }
+}
+
+function visitView(map, days) {
+    const keys = rangeDayKeys(map, days);
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+    const series = keys.map((k) => ({ key: k, count: num((map.get(k) || {}).visitors) }));
+    let visitors = 0, sessions = 0;
+    const pages = new Map();
+    for (const k of keys) {
+        const d = map.get(k) || {};
+        visitors += num(d.visitors);
+        sessions += num(d.sessions);
+        for (const [field, v] of Object.entries(d)) {
+            if (field.startsWith('p_')) {
+                const p = field.slice(2);
+                pages.set(p, (pages.get(p) || 0) + num(v));
+            }
+        }
+    }
+    return {
+        series,
+        visitors,
+        sessions,
+        rows: keys.map((k) => {
+            const d = map.get(k) || {};
+            return { k, visitors: num(d.visitors), sessions: num(d.sessions) };
+        }),
+        pages: [...pages.entries()].sort((a, b) => b[1] - a[1]),
+    };
+}
+
+// 데모용 방문 — 시드 고정. 기록 수보다 훨씬 많아야 '대부분은 그냥 떠난다'가 보인다.
+function makeDemoVisits() {
+    const rnd = mulberry32(20260729);
+    const m = new Map();
+    for (let i = 89; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        const weekend = [0, 6].includes(d.getDay()) ? 1.4 : 1;
+        const visitors = Math.round((14 + rnd() * 26) * weekend * (1 + (89 - i) / 160));
+        const sessions = visitors + Math.round(rnd() * visitors * 0.5);
+        const landing = Math.round(sessions * (0.62 + rnd() * 0.1));
+        const app = Math.round((sessions - landing) * (0.7 + rnd() * 0.2));
+        m.set(dayKey(d), {
+            visitors, sessions,
+            p_landing: landing,
+            p_app: app,
+            p_logbook: Math.max(0, sessions - landing - app),
+        });
+    }
+    return m;
+}
+
 /* ────────────────────────── render ────────────────────────── */
 
 function render() {
@@ -1910,6 +1987,20 @@ function render() {
         successTile.insertBefore(meter, el('kpi-success-sub'));
     }
     meter.firstChild.style.width = Math.round(a.successRate * 100) + '%';
+
+    // 사이트 방문 — 기록을 남기지 않고 떠난 사람까지 포함하는 유일한 카드다.
+    const v = visitView(visits, rangeDays);
+    // 방문 → 기록 전환. 분모(브라우저)와 분자(계정)의 모집단이 달라 정확한 비율은
+    // 아니지만, 방향을 보는 데는 이게 유일한 단서다. 그래서 '약'이라고 못박는다.
+    const convText = v.visitors && a.users
+        ? ` · 이 중 약 ${Math.round((a.users / v.visitors) * 100)}%가 기록으로 이어짐`
+        : '';
+    el('visits-sub').textContent = v.visitors || v.sessions
+        ? `${label} · 방문자 ${fmt(v.visitors)}명 · 세션 ${fmt(v.sessions)}회`
+            + (v.pages.length ? ` · ${v.pages.map(([p, n]) => `${PAGE_KO[p] || p} ${fmt(n)}`).join(' · ')}` : '')
+            + convText
+        : '아직 방문 집계가 없습니다. (배포 후 방문이 쌓이면 표시됩니다)';
+    renderTrend(el('visits-wrap'), v.series, '일별 방문자 추이');
 
     el('trend-sub').textContent = `${label} · 하루에 저장된 레시피 수`;
     renderTrend(el('trend-wrap'), a.series);
@@ -2010,6 +2101,16 @@ function render() {
     });
 
     // 표 뷰 — 모든 차트는 표로도 읽을 수 있어야 한다
+    clear(el('tv-visits'));
+    el('tv-visits').appendChild(buildTable(
+        [
+            { key: 'd', label: '날짜' },
+            { key: 'v', label: '방문자', num: true },
+            { key: 's', label: '세션', num: true },
+        ],
+        v.rows.map((r) => ({ d: r.k, v: fmt(r.visitors), s: fmt(r.sessions) }))
+    ));
+
     clear(el('tv-trend'));
     el('tv-trend').appendChild(buildTable(
         [{ key: 'd', label: '날짜' }, { key: 'c', label: '기록 수', num: true }],
@@ -2413,6 +2514,7 @@ function showGate(title, msg, node) {
 if (isDemo) {
     allRecipes = makeDemoRecipes();
     leads = makeDemoLeads();
+    visits = makeDemoVisits();
     el('demo-banner').classList.remove('hidden');
     el('who').textContent = '데모 모드';
     el('btn-logout').classList.add('hidden');
@@ -2477,9 +2579,10 @@ if (isDemo) {
                         allRecipes = await loadAllRecipes(fb);
                     }
 
-                    // 리드는 데이터 경로와 무관하게 항상 시도한다(관리자만 읽음).
-                    // 규칙에 leads가 없으면 조용히 빈 배열로 떨어진다.
+                    // 리드·방문은 데이터 경로와 무관하게 항상 시도한다(관리자만 읽음).
+                    // 규칙에 없으면 조용히 비어서 떨어진다.
                     leads = await loadLeads(fb);
+                    visits = await loadVisits(fb);
 
                     // 랜딩의 사회적 증거용 공개 집계. recipes 자체는 비공개라
                     // 익명 방문자가 셀 수 없으므로 여기서 숫자만 공개 문서에 남긴다.

@@ -5,7 +5,8 @@ import {
     doc,
     getDoc,
     setDoc,
-    track
+    track,
+    bumpVisit
 } from "./firebase-config.js";
 // auth-ui의 signInWithChooser는 더 이상 랜딩에서 쓰지 않는다 — 주 CTA가 로그인
 // 시트 없이 앱으로 직행하도록 바뀌었다. 로그인은 앱 헤더와 게스트 게이트가 담당한다.
@@ -61,6 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // (firebase-config.js). 그래서 퍼널 최상단(랜딩 방문 수) 분모가 실제보다 작게
     // 잡혔다. 로드 즉시 한 번 보내 계측을 켠다 — app.html의 app_page_view와 대칭.
     track('landing_view');
+    // 방문은 GA4와 별개로 Firestore에도 센다 — 관리자 대시보드가 읽는 건 여기다.
+    bumpVisit('landing');
 
     // ====== Auth & Navigation (Three.js와 독립적으로 실행) ======
     const updateCtaText = (text) => {

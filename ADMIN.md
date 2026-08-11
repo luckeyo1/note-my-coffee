@@ -102,6 +102,13 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // 방문 카운터. 비로그인 방문자도 세야 하므로 쓰기가 공개다. 대신 개인정보가
+    // 없고(익명 카운터), 읽기는 관리자만 — 방문 수가 밖으로 새지 않는다.
+    match /stats_visits/{day} {
+      allow read: if isAdmin();
+      allow write: if true;
+    }
+
     // 리드마그넷 이메일. 랜딩 방문자는 로그인 상태가 아니므로 create는 공개로
     // 열되(최소 검증), 읽기·삭제는 관리자만. 이메일(PII)은 관리자만 본다.
     match /leads/{leadId} {
@@ -170,6 +177,26 @@ service cloud.firestore {
   않는다(백필은 `recipes`만 읽어 이름을 알 수 없으므로).
 - **개인정보 주의**: `users` 문서에 이메일이 담기지만 읽기는 관리자와 본인뿐이다
   (규칙의 `users` read = `isAdmin() || 본인`).
+
+## 사이트 방문 (stats_visits)
+
+대시보드는 Firestore만 읽으므로 원래 **기록을 남긴 사람**만 보였다. 그래서 방문 수를
+아주 가벼운 익명 카운터로 Firestore에도 남긴다 — 기록 없이 떠난 방문자까지 잡는
+유일한 카드다.
+
+- `firebase-config.js`의 `bumpVisit(page)`가 랜딩·기록 화면·로그북 진입 시 호출된다.
+  `stats_visits/{YYYY-MM-DD}` 문서에 `increment`로 올린다.
+- **개인을 식별하지 않는다.** 누가 왔는지는 저장하지 않고 숫자만 센다.
+  비로그인 방문자의 신원은 원래 알 수 없고, 알려고 해서도 안 된다.
+- 쓰기를 줄이려 플래그 두 개를 쓴다 — `sessions`는 **세션당 1회**(sessionStorage),
+  `visitors`는 **브라우저·하루당 1회**(localStorage). 그래서 `visitors`는 순 방문자의
+  **근사치**다: 시크릿 모드·캐시 삭제·다른 기기는 새로 센다.
+- 플래그는 **쓰기가 성공한 뒤에** 세운다. 규칙 거부·오프라인일 때 플래그만 남아
+  영영 집계되지 않는 상태를 막는다.
+- 화면별 분해는 `p_landing`·`p_app`·`p_logbook` 필드에 쌓인다.
+- 카드의 "약 N%가 기록으로 이어짐"은 분모(브라우저)와 분자(계정)의 모집단이 달라
+  정확한 전환율이 아니다. **방향만** 보는 근사치다.
+- 규칙에 `stats_visits`가 없으면 집계가 안 되고 카드도 빈다.
 
 ## 리드마그넷 (이메일 수집)
 
