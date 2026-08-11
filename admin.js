@@ -25,6 +25,9 @@ let rangeDays = 30;
 let userSort = 'count';   // 사용자 목록 정렬: 'count'(기록순) | 'recent'(최근순)
 let leads = [];           // 리드마그넷으로 수집된 이메일 (leads 컬렉션)
 let visits = new Map();   // dayKey → { sessions, visitors, p_* } (stats_visits 컬렉션)
+// 리드·방문은 대시보드를 먼저 띄운 뒤 배경에서 받는다. 도착 전에 '아직 없습니다'를
+// 보여주면 잠시 뒤 숫자로 바뀌어 거짓말이 된다 — 그래서 로딩 중임을 구분한다.
+let secondaryReady = false;
 
 // 데이터 출처. 'aggregate'는 stats_daily/users를 읽는 가벼운 경로,
 // 'scan'은 recipes 전체를 내려받는 예전 경로다(집계가 아직 없거나 권한이 없을 때).
@@ -1812,7 +1815,9 @@ function renderLeads(wrap, rows) {
     clear(wrap);
     el('leads-sub').textContent = rows.length
         ? `총 ${fmt(rows.length)}명 · 취향 검사 결과에서 이메일을 남긴 방문자`
-        : '아직 수집된 이메일이 없습니다. (취향 검사 결과 화면의 옵트인으로 쌓입니다)';
+        : secondaryReady
+            ? '아직 수집된 이메일이 없습니다. (취향 검사 결과 화면의 옵트인으로 쌓입니다)'
+            : '불러오는 중…';
     el('leads-export').disabled = !rows.length;
     if (!rows.length) return;
 
@@ -1999,7 +2004,9 @@ function render() {
         ? `${label} · 방문자 ${fmt(v.visitors)}명 · 세션 ${fmt(v.sessions)}회`
             + (v.pages.length ? ` · ${v.pages.map(([p, n]) => `${PAGE_KO[p] || p} ${fmt(n)}`).join(' · ')}` : '')
             + convText
-        : '아직 방문 집계가 없습니다. (배포 후 방문이 쌓이면 표시됩니다)';
+        : secondaryReady
+            ? '아직 방문 집계가 없습니다. (배포 후 방문이 쌓이면 표시됩니다)'
+            : '불러오는 중…';
     renderTrend(el('visits-wrap'), v.series, '일별 방문자 추이');
 
     el('trend-sub').textContent = `${label} · 하루에 저장된 레시피 수`;
@@ -2515,6 +2522,7 @@ if (isDemo) {
     allRecipes = makeDemoRecipes();
     leads = makeDemoLeads();
     visits = makeDemoVisits();
+    secondaryReady = true;
     el('demo-banner').classList.remove('hidden');
     el('who').textContent = '데모 모드';
     el('btn-logout').classList.add('hidden');
@@ -2566,6 +2574,12 @@ if (isDemo) {
 
                 el('who').textContent = user.email || user.uid;
 
+                // 로딩 상태를 반드시 보여준다. 이게 없으면 데이터를 받는 동안
+                // 로그인 화면이 그대로 떠 있어서 '버튼을 눌러도 아무 일이 없다'로 보인다.
+                showGate('불러오는 중…', '운영 지표를 가져오고 있습니다.');
+                el('btn-login').classList.add('hidden');
+                el('btn-signout-gate').classList.add('hidden');
+
                 try {
                     // ① 가벼운 경로 먼저 — 집계 문서가 있으면 recipes 전체를 안 받는다.
                     agg = await loadAggregates(fb);
@@ -2579,10 +2593,17 @@ if (isDemo) {
                         allRecipes = await loadAllRecipes(fb);
                     }
 
-                    // 리드·방문은 데이터 경로와 무관하게 항상 시도한다(관리자만 읽음).
-                    // 규칙에 없으면 조용히 비어서 떨어진다.
-                    leads = await loadLeads(fb);
-                    visits = await loadVisits(fb);
+                    // 핵심 데이터가 오면 바로 그린다. 아래 보조 데이터(리드·방문)와
+                    // 공개 집계 쓰기를 기다리면 그만큼 첫 화면이 늦어진다.
+                    showDash();
+
+                    // 리드·방문은 보조 카드다. 둘을 **병렬로** 받고, 도착하면 다시
+                    // 그린다 — 예전처럼 직렬로 await하면 왕복 두 번만큼 화면이 밀렸다.
+                    // 규칙에 없거나 권한이 없으면 각자 조용히 비어서 떨어진다.
+                    Promise.all([loadLeads(fb), loadVisits(fb)])
+                        .then(([l, v]) => { leads = l; visits = v; })
+                        .catch((e) => console.warn('[Admin] 보조 지표를 불러오지 못했습니다.', e))
+                        .finally(() => { secondaryReady = true; render(); });
 
                     // 랜딩의 사회적 증거용 공개 집계. recipes 자체는 비공개라
                     // 익명 방문자가 셀 수 없으므로 여기서 숫자만 공개 문서에 남긴다.
@@ -2591,17 +2612,14 @@ if (isDemo) {
                     const totalCount = dataMode === 'aggregate'
                         ? [...agg.daily.values()].reduce((s, d) => s + (Number(d.count) || 0), 0)
                         : allRecipes.length;
+                    // 화면에 필요한 값이 아니라 랜딩용 부수 효과다 — await하지 않는다.
                     // 실패해도 대시보드는 그대로 동작해야 한다.
-                    try {
-                        await fb.setDoc(fb.doc(fb.db, 'public_stats', 'landing'), {
-                            recipeCount: totalCount,
-                            updatedAt: new Date().toISOString()
-                        });
-                    } catch (statErr) {
+                    fb.setDoc(fb.doc(fb.db, 'public_stats', 'landing'), {
+                        recipeCount: totalCount,
+                        updatedAt: new Date().toISOString()
+                    }).catch((statErr) => {
                         console.warn('public_stats 갱신 실패 (대시보드에는 영향 없음)', statErr);
-                    }
-
-                    showDash();
+                    });
                 } catch (err) {
                     const hint = document.createElement('code');
                     hint.textContent = user.uid;
@@ -2611,6 +2629,9 @@ if (isDemo) {
                     );
                     el('gate-msg').appendChild(hint);
                     el('gate-msg').appendChild(document.createTextNode(' 입니다. ADMIN.md를 참고하세요.'));
+                    // 로딩 중에 감췄던 버튼을 되살린다 — 실패 화면에 빠져나갈 길이 없으면 안 된다.
+                    el('btn-login').classList.remove('hidden');
+                    el('btn-signout-gate').classList.remove('hidden');
                 }
             });
         })
