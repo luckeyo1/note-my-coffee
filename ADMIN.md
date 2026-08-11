@@ -101,6 +101,16 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow write: if request.auth != null;
     }
+
+    // 리드마그넷 이메일. 랜딩 방문자는 로그인 상태가 아니므로 create는 공개로
+    // 열되(최소 검증), 읽기·삭제는 관리자만. 이메일(PII)은 관리자만 본다.
+    match /leads/{leadId} {
+      allow create, update: if request.resource.data.email is string
+                            && request.resource.data.email.size() > 3
+                            && request.resource.data.email.size() < 200
+                            && request.resource.data.source is string;
+      allow read, delete: if isAdmin();
+    }
   }
 }
 ```
@@ -133,6 +143,48 @@ service cloud.firestore {
 관리자를 추가하려면 `ADMIN_EMAILS` 배열과 위 규칙의 `isAdmin()` **양쪽 모두**에
 주소를 넣어야 한다. 한쪽만 고치면 화면은 열리는데 데이터가 안 나오거나(규칙 누락),
 데이터 권한은 있는데 화면이 막힌다(배열 누락).
+
+## 사용자 상세 (목록 + 드릴다운)
+
+`활성화·유지 퍼널` 아래 **사용자** 카드는 기록을 남긴 계정을 한 행씩 보여준다.
+기간 필터와 무관한 **누적 로스터**이며(휴면 카드와 같은 현재 시점 관점), `기록순`
+버튼으로 `최근순`과 토글한다.
+
+- 집계 경로에서는 `users` 컬렉션을, 폴백/데모에서는 `recipes`를 사용자별로 묶어 만든다.
+- **행을 누르면** 그 사용자의 개인 지표(총 기록·평균 평점·성공률·에스프레소 비중)와
+  **레시피 이력 표**를 모달로 연다. 스캔/데모 경로는 이미 받아둔 전체에서 걸러 추가
+  조회가 없고, 집계 경로에서만 `where('userId','==',uid)` 단일 조건으로 그 사용자
+  것만 라이브로 읽는다(단일 필드 조건이라 복합 색인이 필요 없다).
+
+### 사용자 식별 — 이름·이메일
+
+레시피에는 `userId`(uid)만 있어 원래는 사용자를 uid로만 구분할 수 있었다. 그래서
+저장 시점 집계(`storage.js`의 `bumpAggregates`)가 이제 `users` 문서에 `displayName`·
+`email`을 함께 남긴다. **본인이 자기 `users` 문서에 쓰는 것**이라 규칙 변경은 필요 없다
+(`users` 쓰기는 이미 본인에게 열려 있다). 값이 없으면(제공자가 안 준 경우) 남기지 않아
+빈 값으로 기존 이름을 덮어쓰지 않는다.
+
+- **소급 적용은 안 된다.** 기존 사용자는 *다음 저장*부터 이름이 붙는다. 클라이언트
+  SDK로는 남의 Auth 계정을 읽을 수 없어, 다시 저장하지 않는 사용자는 uid로 남는다.
+- `집계 재생성`은 `users`를 `{ merge: true }`로 써서 이미 저장된 이름/이메일을 지우지
+  않는다(백필은 `recipes`만 읽어 이름을 알 수 없으므로).
+- **개인정보 주의**: `users` 문서에 이메일이 담기지만 읽기는 관리자와 본인뿐이다
+  (규칙의 `users` read = `isAdmin() || 본인`).
+
+## 리드마그넷 (이메일 수집)
+
+랜딩의 **취향 검사 결과** 화면 하단에 이메일 옵트인이 있다. 추천 원두는 이미
+무료로 주고, 그 몰입 절정에서 "앞으로도 받아볼지"를 물어 이메일을 모은다.
+
+- 방문자가 이메일을 남기면 `leads` 컬렉션에 쌓인다(`landing.js`의 `window.nmcSaveLead`).
+  인라인 퀴즈 스크립트는 모듈 import를 못 써서, `nmcTrack`처럼 전역으로 노출한다.
+- 문서 ID는 **이메일의 FNV-1a 해시**(`l`+해시)라 같은 사람이 다시 남겨도 중복되지
+  않는다. 필드: `email`·`source`(quiz)·`profile`(A~D)·`profileTitle`·`createdAt`·`path`.
+- 관리자 페이지의 **리드 카드**에서 목록을 보고 **CSV로 내보낸다**(BOM 포함 — 엑셀
+  한글 안전). 발송 백엔드는 없다 — 리스트만 모으고, 발송은 나중 과제다.
+- **규칙이 전제다.** 위 규칙 블록에 `leads`가 없으면 옵트인은 `permission-denied`로
+  실패하고 리드 카드도 빈다. 콘솔에 규칙을 다시 게시해야 한다.
+- 계측: 옵트인 성공 시 `lead_capture`(source·profile) 이벤트를 보낸다.
 
 ## 알아둘 한계
 

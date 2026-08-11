@@ -46,7 +46,7 @@ const beanDocId = (name) => {
  * @param {string} uid
  * @param {1|-1} delta
  */
-async function bumpAggregates(recipe, uid, delta) {
+async function bumpAggregates(recipe, uid, delta, profile) {
     const key = dayKeyOf(recipe && recipe.date);
     if (!key || !uid) return;
 
@@ -92,6 +92,12 @@ async function bumpAggregates(recipe, uid, delta) {
     // 시각이 두 번 써질 뿐이라 무해하다(recipeCount는 increment라 영향 없다).
     const userRef = doc(db, 'users', uid);
     const patch = { lastSeenAt: new Date().toISOString(), recipeCount: increment(delta) };
+    // 이름/이메일은 본인이 자기 users 문서에 쓰는 것이라 규칙 변경이 필요 없다.
+    // 제공자가 값을 준 경우에만 남기고, 빈 값으로 기존 값을 덮어쓰지 않는다.
+    if (profile) {
+        if (profile.displayName) patch.displayName = profile.displayName;
+        if (profile.email) patch.email = profile.email;
+    }
     if (delta > 0) {
         const snap = await getDoc(userRef);
         if (!snap.exists() || !snap.data().firstSeenAt) {
@@ -110,9 +116,9 @@ async function bumpAggregates(recipe, uid, delta) {
 }
 
 // 집계 실패가 본 기능을 끌고 내려가지 않게 감싼다.
-async function bumpAggregatesSafe(recipe, uid, delta) {
+async function bumpAggregatesSafe(recipe, uid, delta, profile) {
     try {
-        await bumpAggregates(recipe, uid, delta);
+        await bumpAggregates(recipe, uid, delta, profile);
     } catch (e) {
         console.warn('[Stats] 집계 갱신 실패 — 기록 자체는 정상 처리됐습니다.', e);
     }
@@ -124,6 +130,14 @@ const CoffeeNotesStorage = {
 
     setCurrentUser(user) {
         this.currentUser = user;
+    },
+
+    // 관리자 대시보드에서 uid 대신 사람이 알아볼 이름/이메일로 보이게 하려고
+    // 집계에 함께 넘긴다. 값이 없으면(제공자가 안 준 경우) null.
+    _profile() {
+        const u = this.currentUser;
+        if (!u) return null;
+        return { displayName: u.displayName || '', email: u.email || '' };
     },
 
     /**
@@ -216,7 +230,7 @@ const CoffeeNotesStorage = {
                     const data = { ...r, userId: this.currentUser.uid, updatedAt: new Date().toISOString() };
                     delete data.id; // Firestore assigns its own id
                     await addDoc(collection(db, "recipes"), data);
-                    await bumpAggregatesSafe(data, this.currentUser.uid, 1);
+                    await bumpAggregatesSafe(data, this.currentUser.uid, 1, this._profile());
                     migrated++;
                 } catch (e) {
                     console.error("Error migrating local recipe to cloud", e);
@@ -245,7 +259,7 @@ const CoffeeNotesStorage = {
                 // Remove local id if it exists, Firestore will generate one
                 delete recipeData.id;
                 const docRef = await addDoc(collection(db, "recipes"), recipeData);
-                await bumpAggregatesSafe(recipeData, this.currentUser.uid, 1);
+                await bumpAggregatesSafe(recipeData, this.currentUser.uid, 1, this._profile());
                 return docRef.id;
             } catch (e) {
                 console.error("Error saving recipe to Firestore", e);
@@ -284,7 +298,7 @@ const CoffeeNotesStorage = {
                 }
 
                 await deleteDoc(doc(db, "recipes", id));
-                if (prior) await bumpAggregatesSafe(prior, this.currentUser.uid, -1);
+                if (prior) await bumpAggregatesSafe(prior, this.currentUser.uid, -1, this._profile());
                 return true;
             } catch (e) {
                 console.error("Error deleting recipe from Firestore", e);
