@@ -1,7 +1,8 @@
 import {
     auth,
     onAuthStateChanged,
-    track
+    track,
+    bumpVisit
 } from "./firebase-config.js";
 import CoffeeNotesStorage from "./storage.js";
 
@@ -69,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 앱 페이지는 지금까지 GA4 히트가 0건이었다. track()이 처음 호출될 때만
     // getAnalytics()가 실행되는 구조라, 자동 page_view조차 발생하지 않았다.
     track('app_page_view', { page: 'logbook' });
+    bumpVisit('logbook');
 
     const _stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
 

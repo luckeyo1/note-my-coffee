@@ -3,7 +3,8 @@ import {
     auth,
     signOut,
     onAuthStateChanged,
-    track
+    track,
+    bumpVisit
 } from "./firebase-config.js";
 import { signInWithChooser } from "./auth-ui.js";
 import CoffeeNotesStorage from "./storage.js";
@@ -12,6 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 앱 페이지는 지금까지 GA4 히트가 0건이었다 — track()이 처음 호출될 때만
     // getAnalytics()가 실행되는 구조라 자동 page_view조차 발생하지 않았다.
     track('app_page_view', { page: 'app' });
+    // 방문은 GA4와 별개로 Firestore에도 센다 — 관리자 대시보드가 읽는 건 여기다.
+    bumpVisit('app');
 
     let currentMode = 'espresso';
     let currentLang = 'en';

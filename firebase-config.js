@@ -124,8 +124,69 @@ function track(name, params) {
         .catch(() => {});
 }
 
+// ── 방문 집계 ──────────────────────────────────────────────────────────────
+// GA4에는 방문 데이터가 있지만 관리자 대시보드(Firestore만 읽는다)에서는 볼 수
+// 없었다. 그래서 방문 수를 아주 가벼운 카운터로 Firestore에도 남긴다.
+//
+// 개인을 식별하지 않는다 — 익명 카운터일 뿐이고, 누가 왔는지는 저장하지 않는다.
+// (비로그인 방문자의 신원은 원래 알 수 없고, 알려고 해서도 안 된다)
+//
+// 매 페이지 로드마다 쓰면 쓰기 비용이 방문 수만큼 늘어난다. 그래서 두 플래그로
+// 줄인다: 세션당 1회(sessions), 브라우저·하루당 1회(visitors).
+// visitors는 '순 방문자'의 근사치다 — 시크릿 모드·캐시 삭제·다른 기기는 새로 센다.
+const VISIT_SESSION_KEY = 'nmcVisitSession';
+const VISIT_DAY_KEY = 'nmcVisitDay';
+
+const visitDayKey = () => {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+
+// 스토리지는 시크릿 모드·차단 설정에서 던질 수 있다. 실패하면 '이미 셌다'로
+// 취급해 쓰기를 건너뛴다 — 계측 때문에 페이지가 느려지거나 깨지면 안 된다.
+const readFlag = (store, key) => {
+    try { return window[store].getItem(key); } catch (e) { return '__blocked__'; }
+};
+const writeFlag = (store, key, value) => {
+    try { window[store].setItem(key, value); } catch (e) { /* 무시 */ }
+};
+
+/**
+ * 사이트 방문을 집계한다. 실패해도 조용히 무시된다 — await하거나 catch할 필요가 없다.
+ * @param {string} page 방문한 화면 ('landing' | 'app' 등). 화면별 분해에 쓴다.
+ */
+function bumpVisit(page) {
+    try {
+        const today = visitDayKey();
+        const newSession = readFlag('sessionStorage', VISIT_SESSION_KEY) === null;
+        const newVisitor = readFlag('localStorage', VISIT_DAY_KEY) !== today;
+        if (!newSession && !newVisitor) return;   // 오늘 이미 센 브라우저
+
+        const patch = { updatedAt: new Date().toISOString() };
+        if (newSession) {
+            patch.sessions = increment(1);
+            // 화면별 세션 — 랜딩만 보고 나간 사람과 앱까지 들어온 사람을 구분한다.
+            patch['p_' + (page || 'unknown')] = increment(1);
+        }
+        if (newVisitor) patch.visitors = increment(1);
+
+        setDoc(doc(db, 'stats_visits', today), patch, { merge: true })
+            .then(() => {
+                // 쓰기가 성공한 뒤에 플래그를 세운다 — 규칙 거부·오프라인일 때
+                // 플래그만 남아 영영 집계되지 않는 상태를 막는다.
+                if (newSession) writeFlag('sessionStorage', VISIT_SESSION_KEY, '1');
+                if (newVisitor) writeFlag('localStorage', VISIT_DAY_KEY, today);
+            })
+            .catch((e) => console.warn('[Visits] 방문 집계 실패 (기능에는 영향 없음)', e));
+    } catch (e) {
+        console.warn('[Visits] 방문 집계 실패 (기능에는 영향 없음)', e);
+    }
+}
+
 export {
     track,
+    bumpVisit,
     auth,
     db,
     googleProvider,
