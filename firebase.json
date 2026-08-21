@@ -2,6 +2,20 @@
   "hosting": {
     "public": ".",
     "cleanUrls": true,
+    "rewrites": [
+      {
+        "source": "/.well-known/assetlinks.json",
+        "destination": "/assetlinks.json"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" }
+        ]
+      }
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -11,6 +25,7 @@
       "**/*.md",
       "*.docx",
       "scripts/**",
+      "store/**",
       "package.json",
       "package-lock.json",
       "생성된 이미지*.png"
