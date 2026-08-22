@@ -4,10 +4,11 @@ import {
     track,
     bumpVisit
 } from "./firebase-config.js";
-import CoffeeNotesStorage from "./storage.js";
+import CoffeeNotesStorage, { loadLang, saveLang } from "./storage.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    let currentLang = 'en';
+    // app.html에서 고른 언어를 그대로 이어받는다(storage.js)
+    let currentLang = loadLang();
     let recipesCache = []; // for event delegation lookup
 
     const i18n = {
@@ -60,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Render ────────────────────────────────────────────────────────────
     const setLang = (lang) => {
         currentLang = lang;
+        saveLang(lang);
         elements.btnLangEn.classList.toggle('active', lang === 'en');
         elements.btnLangKo.classList.toggle('active', lang === 'ko');
         elements.btnNewRecipe.innerText = i18n[lang].newRecipe;

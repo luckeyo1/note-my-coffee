@@ -7,7 +7,7 @@ import {
     bumpVisit
 } from "./firebase-config.js";
 import { signInWithChooser } from "./auth-ui.js";
-import CoffeeNotesStorage from "./storage.js";
+import CoffeeNotesStorage, { loadLang, saveLang } from "./storage.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // 앱 페이지는 지금까지 GA4 히트가 0건이었다 — track()이 처음 호출될 때만
@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bumpVisit('app');
 
     let currentMode = 'espresso';
-    let currentLang = 'en';
+    // 저장하면 logbook.html로 넘어가므로 언어를 기기에 남겨 유지한다(storage.js)
+    let currentLang = loadLang();
     let successResult = false;
     let uploadedImageData = ''; // Base64 image string
     let audioCtx = null;
@@ -1187,7 +1188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setLang = (lang) => {
-        currentLang = lang; ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
+        currentLang = lang; saveLang(lang); ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
         const t = i18n[lang]; 
         
         ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => {

@@ -366,4 +366,32 @@ const CoffeeNotesStorage = {
     }
 };
 
+// ── 언어 선택 유지 ──────────────────────────────────────────────────────
+// 레시피를 저장하면 logbook.html로 페이지가 통째로 넘어간다. 언어가 JS 변수에만
+// 있으면 그 순간 초기값(en)으로 돌아가, 한국어로 쓰던 사람이 저장하자마자 영어
+// 화면을 만나게 된다. 그래서 선택을 기기에 남긴다.
+//
+// app.html·logbook.html 두 곳이 같은 값을 읽고 써야 하므로 여기 둔다 —
+// 양쪽이 이미 이 모듈을 가져다 쓴다. 키가 갈라지면 유지가 깨진다.
+const LANG_KEY = 'nmcLang';
+const SUPPORTED_LANGS = ['en', 'ko'];
+
+// 시크릿 모드·저장소 차단 환경에서는 접근 자체가 throw한다. 언어 때문에
+// 앱이 멎어선 안 되므로 삼키고 기본값으로 간다.
+export function loadLang(fallback = 'en') {
+    try {
+        const saved = localStorage.getItem(LANG_KEY);
+        return SUPPORTED_LANGS.includes(saved) ? saved : fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+export function saveLang(lang) {
+    if (!SUPPORTED_LANGS.includes(lang)) return;
+    try {
+        localStorage.setItem(LANG_KEY, lang);
+    } catch (e) { /* 저장 못 해도 이번 세션 동안은 정상 동작한다 */ }
+}
+
 export default CoffeeNotesStorage;
