@@ -68,13 +68,20 @@ bubblewrap build      # app-release-bundle.aab 생성
 
 이게 틀리면 앱을 열었을 때 **주소창이 그대로 보인다**(앱처럼 안 보임).
 
-1. **SHA-256 지문을 얻는다.**
-   - Play App Signing을 쓰면(권장) → Play Console → 앱 → **설정 › 앱 서명**에서
-     "앱 서명 키 인증서"의 SHA-256을 복사한다.
-   - 로컬 키를 쓰면 → `bubblewrap fingerprint list`
-   - 두 키는 다르다. **Play가 재서명하므로 반드시 Play Console 쪽 지문**을 써야 한다.
+**지문은 결국 두 개가 필요하다.** `sha256_cert_fingerprints`는 배열이라 둘 다 담는다.
 
-2. **`.well-known/assetlinks.json`** 에서 `REPLACE_WITH_...` 자리를 그 지문으로 교체한다.
+| 지문 | 어디서 | 무엇을 검증하나 |
+|---|---|---|
+| 로컬(업로드) 키 | PWABuilder zip의 `assetlinks.json`, 또는 `bubblewrap fingerprint list` | 직접 설치한 APK |
+| **Play 앱 서명 키** | Play Console → **설정 › 앱 서명** (첫 AAB 업로드 후에 생성된다) | **스토어에서 설치한 앱** |
+
+Play가 업로드한 AAB를 **재서명**하므로, 스토어에서 받은 앱은 Play 앱 서명 키의
+지문을 갖는다. 그래서 로컬 지문만 넣으면 **스토어 설치본에서 주소창이 남는다.**
+
+- 현재 상태: 로컬 키 지문이 들어 있다(사이드로드 검증용).
+- **남은 일: 첫 AAB 업로드 후 Play 앱 서명 키 지문을 배열에 추가한다.**
+  `설정 › 앱 서명`에서 **"앱 서명 키 인증서"** 의 SHA-256을 쓴다 —
+  바로 아래 "업로드 키 인증서"가 아니다(흔한 실수).
 
 3. 배포 후 확인:
    ```bash
