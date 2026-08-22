@@ -2,12 +2,6 @@
   "hosting": {
     "public": ".",
     "cleanUrls": true,
-    "rewrites": [
-      {
-        "source": "/.well-known/assetlinks.json",
-        "destination": "/assetlinks.json"
-      }
-    ],
     "headers": [
       {
         "source": "/.well-known/assetlinks.json",
@@ -18,7 +12,13 @@
     ],
     "ignore": [
       "firebase.json",
-      "**/.*",
+      ".git/**",
+      ".github/**",
+      ".vscode/**",
+      ".idx/**",
+      ".claude/**",
+      ".firebaserc",
+      ".gitignore",
       "**/node_modules/**",
       "firebase-debug.log",
 

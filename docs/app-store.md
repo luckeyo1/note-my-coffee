@@ -74,18 +74,32 @@ bubblewrap build      # app-release-bundle.aab 생성
    - 로컬 키를 쓰면 → `bubblewrap fingerprint list`
    - 두 키는 다르다. **Play가 재서명하므로 반드시 Play Console 쪽 지문**을 써야 한다.
 
-2. 저장소 루트의 **`assetlinks.json`** 에서 `REPLACE_WITH_...` 자리를 그 지문으로 교체한다.
+2. **`.well-known/assetlinks.json`** 에서 `REPLACE_WITH_...` 자리를 그 지문으로 교체한다.
 
 3. 배포 후 확인:
    ```bash
    curl -s https://note-my-coffee.web.app/.well-known/assetlinks.json
    ```
-   JSON이 그대로 나와야 한다.
+   우리가 쓴 JSON(패키지명과 지문이 든)이 나와야 한다.
 
-> **왜 파일이 루트에 있나** — `firebase.json`의 `ignore`에 `"**/.*"`가 있어서
-> 점으로 시작하는 `.well-known/` 디렉터리는 **배포에서 통째로 제외된다.** 파일을
-> 거기 두면 조용히 404가 나고 원인을 찾기 어렵다. 그래서 실제 파일은 점 없는
-> 루트 경로에 두고, `firebase.json`의 `rewrites`가 `.well-known` 경로로 되돌려준다.
+> ### ⚠️ Firebase Hosting의 함정 두 가지 (실제로 겪었다)
+>
+> **1) 빈 배열 `[]`이 응답된다면** — Firebase Hosting은 이 경로를 **자체적으로
+> 자동 생성해서 제공한다.** Firebase 프로젝트에 안드로이드 앱이 등록돼 있지 않으면
+> 빈 배열을 돌려주고, 이 자동 응답이 `rewrites`보다 우선한다. 그래서 rewrite로는
+> 해결되지 않는다 — **정적 파일이 rewrite보다 우선순위가 높으므로 실제 파일을
+> `.well-known/`에 둔다**(지금 구조).
+>
+> 그래도 `[]`가 계속 나오면, 대안으로 **Firebase 콘솔에서 안드로이드 앱을 등록**하면
+> 된다(프로젝트 설정 › 내 앱 › Android 추가 → 패키지명 `app.web.note_my_coffee` +
+> SHA-256 입력). 그러면 Firebase가 올바른 assetlinks를 자동 생성한다. 둘 중
+> **동작하는 쪽 하나만** 쓰면 된다.
+>
+> **2) `ignore`의 `"**/.*"`** — 점으로 시작하는 경로를 배포에서 제외하는 패턴이라
+> `.well-known/`이 통째로 빠질 위험이 있었다. 그래서 이 패턴을 없애고 `.git/**`·
+> `.github/**` 등 **실제 제외할 것만 명시**로 바꿨다. 새 dot 디렉터리를 만들면
+> 배포에 포함되니, 비공개로 둬야 하면 `ignore`에 직접 추가해야 한다.
+>
 > `headers`로 `Content-Type: application/json`도 강제한다(검증기가 엄격하다).
 
 ## Step 3 — Play Console 등록
