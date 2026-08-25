@@ -27,4 +27,11 @@
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
+  <!-- Play 정책상 계정 삭제 요청 URL은 로그인 없이 접근 가능해야 하고,
+       스토어 등록정보에 노출된다. 색인에서 빠지지 않게 여기에도 둔다. -->
+  <url>
+    <loc>https://note-my-coffee.web.app/delete-account</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
 </urlset>
