@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>개인정보처리방침 — Note My Coffee</title>
-    <meta name="description" content="Note My Coffee가 어떤 정보를 어디에 저장하고, 무엇을 저장하지 않는지 정리한 문서입니다.">
+    <title>계정 및 데이터 삭제 — Note My Coffee</title>
+    <meta name="description" content="Note My Coffee 계정과 저장된 기록을 삭제하는 방법, 삭제되는 데이터와 보관되는 데이터를 안내합니다.">
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#FCFAF6">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -184,131 +184,105 @@
 <div class="doc">
     <a class="back" href="index.html">← Note My Coffee</a>
 
-    <h1>개인정보처리방침</h1>
+    <h1>계정 및 데이터 삭제</h1>
     <p class="lede">
-        Note My Coffee는 커피 추출 기록을 남기는 데 필요한 최소한의 정보만 다룹니다.
-        이 문서는 무엇을 어디에 저장하는지, 그리고 <em>무엇을 저장하지 않는지</em>를
-        실제 동작 그대로 적은 것입니다.
+        <strong>Note My Coffee</strong>(개인 운영 프로젝트)의 계정과 저장된 기록을 삭제하는 방법입니다.
+        무엇이 지워지고 <em>무엇이 남는지</em>까지 실제 처리 그대로 적었습니다.
     </p>
-    <p class="updated">최종 수정 2026-08-04 · 운영자 개인 프로젝트</p>
+    <p class="updated">최종 수정 2026-08-25</p>
 
-    <h2>1. 저장하는 정보</h2>
+    <h2>1. 레시피를 하나씩 지우기</h2>
+    <ul>
+        <li>앱의 <strong>로그북</strong>에서 레시피 카드의 <strong>삭제</strong>를 누르면 그 기록이 바로 지워집니다.</li>
+        <li>로그인 전에 남긴 기록은 기기(브라우저 저장소)에만 있습니다. 브라우저의
+            사이트 데이터를 지우거나 앱 저장공간을 비우면 즉시 사라지며, 서버에는 처음부터 전송되지 않습니다.</li>
+    </ul>
+
+    <h2>2. 계정과 모든 기록을 삭제하기</h2>
+    <p>아래 주소로 요청하시면 계정 자체와 저장된 기록 전부를 삭제합니다.</p>
+    <ul>
+        <li><strong>보낼 곳</strong> — <code>qorlgh1994@gmail.com</code></li>
+        <li><strong>제목</strong> — <code>[Note My Coffee] 계정 삭제 요청</code></li>
+        <li><strong>본문에 적을 것</strong> — 로그인에 사용한 방법(구글 또는 카카오)과 계정 이메일 또는 닉네임</li>
+    </ul>
+    <p>
+        본인 확인 후 처리하며, <strong>요청을 확인한 날로부터 30일 이내</strong>에 삭제를 마치고
+        결과를 회신드립니다. 별도의 앱 설치나 로그인 없이 이메일만으로 요청할 수 있습니다.
+    </p>
+
+    <h2>3. 삭제되는 데이터</h2>
     <div class="table-scroll">
         <table>
             <thead>
-                <tr>
-                    <th>항목</th>
-                    <th>저장 위치</th>
-                    <th>언제</th>
-                </tr>
+                <tr><th>데이터</th><th>저장 위치</th></tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>레시피 기록<br>(도징·온도·시간·수율, 원두 이름, 산지, 테이스팅 노트, 별점, 성공 여부, 사진)</td>
-                    <td>로그인 전에는 <strong>지금 쓰는 브라우저 안(localStorage)에만</strong>.
-                        로그인 후에는 Google Firestore의 <code>recipes</code> 컬렉션에 계정 ID와 함께.</td>
-                    <td>레시피를 저장할 때</td>
+                    <td>계정 정보<br>(이메일, 표시 이름, 프로필 사진 주소, 계정 고유 ID)</td>
+                    <td>Firebase Authentication</td>
                 </tr>
                 <tr>
-                    <td>구글 계정 정보<br>(이메일, 표시 이름, 프로필 사진 주소, 계정 고유 ID)</td>
-                    <td>Google Firebase Authentication</td>
-                    <td>구글 로그인을 할 때만</td>
+                    <td>레시피 기록 전체<br>(도징·온도·시간·수율, 원두 이름, 산지, 테이스팅 노트, 별점, 성공 여부, 사진, 날씨 문구)</td>
+                    <td>Firestore <code>recipes</code></td>
                 </tr>
                 <tr>
-                    <td>카카오 계정 정보<br>(닉네임, 프로필 사진 주소, 계정 고유 ID)<br>
-                        <strong>이메일은 요청하지 않으며 받지 않습니다.</strong></td>
-                    <td>Google Firebase Authentication</td>
-                    <td>카카오 로그인을 할 때만</td>
+                    <td>사용자 요약<br>(첫 기록일, 마지막 기록일, 기록 수, 이름, 이메일)</td>
+                    <td>Firestore <code>users</code></td>
                 </tr>
                 <tr>
-                    <td>날씨 표시 문구<br>(예: "서울 · 24°C 맑음")</td>
-                    <td>레시피 기록의 한 필드로 함께 저장</td>
-                    <td>레시피를 저장할 때</td>
+                    <td>소식 수신 이메일<br>(취향 검사 결과에서 이메일을 남긴 경우에만)</td>
+                    <td>Firestore <code>leads</code></td>
+                </tr>
+                <tr>
+                    <td>집계 문서에 남아 있는 <strong>계정 고유 ID</strong><br>
+                        (날짜별 기록 수를 세는 카운터의 키로 쓰입니다)</td>
+                    <td>Firestore <code>stats_daily</code> — 삭제 처리 시 집계를 다시 만들어 함께 제거합니다</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>4. 삭제 후에도 남는 데이터</h2>
+    <p>
+        아래는 <strong>개인을 식별할 수 없는 숫자</strong>만 담고 있어 삭제 후에도 유지됩니다.
+        누가 남긴 기록인지 되짚을 수 있는 정보가 들어 있지 않습니다.
+    </p>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr><th>데이터</th><th>내용</th><th>보관 기간</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>날짜별 집계</td>
+                    <td>하루에 저장된 기록 수, 추출 모드 비중, 별점 분포 등 합계 숫자</td>
+                    <td>기한 없음</td>
+                </tr>
+                <tr>
+                    <td>원두 이름 사전</td>
+                    <td>기록에 쓰인 원두 이름 목록 (작성자 정보 없음)</td>
+                    <td>기한 없음</td>
+                </tr>
+                <tr>
+                    <td>방문 집계</td>
+                    <td>날짜별 방문자·세션 수 (계정과 연결되지 않는 익명 카운터)</td>
+                    <td>기한 없음</td>
                 </tr>
             </tbody>
         </table>
     </div>
     <p>
-        첫 레시피 한 개는 로그인 없이 저장되며, 이때는 서버로 아무것도 전송되지 않습니다.
-        이후 구글 또는 카카오 로그인을 하면 그 체험 기록이 계정으로 옮겨갑니다.
-    </p>
-    <p>
-        구글과 카카오는 <strong>서로 다른 계정</strong>으로 처리됩니다. 같은 사람이 두 방법으로
-        각각 로그인하면 기록도 각각 따로 쌓이며, 두 계정은 합쳐지지 않습니다.
+        접속 분석(Google Analytics 4)에는 개인을 식별할 수 있는 정보와 레시피 내용이
+        전송되지 않으며, 계정과 연결되지 않습니다.
     </p>
 
-    <h2>2. 저장하지 않는 정보</h2>
-    <ul>
-        <li>이름, 전화번호, 주소, 생년월일 — 입력받는 곳이 없습니다.</li>
-        <li><strong>위치 좌표</strong> — 날씨를 불러오는 데만 쓰고 저장하지 않습니다. 기록에 남는 것은 위 표의 날씨 문구뿐입니다.</li>
-        <li><strong>카드 정보</strong> — 후원 섹션은 토스페이먼츠 <em>샌드박스(테스트 모드)</em> 데모입니다. 실제 결제가 발생하지 않고, 카드 정보는 이 서비스를 거치지 않습니다.</li>
-        <li>비밀번호 — 구글·카카오 로그인만 쓰므로 비밀번호를 받지도, 보관하지도 않습니다.</li>
-        <li><strong>카카오 이메일·전화번호·생일 등</strong> — 카카오 로그인에서 닉네임과 프로필 사진
-            외에는 동의를 요청하지 않으므로 전달받지 않습니다.</li>
-    </ul>
-
-    <h2>3. 위치 정보</h2>
+    <h2>5. 문의</h2>
     <p>
-        앱은 추출 환경(기온·습도)을 보여주기 위해 위치를 한 번 확인합니다. 순서는 이렇습니다.
-    </p>
-    <ul>
-        <li>브라우저 위치 권한을 <strong>허용한 경우에만</strong> 기기 위치를 사용합니다. 거부하면 그대로 다음 단계로 넘어갑니다.</li>
-        <li>권한이 없으면 <a href="https://ipapi.co/privacy/" target="_blank" rel="noopener noreferrer">ipapi.co</a>가 접속 IP로 대략적인 도시를 추정합니다.</li>
-        <li>둘 다 실패하면 서울로 고정합니다.</li>
-    </ul>
-    <p>
-        확인된 좌표는 날씨 조회(<a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener noreferrer">Open-Meteo</a>)와
-        지역명 변환(BigDataCloud)에 전달되며, 이 서비스에는 저장되지 않습니다.
+        삭제 처리나 이 문서에 대한 문의는 <code>qorlgh1994@gmail.com</code>으로 보내주세요.
+        저장하는 정보 전반은 <a href="privacy.html">개인정보처리방침</a>에서 확인하실 수 있습니다.
     </p>
 
-    <h2>4. 사진</h2>
-    <p>
-        레시피에 사진을 붙이면 <strong>브라우저 안에서 먼저 축소·압축</strong>한 뒤 레시피 기록에 포함해
-        저장합니다. 원본 파일은 업로드되지 않으며, 사진은 본인 계정의 기록에서만 보입니다.
-    </p>
-
-    <h2>5. 접속 분석</h2>
-    <p>
-        어떤 안내가 실제로 도움이 되는지 알기 위해 <strong>Google Analytics 4</strong>로 익명 이벤트를 집계합니다.
-        기록하는 것은 이런 종류입니다 — 어떤 버튼을 눌렀는지, 취향 검사를 시작·완주했는지,
-        어떤 원두 추천 링크를 눌렀는지, 데모를 봤는지.
-    </p>
-    <p>
-        이 이벤트에는 <strong>개인을 식별할 수 있는 정보가 들어가지 않습니다</strong>. 레시피 내용,
-        원두 이름, 사진, 이메일은 분석으로 전송되지 않습니다. 분석은 쿠키와 유사 저장소를 사용하며,
-        브라우저의 추적 차단 기능이나 광고 차단기를 쓰고 있으면 수집되지 않고 서비스도 정상 동작합니다.
-    </p>
-
-    <h2>6. 처리를 위탁하는 곳</h2>
-    <p>정보를 판매하거나 광고 목적으로 제3자에게 제공하지 않습니다. 서비스 운영에 필요한 범위에서 아래를 이용합니다.</p>
-    <ul>
-        <li><strong>Google</strong> (Firebase Authentication, Firestore, Analytics, Hosting) — 로그인, 기록 저장, 접속 분석</li>
-        <li><strong>카카오</strong> (카카오 로그인) — 카카오로 로그인할 때의 본인 확인. 카카오에서
-            닉네임과 프로필 사진만 전달받습니다.</li>
-        <li><strong>Open-Meteo · BigDataCloud · ipapi.co</strong> — 날씨와 지역명 조회</li>
-        <li><strong>토스페이먼츠</strong> — 후원 섹션 테스트 결제 데모</li>
-    </ul>
-
-    <h2>7. 보관과 삭제</h2>
-    <p>
-        기록은 직접 지울 때까지 보관됩니다. 로그북에서 레시피를 개별 삭제할 수 있고,
-        로그인 전 기록은 브라우저 저장소를 비우면 사라집니다.
-        <strong>계정과 저장된 모든 기록의 삭제</strong>를 원하시면 아래 주소로 알려주세요 —
-        확인 후 처리하고 결과를 회신드립니다.
-        삭제되는 항목과 남는 항목, 처리 기간은 <a href="delete-account.html">계정 및 데이터 삭제</a>에
-        따로 정리해두었습니다.
-    </p>
-
-    <h2>8. 문의</h2>
-    <p>
-        이 방침이나 본인 정보 처리에 대한 문의는
-        <a href="mailto:qorlgh1994@gmail.com">qorlgh1994@gmail.com</a>으로 보내주세요.
-    </p>
-
-    <footer>
-        방침이 바뀌면 이 페이지의 최종 수정일을 갱신합니다.<br>
-        ☕ Note My Coffee · 바리스타가 만든 커피 기록 앱
-    </footer>
+    <footer>☕ Note My Coffee · 바리스타가 만든 커피 기록 앱</footer>
 </div>
 </body>
 </html>

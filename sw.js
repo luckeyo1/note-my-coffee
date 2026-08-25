@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v18';
+const VERSION = 'v19';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -28,7 +28,8 @@ const PRECACHE_ASSETS = [
   'icon-512.png',
   'icon-maskable-512.png',
   'apple-touch-icon.png',
-  'privacy.html'
+  'privacy.html',
+  'delete-account.html'
 ];
 
 // Optional assets: art that may not be in the repo yet. addAll() rejects the
