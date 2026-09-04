@@ -798,12 +798,44 @@ document.addEventListener('DOMContentLoaded', () => {
         return res.json();
     };
 
+    // ── 캐시 ───────────────────────────────────────────────────────────
+    // 스트립은 위치 → 날씨 → 역지오코딩을 **직렬로** 탄다. 권한이 막혀 IP
+    // 폴백까지 가면 첫 화면에 20초 넘게 "위치 확인 중"만 떠 있었다. 마지막
+    // 값을 남겨 즉시 그리고, 오래됐을 때만 조용히 새로 받는다.
+    const WX_KEY = 'nmcWx';                    // 마지막 관측값 + 그때의 좌표
+    const GEO_KEY = 'nmcGeo';                  // 좌표 → 지명. 지명은 변하지 않으니 따로 오래 둔다
+    const WX_FRESH_MS = 15 * 60 * 1000;        // 이보다 새 값이면 네트워크를 아예 타지 않는다
+    const WX_MAX_AGE_MS = 3 * 60 * 60 * 1000;  // 이보다 오래된 기온은 보여주지 않는다 — 틀린 값이다
+    const LOC_REUSE_MS = 30 * 60 * 1000;       // 좌표 재사용 한도. 여기서 대기 시간이 가장 많이 준다
+
+    // 시크릿 모드·저장소 차단 환경에서는 접근 자체가 throw한다. 날씨 때문에
+    // 앱이 멎어선 안 되므로 전부 삼키고 캐시 없이 동작한다.
+    const readJson = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+    const writeJson = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 캐시는 있으면 좋은 것일 뿐이다 */ } };
+
+    // 지명은 언어별로 다르므로 언어를 키에 넣는다. 좌표는 소수점 2자리(약 1km)로
+    // 뭉개 같은 동네를 오갈 때 매번 다시 묻지 않게 한다.
+    const geoKey = (lat, lon, lang) => `${lat.toFixed(2)},${lon.toFixed(2)},${lang}`;
+    const readGeo = (lat, lon, lang) => (readJson(GEO_KEY) || {})[geoKey(lat, lon, lang)] || '';
+    const writeGeo = (lat, lon, lang, city) => {
+        if (!city) return;
+        const m = readJson(GEO_KEY) || {};
+        m[geoKey(lat, lon, lang)] = city;
+        // 무한정 늘지 않게 최근 30개만 남긴다(객체 키는 삽입 순서를 유지한다).
+        const keys = Object.keys(m);
+        if (keys.length > 30) keys.slice(0, keys.length - 30).forEach((k) => delete m[k]);
+        writeJson(GEO_KEY, m);
+    };
+
     const locateByGps = () => new Promise((resolve, reject) => {
         if (!('geolocation' in navigator)) return reject(new Error('geolocation unsupported'));
         navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, approx: false }),
             reject,
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 5 * 60 * 1000 }
+            // 날씨는 도시 단위면 충분하다. enableHighAccuracy는 위성 고정을
+            // 기다리느라 실내에서 수 초씩 잡아먹는데, 그 정밀도가 기온·습도를
+            // 바꾸지 않는다. Wi-Fi/기지국 측위로 낮추고 대기도 6초로 줄인다.
+            { enableHighAccuracy: false, timeout: 6000, maximumAge: LOC_REUSE_MS }
         );
     });
 
@@ -818,48 +850,108 @@ document.addEventListener('DOMContentLoaded', () => {
         return d.city || d.locality || d.principalSubdivision || '';
     };
 
+    const hintFor = (temp, hum) => {
+        if (hum > 65) return currentLang === 'ko' ? `습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${hum}% — try slightly coarser grind`;
+        if (hum < 40) return currentLang === 'ko' ? `습도 ${hum}% — 추출 강도 +0.5g 권장` : `Humidity ${hum}% — consider +0.5g dosing`;
+        if (temp <= 5) return currentLang === 'ko' ? `기온 ${temp.toFixed(0)}°C — 잔과 장비를 충분히 예열하세요` : `${temp.toFixed(0)}°C — preheat your cup and gear`;
+        return currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
+    };
+
+    const relAge = (ms) => {
+        const m = Math.max(1, Math.round(ms / 60000));
+        if (m < 60) return currentLang === 'ko' ? `${m}분 전` : `${m}m ago`;
+        const h = Math.round(m / 60);
+        return currentLang === 'ko' ? `${h}시간 전` : `${h}h ago`;
+    };
+
+    // 캐시와 네트워크 양쪽이 같은 경로로 그리게 한다 — 갈라지면 한쪽만 고치게 된다.
+    const renderWeather = (loc, cur, ageMs) => {
+        const infoSpan = el.weatherInfo.querySelector('span:last-child');
+        const temp = cur.temperature_2m;
+        const hum = cur.relative_humidity_2m;
+        const city = readGeo(loc.lat, loc.lon, currentLang) || loc.city
+            || (currentLang === 'ko' ? '내 위치' : 'My location');
+
+        lastWeatherText = `📍 ${city} · ${wmoEmoji(cur.weather_code, cur.is_day === 1)} ${temp.toFixed(1)}°C · 💧 ${hum}%`;
+        if (infoSpan) {
+            // 도시명이 외부 API 응답이므로 innerHTML 대신 textContent로 렌더링한다.
+            infoSpan.textContent = lastWeatherText;
+            const tag = (txt) => {
+                const s = document.createElement('small');
+                s.style.cssText = 'opacity:0.6;font-size:0.75em;margin-left:4px;';
+                s.textContent = txt;
+                infoSpan.appendChild(s);
+            };
+            if (loc.approx) tag(currentLang === 'ko' ? '(추정 위치)' : '(approx.)');
+            // 옛 값을 보여주는 중이면 숨기지 않고 나이를 밝힌다. 새로 받으면
+            // 이 태그는 사라진다 — 지금 기온인 척하지 않는 게 요점이다.
+            if (ageMs > WX_FRESH_MS) tag(relAge(ageMs));
+        }
+        el.envHint.textContent = hintFor(temp, hum);
+    };
+
+    // 지명만 따로 채운다. 기온은 이미 화면에 떠 있으므로 늦게 와도 손해가 없다.
+    // 언어를 바꾸면 날씨는 그대로 두고 이 경로만 다시 탄다.
+    const fillCityName = async (loc, cur, ageMs) => {
+        if (loc.approx || readGeo(loc.lat, loc.lon, currentLang)) return;
+        const lang = currentLang;   // await 사이에 언어가 또 바뀔 수 있다
+        try {
+            const city = await reverseGeocode(loc.lat, loc.lon);
+            writeGeo(loc.lat, loc.lon, lang, city);
+            if (lang === currentLang) renderWeather(loc, cur, ageMs);
+        } catch (geoErr) { /* 지명 없이도 기온·습도는 유효하다 */ }
+    };
+
     let weatherBusy = false;
-    const fetchWeather = async () => {
+    // force: 사용자가 스트립을 눌러 직접 새로고침한 경우. 신선도와 무관하게 받는다.
+    const fetchWeather = async ({ force = false } = {}) => {
         if (weatherBusy) return;
-        weatherBusy = true;
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
         el.weatherInfo.title = currentLang === 'ko' ? '클릭하면 새로고침' : 'Click to refresh';
-        if (infoSpan) infoSpan.textContent = i18n[currentLang].weather;
+
+        const cached = readJson(WX_KEY);
+        const age = cached && cached.ts ? Date.now() - cached.ts : Infinity;
+        const usable = cached && cached.loc && cached.cur && age >= 0 && age <= WX_MAX_AGE_MS;
+
+        // 1) 캐시가 쓸 만하면 네트워크를 기다리지 않고 먼저 그린다.
+        if (usable) renderWeather(cached.loc, cached.cur, age);
+        else if (infoSpan) infoSpan.textContent = i18n[currentLang].weather;
+
+        // 2) 충분히 새 값이면 날씨는 다시 받지 않는다. 언어를 바꿔 이 언어의
+        //    지명만 없는 경우가 있으므로 그것만 채우고 끝낸다.
+        if (usable && !force && age <= WX_FRESH_MS) {
+            fillCityName(cached.loc, cached.cur, age);
+            return;
+        }
+
+        weatherBusy = true;
         try {
-            let loc;
-            try { loc = await locateByGps(); }
-            catch (gpsErr) {
-                try { loc = await locateByIp(); }
-                catch (ipErr) { loc = { lat: 37.5665, lon: 126.9780, city: currentLang === 'ko' ? '서울' : 'Seoul', approx: true }; }
+            // 3) 좌표부터 재사용한다. 대기 시간이 가장 많이 줄어드는 지점이다 —
+            //    GPS 프롬프트도, IP 폴백(최대 8초)도 통째로 건너뛴다.
+            //    직접 새로고침한 경우엔 좌표도 다시 잡는다 — 위치가 틀려서
+            //    누르는 경우가 있는데 캐시를 재사용하면 같은 값이 또 나온다.
+            let loc = !force && cached && cached.loc && age <= LOC_REUSE_MS ? cached.loc : null;
+            if (!loc) {
+                try { loc = await locateByGps(); }
+                catch (gpsErr) {
+                    try { loc = await locateByIp(); }
+                    catch (ipErr) { loc = { lat: 37.5665, lon: 126.9780, city: currentLang === 'ko' ? '서울' : 'Seoul', approx: true }; }
+                }
             }
 
             const wx = await fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,weather_code,is_day&timezone=auto`);
             const cur = wx.current;
+            writeJson(WX_KEY, { ts: Date.now(), loc, cur });
+            renderWeather(loc, cur, 0);
 
-            let city = '';
-            if (!loc.approx) { try { city = await reverseGeocode(loc.lat, loc.lon); } catch (geoErr) { /* 지명 없이 진행 */ } }
-            if (!city) city = loc.city || (currentLang === 'ko' ? '내 위치' : 'My location');
-
-            const temp = cur.temperature_2m; const hum = cur.relative_humidity_2m;
-            lastWeatherText = `📍 ${city} · ${wmoEmoji(cur.weather_code, cur.is_day === 1)} ${temp.toFixed(1)}°C · 💧 ${hum}%`;
-            if (infoSpan) {
-                // 도시명이 외부 API 응답이므로 innerHTML 대신 textContent로 렌더링한다.
-                infoSpan.textContent = lastWeatherText;
-                if (loc.approx) {
-                    const s = document.createElement('small');
-                    s.style.cssText = 'opacity:0.6;font-size:0.75em;margin-left:4px;';
-                    s.textContent = currentLang === 'ko' ? '(추정 위치)' : '(approx.)';
-                    infoSpan.appendChild(s);
-                }
-            }
-
-            if (hum > 65) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${hum}% — try slightly coarser grind`;
-            else if (hum < 40) el.envHint.textContent = currentLang === 'ko' ? `습도 ${hum}% — 추출 강도 +0.5g 권장` : `Humidity ${hum}% — consider +0.5g dosing`;
-            else if (temp <= 5) el.envHint.textContent = currentLang === 'ko' ? `기온 ${temp.toFixed(0)}°C — 잔과 장비를 충분히 예열하세요` : `${temp.toFixed(0)}°C — preheat your cup and gear`;
-            else el.envHint.textContent = currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
+            // 4) 지명은 마지막이다 — 이미 캐시에 있으면 아예 부르지 않는다.
+            await fillCityName(loc, cur, 0);
         } catch (e) {
-            lastWeatherText = '';
-            if (infoSpan) infoSpan.textContent = i18n[currentLang].weatherError;
+            // 캐시로 이미 뭔가 보여주고 있으면 그걸 지우고 오류로 덮지 않는다.
+            if (!usable) {
+                lastWeatherText = '';
+                if (infoSpan) infoSpan.textContent = i18n[currentLang].weatherError;
+            }
         } finally {
             weatherBusy = false;
         }
@@ -867,8 +959,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 날씨 스트립 클릭으로 수동 새로고침 + 15분마다 자동 갱신 (탭을 켜둬도 최신 유지)
     el.weatherInfo.style.cursor = 'pointer';
-    el.weatherInfo.addEventListener('click', () => fetchWeather());
-    setInterval(fetchWeather, 15 * 60 * 1000);
+    el.weatherInfo.addEventListener('click', () => fetchWeather({ force: true }));
+    setInterval(() => fetchWeather(), 15 * 60 * 1000);
 
     const updateBrewRatio = () => {
         const d = parseFloat(el.rDosing.value); const y = parseFloat(el.rYield.value); const r = y / d;
