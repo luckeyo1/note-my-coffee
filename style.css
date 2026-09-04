@@ -41,9 +41,23 @@
     --radius-photo: 14px;
     --ink-dark: #FBFAF8;
     --bg-deep: #FBFAF8;
-    --font-brand: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
-    --font-display: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
-    --font-body: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
+    /* index.html의 :root에만 있던 이름들이라 이 파일에서는 var()가 폴백으로
+       떨어지고 있었다. --signal의 폴백 #0E4C7A는 은퇴한 '계기 블루'라서,
+       온도 게이지 하나만 따뜻한 팔레트 위에 남색으로 찍혔다. 여기서 정의해
+       폴백 경로를 없앤다. */
+    --signal: var(--gold-light);
+    --ink-2: var(--ink-muted);
+    --paper-2: var(--cream-dark);
+    /* 본문·UI는 Pretendard로 통일한다. IBM Plex Sans KR은 한글 자간·힌팅이 작은
+       크기에서 무너져 모바일 기록 화면(대부분 12~14px)에서 가장 손해가 컸다.
+       Pretendard는 라틴까지 함께 덮으므로 한글/영문에 서체를 나누지 않는다.
+       `font/pretendard/`에 자체 호스팅한다 — 동일 출처라 서비스워커가 캐시하고,
+       외부 CDN을 새로 붙이지 않아 개인정보처리방침도 그대로다. */
+    --font-brand: 'Pretendard Variable', Pretendard, system-ui, -apple-system, sans-serif;
+    --font-display: 'Pretendard Variable', Pretendard, system-ui, -apple-system, sans-serif;
+    --font-body: 'Pretendard Variable', Pretendard, system-ui, -apple-system, sans-serif;
+    /* 수치는 계속 등폭이다. 토큰 문서가 말하는 "계기(instrument)" 성격은
+       숫자가 만들므로 여기는 바꾸지 않는다. */
     --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
     --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     --spring: 0.5s cubic-bezier(0.34, 1.4, 0.4, 1);
@@ -232,7 +246,7 @@ body {
 }
 .console-box::before {
     content: ""; position: absolute; top: -1px; left: 36px; right: 36px; height: 1px;
-    background: rgba(14,76,122,0.7);
+    background: rgba(180,83,42,0.7);
     pointer-events: none;
 }
 
@@ -247,7 +261,7 @@ body {
     background: var(--ink-2, #544C41); /* 도징 바 */
 }
 .visual-temp-bar {
-    background: var(--signal, #0E4C7A); /* Blue to Red */
+    background: var(--signal);
 }
 
 /* ===== CONTROL GROUPS ===== */
@@ -262,7 +276,7 @@ body {
 
 .quality-badge { font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 0; align-self: center; margin-left: 6px; }
 .quality-badge.ideal { background: var(--success-bg); color: var(--success); }
-.quality-badge.low, .quality-badge.high { background: #FEF3E2; color: #0E4C7A; }
+.quality-badge.low, .quality-badge.high { background: #FEF3E2; color: var(--gold-light); }
 .quality-badge.extreme { background: var(--danger-bg); color: var(--danger); }
 
 /* ===== SLIDER ===== */
@@ -448,7 +462,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 .ratio-num { font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft); font-weight: 500; }
 .ratio-status { font-size: 11px; font-weight: 500; }
 .ratio-status.ideal { color: var(--success); }
-.ratio-status.warning { color: #0E4C7A; }
+.ratio-status.warning { color: var(--gold-light); }
 
 /* ===== STOPWATCH ===== */
 .stopwatch-trigger {
@@ -1017,7 +1031,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 
 .recipe-share-box {
     background: #F6F3ED;
-    border: 1px solid rgba(14,76,122,0.2);
+    border: 1px solid rgba(180,83,42,0.2);
     border-radius: 0;
     width: 100%;
     max-width: 500px;
@@ -1058,7 +1072,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
     background: rgba(21,18,14,0.04);
     border: 1px solid rgba(21,18,14,0.08);
     color: #544C41;
-    font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     padding: 10px 12px;
@@ -1068,9 +1082,9 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 }
 .recipe-share-tab:hover { color: #15120E; }
 .recipe-share-tab.is-active {
-    background: rgba(14,76,122,0.14);
-    border-color: rgba(14,76,122,0.45);
-    color: #0E4C7A;
+    background: rgba(180,83,42,0.14);
+    border-color: rgba(180,83,42,0.45);
+    color: var(--gold-light);
 }
 
 /* Preview frame — keeps the modal from jumping between aspect ratios */
@@ -1121,7 +1135,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
     background: rgba(21,18,14,0.06);
     border: 1px solid rgba(21,18,14,0.1);
     color: #15120E;
-    font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
     padding: 12px 16px;
@@ -1132,11 +1146,11 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 .recipe-share-btn:hover { background: rgba(21,18,14,0.1); }
 
 .recipe-share-btn--gold {
-    background: #0E4C7A;
-    border-color: #0E4C7A;
+    background: var(--gold-light);
+    border-color: var(--gold-light);
     color: #FBFAF8;
 }
-.recipe-share-btn--gold:hover { background: #b8946a; }
+.recipe-share-btn--gold:hover { background: var(--gold); }
 .recipe-share-btn--gold:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Import preview ── */
@@ -1146,7 +1160,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 }
 
 .import-bean {
-    font-family: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
+    font-family: var(--font-body);
     font-size: 24px;
     font-weight: 600;
     color: #15120E;
@@ -1184,7 +1198,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 
 .ip-v {
     font-size: 16px;
-    color: #0E4C7A;
+    color: var(--gold-light);
     font-weight: 600;
 }
 .ip-k {
@@ -1202,7 +1216,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 }
 
 .import-stars {
-    color: #0E4C7A;
+    color: var(--gold-light);
     font-size: 17px;
     letter-spacing: 2px;
     margin-bottom: 10px;

@@ -17,7 +17,10 @@
     <script src="boot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Pretendard(자체 호스팅). 동적 서브셋이라 페이지에 실제로 쓰인 글자 범위의
+         woff2만 내려받는다. 동일 출처여서 서비스워커가 캐시 → 오프라인에서도 유지된다. -->
+    <link rel="stylesheet" href="font/pretendard/pretendard.css">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
         /* 이 페이지만 재디자인에서 빠져 옛 다크 럭셔리 테마(검정 배경 + 폐기한 골드,
@@ -37,7 +40,7 @@
             --clay-deep: #9E421D;
             --rule: rgba(36, 28, 21, 0.12);
             --rule-soft: rgba(36, 28, 21, 0.07);
-            --sans: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, sans-serif;
+            --sans: 'Pretendard Variable', Pretendard, system-ui, -apple-system, sans-serif;
             --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
         }
 

@@ -291,12 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillStyle = SURF;
         ctx.fillRect(0, 0, W, 48);
         ctx.fillStyle = GOLD;
-        ctx.font = "13px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font = "13px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         ctx.fillText('☕  NOTE MY COFFEE', 22, 30);
 
         // Mode badge
         const mode  = modeLabel(recipe.mode);
-        ctx.font    = "bold 9px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font    = "bold 9px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         const modeW = ctx.measureText(mode).width + 20;
         ctx.fillStyle = 'rgba(200,169,110,0.14)';
         _rrect(ctx, W - 22 - modeW, 14, modeW, 20, 3);
@@ -306,13 +306,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Bean name
         ctx.fillStyle = TEXT;
-        ctx.font = "bold 26px Georgia, 'Gowun Batang', serif";
+        ctx.font = "bold 26px Georgia, 'Pretendard Variable', serif";
         ctx.fillText(_trunc(recipe.beanName || 'Unknown Bean', 34), 22, 92);
 
         // Origin line
         const sub = [mode, recipe.origin].filter(Boolean).join(' · ');
         ctx.fillStyle = SUB;
-        ctx.font      = "12px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font      = "12px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         ctx.fillText(sub, 22, 112);
 
         // Divider
@@ -329,10 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
         params.forEach(({ k, v }, i) => {
             const x = 22 + i * colW;
             ctx.fillStyle = GOLD;
-            ctx.font = "bold 20px 'DM Mono', 'Noto Sans KR', monospace";
+            ctx.font = "bold 20px 'IBM Plex Mono', 'Pretendard Variable', monospace";
             ctx.fillText(v, x, 170);
             ctx.fillStyle = MUTED;
-            ctx.font = "9px 'DM Mono', 'Noto Sans KR', monospace";
+            ctx.font = "9px 'IBM Plex Mono', 'Pretendard Variable', monospace";
             ctx.fillText(k, x, 186);
         });
 
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Taste notes
         if (recipe.tasteNotes) {
             ctx.fillStyle = SUB;
-            ctx.font = "13px 'DM Sans', 'Noto Sans KR', sans-serif";
+            ctx.font = "13px 'Pretendard Variable', sans-serif";
             ctx.fillText('✦  ' + _trunc(recipe.tasteNotes, 56), 22, 228);
         }
 
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         _rrect(ctx, 22, 272, ok ? 90 : 64, 22, 3);
         ctx.fill();
         ctx.fillStyle = ok ? '#4ADE80' : '#F87171';
-        ctx.font = "bold 10px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font = "bold 10px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         ctx.fillText(ok ? '✓  SUCCESS' : '✗  FAIL', 32, 287);
 
         // Bottom divider
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Footer
         ctx.fillStyle = MUTED;
-        ctx.font = "11px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font = "11px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         ctx.fillText('note-my-coffee.web.app', 22, 344);
         const ds = new Date().toLocaleDateString('ko-KR');
         ctx.fillText(ds, W - 22 - ctx.measureText(ds).width, 344);
@@ -455,12 +455,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Brand (top-left) ────────────────────────────────────────────
         shadowOn();
         ctx.fillStyle = GOLD;
-        ctx.font = "500 30px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font = "500 30px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         ctx.fillText('☕  NOTE MY COFFEE', 64, 84);
 
         // Mode badge (top-right)
         const mode  = modeLabel(recipe.mode);
-        ctx.font    = "bold 22px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font    = "bold 22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         const modeW = ctx.measureText(mode).width + 44;
         shadowOff();
         ctx.fillStyle = 'rgba(200,169,110,0.18)';
@@ -471,12 +471,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Bean name + origin (bottom block) ───────────────────────────
         shadowOn();
         ctx.fillStyle = TEXT;
-        ctx.font = "bold 72px Georgia, 'Gowun Batang', serif";
+        ctx.font = "bold 72px Georgia, 'Pretendard Variable', serif";
         ctx.fillText(_trunc(recipe.beanName || 'Unknown Bean', 22), 64, 870);
 
         const sub = [mode, recipe.origin].filter(Boolean).join('  ·  ');
         ctx.fillStyle = SUB;
-        ctx.font = "30px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font = "30px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         ctx.fillText(_trunc(sub, 42), 64, 916);
         shadowOff();
 
@@ -494,10 +494,10 @@ document.addEventListener('DOMContentLoaded', () => {
         params.forEach(({ k, v }, i) => {
             const x = 64 + i * colW;
             ctx.fillStyle = GOLD;
-            ctx.font = "bold 52px 'DM Mono', 'Noto Sans KR', monospace";
+            ctx.font = "bold 52px 'IBM Plex Mono', 'Pretendard Variable', monospace";
             ctx.fillText(v, x, 1052);
             ctx.fillStyle = MUTED;
-            ctx.font = "22px 'DM Mono', 'Noto Sans KR', monospace";
+            ctx.font = "22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
             ctx.fillText(k, x, 1088);
         });
         shadowOff();
@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (recipe.tasteNotes) {
             shadowOn();
             ctx.fillStyle = SUB;
-            ctx.font = "32px 'DM Sans', 'Noto Sans KR', sans-serif";
+            ctx.font = "32px 'Pretendard Variable', sans-serif";
             ctx.fillText('✦  ' + _trunc(recipe.tasteNotes, 40), 64, 1190);
             shadowOff();
         }
@@ -523,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ok    = !!recipe.success;
         const bText = ok ? '✓  SUCCESS' : '✗  FAIL';
-        ctx.font    = "bold 24px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font    = "bold 24px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         const bW    = ctx.measureText(bText).width + 40;
         ctx.fillStyle = ok ? 'rgba(74,222,128,0.16)' : 'rgba(248,113,113,0.16)';
         _rrect(ctx, W - 64 - bW, 1232, bW, 44, 8); ctx.fill();
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ── Footer ──────────────────────────────────────────────────────
         ctx.fillStyle = MUTED;
-        ctx.font = "24px 'DM Mono', 'Noto Sans KR', monospace";
+        ctx.font = "24px 'IBM Plex Mono', 'Pretendard Variable', monospace";
         ctx.fillText('note-my-coffee.web.app', 64, 1318);
         const ds = new Date().toLocaleDateString('ko-KR');
         ctx.fillText(ds, W - 64 - ctx.measureText(ds).width, 1318);
@@ -550,9 +550,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = [recipe.beanName, recipe.origin, recipe.tasteNotes, recipe.weather,
                       i18n.ko.success, i18n.ko.fail].filter(Boolean).join(' ');
         const faces = [
-            "bold 72px 'Gowun Batang'", "bold 26px 'Gowun Batang'",
-            "500 30px 'DM Mono'", "24px 'DM Mono'",
-            "32px 'DM Sans'", "400 20px 'Noto Sans KR'", "700 20px 'Noto Sans KR'",
+            "bold 72px 'Pretendard Variable'", "bold 26px 'Pretendard Variable'",
+            "500 30px 'IBM Plex Mono'", "24px 'IBM Plex Mono'",
+            "32px 'Pretendard Variable'", "400 20px 'Pretendard Variable'", "700 20px 'Pretendard Variable'",
         ];
         try {
             await Promise.all(faces.map((f) => document.fonts.load(f, text)));

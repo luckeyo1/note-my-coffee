@@ -38,7 +38,10 @@
     <!-- IBM Plex 한 패밀리로 통일한다. Plex는 한글 정식 컷(Sans KR)이 있어 라틴과 한글이
          같은 체계로 붙는다 — 예전처럼 제목·본문·한글 서체를 따로 섞지 않는다.
          숫자는 전부 Plex Mono로 조판한다. 이 제품의 본질이 계측이기 때문이다. -->
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Pretendard(자체 호스팅). 동적 서브셋이라 페이지에 실제로 쓰인 글자 범위의
+         woff2만 내려받는다. 동일 출처여서 서비스워커가 캐시 → 오프라인에서도 유지된다. -->
+    <link rel="stylesheet" href="font/pretendard/pretendard.css">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>

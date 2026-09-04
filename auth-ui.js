@@ -80,7 +80,10 @@ function injectStyle() {
 .nmc-auth-sheet{width:100%;max-width:360px;background:${C.surface};color:${C.text};
   border:1px solid ${C.line};border-radius:18px;padding:26px 22px 20px;
   box-shadow:0 24px 60px rgba(0,0,0,.5);
-  font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  /* 예전엔 'Pretendard'를 부르면서 아무 데서도 로드하지 않아, 로그인 시트만
+     시스템 폰트로 떨어져 주변과 서체가 달랐다. 이제 font/pretendard/에서
+     실제로 로드하므로 variable 이름을 먼저 둔다. */
+  font-family:'Pretendard Variable',Pretendard,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   transform:translateY(10px);transition:transform .18s ease;outline:none}
 .nmc-auth-scrim.is-open .nmc-auth-sheet{transform:translateY(0)}
 .nmc-auth-title{margin:0 0 8px;font-size:19px;font-weight:700;letter-spacing:-.01em;color:${C.text}}
