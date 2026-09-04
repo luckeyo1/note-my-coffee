@@ -57,10 +57,15 @@ async function probeArt(base) {
  * 웹폰트가 실제로 로드된 뒤에 그려야 한다 — 아니면 조용히 폴백 서체로 그려진다.
  *
  * 중요: document.fonts.load()에 **그릴 문자열을 반드시 함께 넘겨야 한다.**
- * 구글 폰트는 한글을 unicode-range 서브셋 수십 개로 쪼개 서빙하는데, 텍스트
+ * Pretendard도 한글을 unicode-range 서브셋 92개로 쪼개 서빙하므로, 텍스트
  * 인자가 없으면 라틴 서브셋만 받아온다. 그래서 페이지 어디에도 없는 글자
  * (예: "밸런스의 클래식"의 '밸')가 두부(□)로 찍혔다. 텍스트를 넘기면 그 글자를
  * 담은 서브셋까지 받아온다.
+ *
+ * 여기 나열한 서체는 **페이지가 실제로 로드하는 것**이어야 한다. 예전엔
+ * DM Sans·DM Mono·Gowun Batang·Noto Sans KR을 기다렸는데 어느 페이지도 그걸
+ * 불러오지 않아, load()가 빈 배열로 즉시 resolve하고 카드는 기기 기본 서체로
+ * 그려졌다 — 기기마다 다른 카드가 나갔다는 뜻이다.
  *
  * @param {string[]} texts 이 카드에 실제로 그릴 문자열들
  */
@@ -68,10 +73,9 @@ async function waitForFonts(texts) {
     if (!document.fonts) return;
     const all = texts.join(' ');
     const jobs = [
-        ["700 64px 'Gowun Batang'", all],
-        ["400 22px 'DM Mono'", all],
-        ["500 26px 'DM Sans'", all],
-        ["400 20px 'Noto Sans KR'", all],
+        ["700 64px 'Pretendard Variable'", all],
+        ["500 26px 'Pretendard Variable'", all],
+        ["400 22px 'IBM Plex Mono'", all],
     ];
     try {
         await Promise.all(jobs.map(([f, t]) => document.fonts.load(f, t)));
@@ -117,7 +121,7 @@ function drawTags(ctx, tags, cx, y) {
     const padX = 20;
     const h = 44;
     const gap = 10;
-    ctx.font = "400 22px 'DM Mono', monospace";
+    ctx.font = "400 22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
     const widths = tags.map((t) => ctx.measureText(t).width + padX * 2);
     const total = widths.reduce((a, b) => a + b, 0) + gap * (tags.length - 1);
 
@@ -194,7 +198,7 @@ function drawRadar(ctx, values, cx, cy, size) {
 
     // 축 이름
     ctx.fillStyle = C.muted;
-    ctx.font = "400 20px 'DM Mono', 'Noto Sans KR', monospace";
+    ctx.font = "400 20px 'IBM Plex Mono', 'Pretendard Variable', monospace";
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     FLAVOR_AXES.forEach((t, i) => {
@@ -270,15 +274,14 @@ export async function buildQuizShareCard({ profile, title, tags, flavor }) {
 
     // 아이브로
     ctx.fillStyle = C.gold;
-    ctx.font = "400 22px 'DM Mono', monospace";
+    ctx.font = "400 22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
     drawTracked(ctx, 'YOUR COFFEE PROFILE', cx, y, 3.4);
     y += 66;
 
     // 프로필 이름 — 길면 두 줄로 흘린다.
     ctx.fillStyle = C.text;
-    // Gowun Batang에 없는 글자가 나와도 두부가 아니라 실제 한글이 찍히도록
-    // 전역 커버리지가 있는 Noto Sans KR을 폴백에 둔다(Cormorant는 라틴 전용이라 무의미).
-    ctx.font = "700 64px 'Gowun Batang', 'Noto Sans KR', Georgia, serif";
+    // Pretendard는 한글·라틴을 한 서체로 덮으므로 폴백을 겹칠 필요가 없다.
+    ctx.font = "700 64px 'Pretendard Variable', sans-serif";
     ctx.textAlign = 'center';
     wrapText(ctx, title, SIZE - 200).forEach((line) => {
         ctx.fillText(line, cx, y);
@@ -300,11 +303,11 @@ export async function buildQuizShareCard({ profile, title, tags, flavor }) {
 
     // 푸터 워드마크
     ctx.fillStyle = C.gold;
-    ctx.font = "500 26px 'DM Sans', 'Noto Sans KR', sans-serif";
+    ctx.font = "500 26px 'Pretendard Variable', sans-serif";
     ctx.textAlign = 'center';
     ctx.fillText('Note My Coffee', cx, SIZE - 92);
     ctx.fillStyle = C.muted;
-    ctx.font = "400 21px 'DM Mono', monospace";
+    ctx.font = "400 21px 'IBM Plex Mono', 'Pretendard Variable', monospace";
     ctx.fillText('note-my-coffee.web.app', cx, SIZE - 56);
 
     // 골드 헤어라인 프레임

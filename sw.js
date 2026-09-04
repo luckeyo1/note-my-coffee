@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v19';
+const VERSION = 'v20';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -29,7 +29,11 @@ const PRECACHE_ASSETS = [
   'icon-maskable-512.png',
   'apple-touch-icon.png',
   'privacy.html',
-  'delete-account.html'
+  'delete-account.html',
+  // Pretendard의 @font-face 선언만 미리 받는다. woff2 서브셋 92개(3.1MB)는
+  // 여기 넣지 않는다 — unicode-range 덕에 브라우저가 실제로 쓰인 글자 범위만
+  // 내려받고, 동일 출처라 아래 network-first 경로가 알아서 캐시한다.
+  'font/pretendard/pretendard.css'
 ];
 
 // Optional assets: art that may not be in the repo yet. addAll() rejects the
