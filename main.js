@@ -81,8 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
             recipeSavedSuccess: "Recipe logged! Opening logbook...",
             recipeSavedFail: "Failed to save recipe.",
             confirmExitModal: "Discard this recipe?",
-            progressLabel: "RECIPE COMPLETENESS",
-            progressHint: "Add bean name to complete",
             proHintDosing: "Pro range: {min}–{max}g",
             proHintTemp: "Pro range: {min}–{max}°C",
             proHintTime: "Pro range: {min}–{max}sec",
@@ -186,8 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             recipeSavedSuccess: "레시피가 기록되었습니다! 로그북으로 이동합니다...",
             recipeSavedFail: "레시피 저장 실패.",
             confirmExitModal: "이 레시피를 버리겠습니까?",
-            progressLabel: "레시피 완성도",
-            progressHint: "원두 이름을 기록하면 완성됩니다",
             proHintDosing: "프로 범위: {min}–{max}g",
             proHintTemp: "프로 범위: {min}–{max}°C",
             proHintTime: "프로 범위: {min}–{max}초",
@@ -304,11 +300,6 @@ document.addEventListener('DOMContentLoaded', () => {
         vTime: document.getElementById('v-time'),
         vYield: document.getElementById('v-yield'),
         uTime: document.getElementById('u-time'),
-        progressLabelText: document.getElementById('progress-label-text'),
-        progressRing: document.getElementById('progress-ring'),
-        progressItems: document.getElementById('progress-items'),
-        progressPct: document.getElementById('progress-pct'),
-        progressHint: document.getElementById('progress-hint'),
         qbDosing: document.getElementById('qb-dosing'),
         qbTemp: document.getElementById('qb-temp'),
         qbTime: document.getElementById('qb-time'),
@@ -478,7 +469,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     chip.addEventListener('click', () => {
                         el.modalBeanName.value = bean;
                         prefillFromRecipe(latestByBean.get(bean));
-                        updateProgress();
                     });
                     el.openedBeansContainer.appendChild(chip);
                 });
@@ -704,7 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (id === 'dosing' && el.visDosing) el.visDosing.style.width = `${(dv - 7) / (40 - 7) * 100}%`;
         if (id === 'temp' && el.visTemp) el.visTemp.style.width = `${(dv - 80) / (100 - 80) * 100}%`;
 
-        updateBrewRatio(); updateProgress();
+        updateBrewRatio();
     };
 
     const qualityRanges = {
@@ -971,52 +961,6 @@ document.addEventListener('DOMContentLoaded', () => {
         el.ratioStatus.className = `ratio-status ${ideal ? 'ideal' : 'warning'}`;
     };
 
-    // 완성도 — 예전에는 원두명 유무로 75%/100% 둘 중 하나였다. 그래선 링을 그려도
-    // 의미가 없다. 실제 기여 요인을 두고 무엇이 빠졌는지 보여준다(Oura 준비도 문법).
-    // 측정값(도징·온도·시간·수율)은 슬라이더라 항상 있으므로 기본 60점으로 깔고,
-    // 사람이 채워야 하는 네 가지가 나머지를 만든다.
-    const RING_CIRCUMFERENCE = 2 * Math.PI * 42;   // app.html의 r=42와 맞물린다
-
-    const completenessFactors = () => ([
-        { key: 'bean',   ok: !!(el.modalBeanName && el.modalBeanName.value.trim()),
-          ko: '원두 이름', en: 'Bean name' },
-        { key: 'notes',  ok: !!(el.modalTasteNotes && el.modalTasteNotes.value.trim()),
-          ko: '테이스팅 노트', en: 'Tasting notes' },
-        { key: 'photo',  ok: !!uploadedImageData,
-          ko: '사진', en: 'Photo' },
-        // 평점은 기본값 3점이 미리 체크돼 있어 항상 '완료'로 잡힌다 — 기여 요인이
-        // 되지 못한다. 사용자가 실제로 채워야 하는 원산지를 대신 넣는다.
-        { key: 'origin', ok: !!(el.modalOrigin && el.modalOrigin.value.trim()),
-          ko: '원산지', en: 'Origin' },
-    ]);
-
-    const updateProgress = () => {
-        const factors = completenessFactors();
-        const score = 60 + factors.filter((f) => f.ok).length * 10;
-
-        if (el.progressRing) {
-            // 링은 위에서 시작해 시계방향으로 찬다(CSS에서 -90도 회전).
-            el.progressRing.style.strokeDasharray = RING_CIRCUMFERENCE;
-            el.progressRing.style.strokeDashoffset = RING_CIRCUMFERENCE * (1 - score / 100);
-        }
-        if (el.progressPct) el.progressPct.textContent = `${score}%`;
-
-        if (el.progressItems) {
-            el.progressItems.textContent = '';
-            factors.forEach((f) => {
-                const li = document.createElement('li');
-                li.className = 'cmp-item' + (f.ok ? ' is-done' : '');
-                // 상태를 색으로만 말하지 않는다 — 표식과 글자가 항상 함께 간다.
-                li.textContent = (f.ok ? '✓ ' : '· ') + (currentLang === 'ko' ? f.ko : f.en);
-                el.progressItems.appendChild(li);
-            });
-        }
-        if (el.progressHint) {
-            el.progressHint.textContent = score === 100
-                ? (currentLang === 'ko' ? '완성된 레시피입니다 ✓' : 'Recipe complete ✓')
-                : '';
-        }
-    };
 
     const updateLogbookBadge = async () => {
         const recipes = await CoffeeNotesStorage.getRecipes();
@@ -1283,12 +1227,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLang = lang; saveLang(lang); ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
         const t = i18n[lang]; 
         
-        ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline','progressLabelText'].forEach(k => {
+        ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline'].forEach(k => {
             if (!el[k]) return;
             let key = k.replace('lbl','');
             // Specific overrides for keys that don't match standard mapping
             if (key === 'saveNudge') key = 'savingNudge';
-            if (key === 'progressLabelText') key = 'progressLabel';
             // Try lowercase, then original key
             el[k].textContent = t[key.charAt(0).toLowerCase() + key.slice(1)] || t[key] || t[k];
         });
@@ -1311,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTagCloud(el.originTagCloud, t.originTags, el.modalOrigin);
         renderTagCloud(el.tasteTagCloud, t.tasteTags, el.modalTasteNotes);
 
-        updateProHints(); updateProgress(); updateBrewRatio(); refreshScaPopover(); fetchWeather();
+        updateProHints(); updateBrewRatio(); refreshScaPopover(); fetchWeather();
         if (el.onboardingModal.classList.contains('active')) renderObStep();
     };
 
