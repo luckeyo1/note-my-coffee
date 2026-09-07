@@ -56,6 +56,26 @@ No people, no faces, no hands. Not a dark moody scene, not a black background,
 not a glossy commercial advertisement, not high-contrast chiaroscuro.
 ```
 
+### `hero-bright.png` — 히어로 배경 사진 (신규)
+
+**쓰이는 곳:** 히어로 **오른쪽 아래**에 은은하게 깔린다. 왼쪽으로 갈수록 크림으로
+사라지는 마스크가 걸려 왼쪽 카피 가독성을 지킨다. 넣은 뒤 `index.html`의 히어로
+`<section class="hero">`를 `class="hero has-photo"`로 바꾸면 켜진다(없을 때 404 방지).
+
+**요청 크기:** 1536×1024 (가로). **오른쪽 2/3에 피사체**, 왼쪽 1/3은 빈 크림 여백.
+
+```
+[공통 밝은 스타일 블록]
+
+A warm cup of freshly brewed coffee on a cream linen table by a window, with a
+few roasted coffee beans and a small plant softly out of focus behind it. Soft
+morning daylight, gentle shadows, steam catching the light. Calm and inviting.
+
+COMPOSITION IS CRITICAL: the cup and objects sit in the RIGHT TWO THIRDS of the
+frame. The left third is empty, bright, uninterrupted cream space — reserved for
+a headline. Keep the whole image high-key and airy.
+```
+
 ### `story-notebook.png` — 01 스토리 밴드 (밝은 버전)
 
 **쓰이는 곳:** 01 "기억은 흐려진다" 섹션 배경 밴드. 위아래가 크림으로 페이드된다.
