@@ -1,7 +1,169 @@
 # 랜딩 이미지 생성 프롬프트 (GPT 이미지 생성용)
 
 이 폴더에 들어갈 이미지를 만드는 프롬프트입니다.
-톤은 **다크 무드 실사** — 랜딩의 "골드 & 잉크" 팔레트(`#080604` / `#C8A96E`)에 강제로 구속시킵니다.
+
+> ## ✅ 지금 쓸 세트: 밝은 미니멀 (2026-09 · Apple 제품 재디자인)
+>
+> 랜딩을 "Apple 제품 페이지" 미니멀 방향으로 고도화하면서 사진을 **밝은 자연광
+> 톤**으로 다시 들인다. 아래 [밝은 세트](#밝은-미니멀-세트-2026-09) 프롬프트를 쓴다.
+>
+> 팔레트는 현재 라이브 팔레트에 맞춘다 — **종이 크림 `#FCFAF6`** 바탕,
+> **클레이 `#B4532A` / `#9E421D`** 액센트. 예전 팔레트 문서(`GEMINI.md`)의 "계기 블루
+> `#0E4C7A`"는 **폐기됐다**(클레이로 교체 완료). 파랑을 넣지 말 것.
+>
+> 이 문서 아래쪽 **다크 키아로스쿠로 세트(`#080604`/`#C8A96E`)는 폐기 이력**이다 —
+> 참고만 하고 그 프롬프트로 새 이미지를 만들지 말 것. 밝은 재디자인과 정면으로
+> 부딪힌다.
+
+---
+
+## 밝은 미니멀 세트 (2026-09)
+
+### 원칙 — 다크 세트와 무엇이 반대인가
+
+| | 폐기된 다크 세트 | **밝은 세트(지금)** |
+|---|---|---|
+| 광원 | 좌상단 하드 스팟, 70%+ 그림자 | **창문 자연광**, 부드럽고 고르게, 그림자 옅게 |
+| 바탕 | 거의 순검정 `#080604` | **따뜻한 오프화이트/크림** `#FCFAF6`, 리넨·나무·석고 |
+| 액센트 | 브라스/앰버 `#C8A96E` | **테라코타/클레이** `#B4532A` (원두·도기·흙빛) |
+| 채도 | 극저채도 | 낮지만 살아 있는 채도, 따뜻한 편향 |
+| 인상 | 무겁고 극적 | **가볍고 정돈, 여백이 주인공** — 에디토리얼 미니멀 |
+
+바뀌지 않는 규칙(다크 세트와 동일):
+- **글자·숫자·기호 금지** — 모든 문구는 HTML/canvas가 그린다.
+- **로고·모노그램·브랜드 포장 금지** — 컵·노트·텀블러는 완전 무지(無地).
+- **화면(폰·태블릿·모니터·앱 UI) 금지** — 실제 앱 화면은 랜딩이 CSS로 그린다.
+- **인물·얼굴·손 금지** — 스톡 느낌과 초상 문제를 피한다.
+
+### 공통 밝은 스타일 블록
+
+**아래 프롬프트 맨 앞에 붙여 한 세트로 묶는다.**
+
+```
+Bright, airy minimalist still-life photography in soft natural window light.
+The scene sits on a warm off-white / cream surface (hex #FCFAF6) — linen, pale
+oak, or matte plaster. Soft diffused daylight from one side, gentle soft
+shadows, no hard spotlight, no crushed blacks. Warm low-saturation palette; the
+only saturated accent is terracotta / clay brown (hex #B4532A) coming from the
+coffee, roasted beans and unglazed ceramic. Calm, uncluttered, editorial, lots
+of empty negative space. Matte finish, faint fine film grain, shot on an 85mm
+lens at f/2.8, gentle shallow depth of field, natural imperfect surfaces.
+No text, no letters, no numbers, no captions, no watermarks.
+No logos, no brand marks, no monograms, no initials, no emblems on any object —
+mugs, tumblers, notebooks and cups must be completely plain and unbranded.
+No phones, no tablets, no laptops, no screens, no displays, no app interfaces.
+No people, no faces, no hands. Not a dark moody scene, not a black background,
+not a glossy commercial advertisement, not high-contrast chiaroscuro.
+```
+
+### `hero-bright.png` — 히어로 배경 사진 (신규)
+
+**쓰이는 곳:** 히어로 **오른쪽 아래**에 은은하게 깔린다. 왼쪽으로 갈수록 크림으로
+사라지는 마스크가 걸려 왼쪽 카피 가독성을 지킨다. 넣은 뒤 `index.html`의 히어로
+`<section class="hero">`를 `class="hero has-photo"`로 바꾸면 켜진다(없을 때 404 방지).
+
+**요청 크기:** 1536×1024 (가로). **오른쪽 2/3에 피사체**, 왼쪽 1/3은 빈 크림 여백.
+
+```
+[공통 밝은 스타일 블록]
+
+A warm cup of freshly brewed coffee on a cream linen table by a window, with a
+few roasted coffee beans and a small plant softly out of focus behind it. Soft
+morning daylight, gentle shadows, steam catching the light. Calm and inviting.
+
+COMPOSITION IS CRITICAL: the cup and objects sit in the RIGHT TWO THIRDS of the
+frame. The left third is empty, bright, uninterrupted cream space — reserved for
+a headline. Keep the whole image high-key and airy.
+```
+
+### `story-notebook.png` — 01 스토리 밴드 (밝은 버전)
+
+**쓰이는 곳:** 01 "기억은 흐려진다" 섹션 배경 밴드. 위아래가 크림으로 페이드된다.
+**빈 노트가 은유의 핵심** — 페이지에 글씨가 있으면 의미가 반대가 된다.
+
+**요청 크기:** 1536×1024 (가로)
+
+```
+[공통 밝은 스타일 블록]
+
+An open paper notebook lying on a pale oak cafe table by a window. THE PAGES ARE
+COMPLETELY BLANK — no handwriting, no printed lines, no letters, no numbers, no
+marks resembling writing of any kind. Only soft paper texture and one or two
+faint dried coffee ring stains. Beside it, a plain unbranded matte ceramic cup
+and a small scattering of roasted coffee beans on the light wood. Soft morning
+daylight, gentle shadows, quiet and calm. Plenty of empty bright surface around
+the objects.
+```
+
+### `mid-cta-plate.png` — 중간 CTA 배너 (밝은 버전)
+
+**쓰이는 곳:** 페이지 중간 가로 배너. 왼쪽 절반에 문구·버튼이 올라간다 —
+**왼쪽 절반은 반드시 비워** 둔다. 밝은 톤이라 예전처럼 어둡게 덮지 않는다.
+
+**요청 크기:** 1536×1024 (가로, 가로로 길게 잘라 씀)
+
+```
+[공통 밝은 스타일 블록]
+
+A warm cup of freshly brewed coffee on a cream linen surface beside a few
+roasted coffee beans and a closed plain notebook, seen from a low three-quarter
+angle. Soft steam catches the daylight. Calm end-of-a-good-morning mood.
+
+COMPOSITION IS CRITICAL: every object sits in the RIGHT HALF of the frame. The
+left half is empty, uninterrupted bright cream space — deliberately reserved for
+text. Keep it simple, minimal, and high-key.
+```
+
+### `profile-a~d.png` — 취향검사 프로필 아트 4종 (밝은 버전)
+
+**쓰이는 곳:** 취향검사 결과 배너 + 공유 카드 상단 밴드. **정사각 1024×1024**, 가로로
+길게 잘라 쓴다 — 피사체를 **가로 가운데 띠**에 모으고 위아래 1/3은 빈 크림 바닥으로
+둔다(잘려 나감). A→D 순서로 **같은 대화에서 연속 생성**해 광원·바닥을 맞춘다.
+A가 가장 밝고 가벼우며 D로 갈수록 진하고 묵직하게 — 단, **넷 다 밝은 톤 안에서**.
+
+```
+[공통 밝은 스타일 블록] · square 1:1 format.
+COMPOSITION: arrange every subject across the horizontal middle band of the
+square, slightly above centre. Top third and bottom third are cropped away —
+leave them as empty bright cream surface.
+
+A (화사한 향미 탐험가 · Floral/Fruity/Acidic): pale light-roast beans, a few
+white jasmine blossoms, two thin dried-peach slices, and a clear glass carafe of
+bright amber coffee glowing in daylight. The lightest, airiest of the four.
+
+B (밸런스의 클래식 · Sweet/Caramel/Balanced) — same series, match A exactly,
+change only subject: evenly medium-roast beans, one translucent caramel shard,
+a plain cream ceramic cup of clean black coffee. Warm cinnamon tone, the
+balanced midpoint.
+
+C (고소한 위로 한 잔 · Nutty/Chocolaty/Sweet) — same series: medium-dark beans,
+whole hazelnuts and almonds, two broken milk-chocolate squares, a thick plain
+stoneware mug of latte with soft cloudy microfoam (NO latte art, no pattern).
+Softest, most comforting light.
+
+D (묵직한 바디 애호가 · Bitter/DarkChoco/Heavy) — same series: dark oily beans, a
+broken block of 85% dark chocolate, a plain demitasse of espresso with dense
+crema. The deepest and most saturated of the four, but still on the bright cream
+surface — rich, not black.
+```
+
+### 밝은 세트 조정 문구
+
+| 증상 | 덧붙일 문구 |
+|---|---|
+| 너무 어둡다 / 무겁다 | `Brighter and more high-key. Open up the shadows, soft even daylight, cream background clearly visible.` |
+| 색이 붕 뜬다(파랑·초록) | `Remove all cool tones. Only warm hues — cream, terracotta clay brown, and soft amber.` |
+| 스톡 광고처럼 매끈하다 | `Less polished, more editorial. Natural imperfect surfaces, faint film grain, no glossy studio reflections.` |
+| 글자가 들어갔다 | `Remove all text, letters, numbers and symbols entirely.` |
+| CTA 배너 왼쪽이 안 비었다 | `The left half of the frame must be completely empty cream space. Move every object to the right half.` |
+
+---
+
+## (폐기 이력) 다크 키아로스쿠로 세트
+
+아래는 2026-07 다크 무드 세트다. **폐기됨** — 위 밝은 세트로 대체됐다. 새 이미지를
+아래 프롬프트로 만들지 말 것. 문서 하단의 폐기 사유도 함께 참고.
+톤은 다크 무드 실사 — 옛 "골드 & 잉크" 팔레트(`#080604` / `#C8A96E`)에 묶여 있었다.
 
 ## 파일명 규약
 

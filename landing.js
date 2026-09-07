@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 정작 누르면 로그인 시트가 떴고, 버튼 바로 아래엔 "로그인 없이 첫 기록"이라고
     // 적혀 있었다 — 페이지와 버튼이 서로 다른 말을 했다. 사용자 제보로 확인된 혼란이다.
     onAuthStateChanged(auth, (user) => {
-        updateCtaText(user ? '콘솔로 이동하기' : '로그인 없이 바로 기록해보기');
+        updateCtaText(user ? '콘솔로 이동하기' : '첫 커피 기록하기');
     });
 
     // ====== 사회적 증거: 누적 기록 수 ======
