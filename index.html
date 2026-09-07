@@ -233,38 +233,18 @@
         .nav-btn:hover { background: var(--gold); color: var(--bg); }
 
         /* ── HERO ── */
+        /* 히어로 — Apple 제품 페이지 문법: 중앙정렬 헤드라인 아래로 제품 화면을
+           크게 놓는다. 예전의 좌우 2단 + 분홍 글로우 + 다크 사진 플레이트는
+           걷어냈다. 미니멀의 핵심은 여백이라 색 블록을 빼고 종이 위에 세운다. */
         .hero {
             position: relative;
-            min-height: 100svh;
-            padding: 120px clamp(24px, 8vw, 120px) 80px;
+            min-height: auto;
+            padding: 132px clamp(24px, 8vw, 120px) 40px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
-        .hero::before {
-            content: "";
-            position: absolute;
-            top: -18%; left: -12%;
-            width: 72%; height: 82%;
-            background: rgba(180,83,42,0.09);
-            pointer-events: none;
-            z-index: 1;
-        }
-        /* 히어로 사진 플레이트. 오른쪽 1/3에 피사체가 있는 이미지를 전제로, 왼쪽으로
-           갈수록 배경색까지 지우는 마스크를 걸어 헤드라인 대비를 지킨다.
-           img/hero-plate.webp가 없으면 이 층만 비고 나머지는 그대로다. */
-        .hero::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            opacity: 0.28;
-            background: none;
-            -webkit-mask-image: rgba(36,28,21,0.35);
-            mask-image: rgba(36,28,21,0.35);
-        }
-        /* 콘텐츠는 사진 플레이트(::after, z-index 0)와 글로우(::before, z-index 1) 위로. */
         .hero-grid { position: relative; z-index: 2; }
 
         .hero-eyebrow {
@@ -276,38 +256,37 @@
             letter-spacing: 0.16em;
             color: var(--gold);
             text-transform: uppercase;
-            opacity: 0.85;
-            margin-bottom: 28px;
+            opacity: 0.9;
+            margin-bottom: 26px;
         }
-        .hero-eyebrow::before {
+        .hero-eyebrow::before,
+        .hero-eyebrow::after {
             content: "";
-            width: 36px; height: 1px;
+            width: 30px; height: 1px;
             background: var(--gold);
-            opacity: 0.7;
+            opacity: 0.55;
         }
 
         .hero-title {
             font-family: var(--sans);
-            /* 100px에서는 "어제의 완벽한 한 잔을,"이 카피 컬럼(약 712px @1280)을 넘겨
-               의도한 2행이 3행으로 깨졌다. 한글은 글자당 약 1em이라 11자 기준으로 맞춘다. */
-            font-size: clamp(38px, 4.9vw, 70px);
+            font-size: clamp(40px, 5.4vw, 76px);
             font-weight: 600;
-            letter-spacing: -0.015em;
-            line-height: 1.24;
+            letter-spacing: -0.02em;
+            line-height: 1.18;
             word-break: keep-all;
             color: var(--text);
-            max-width: 780px;
-            margin-bottom: 28px;
+            max-width: 15ch;
+            margin: 0 auto 26px;
         }
-        /* 한글 폴백에서 italic은 가짜 기울임으로 합성되므로 쓰지 않는다. 골드+글로우로만 강조. */
+        /* 한글 폴백에서 italic은 가짜 기울임으로 합성되므로 쓰지 않는다. 골드로만 강조. */
         .hero-title em { color: var(--gold); font-style: normal; }
 
         .hero-body {
-            font-size: clamp(15px, 1.8vw, 17px);
-            line-height: 1.82;
+            font-size: clamp(16px, 1.8vw, 18px);
+            line-height: 1.75;
             color: var(--sub);
-            max-width: 440px;
-            margin-bottom: 44px;
+            max-width: 480px;
+            margin: 0 auto 40px;
         }
 
         .btn-primary {
@@ -352,31 +331,34 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
+            justify-content: center;
             gap: 12px;
         }
 
         .hero-caption {
             margin-top: 14px;
-            font-size: 12px;
+            font-size: 12.5px;
             color: var(--muted);
         }
 
-        /* 폴드 안에서 카피와 제품 화면을 나란히 — 첫 화면에 제품이 보이게 한다. */
+        /* 중앙정렬 단일 컬럼. 카피가 위, 제품 화면이 아래로 쌓인다(Apple 제품 페이지). */
         .hero-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: clamp(32px, 5vw, 72px);
+            display: flex;
+            flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 1180px;
+            max-width: 760px;
+            margin: 0 auto;
         }
+        .hero-copy { width: 100%; }
 
         .hero-trust {
             display: flex;
             align-items: center;
+            justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 34px;
+            margin-top: 30px;
         }
         .hero-trust-badge {
             font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
@@ -396,60 +378,34 @@
         }
         .hero-stat[hidden] { display: none; }
 
-        /* 폰은 내부가 px 고정이라 transform으로 줄이고, 래퍼 높이로 레이아웃을 보정한다. */
+        /* 제품 화면을 헤드라인 아래 중앙에 크게 놓는다. 폰은 내부가 px 고정이라
+           transform으로 스케일하고, 래퍼 높이로 레이아웃을 보정한다. 종이에서
+           살짝 띄워 그림자로 깊이를 준다 — 미니멀에서 유일하게 허용하는 그림자. */
         .hero-visual {
             --hero-phone-scale: 1;
             display: flex;
             justify-content: center;
+            margin-top: clamp(40px, 6vw, 72px);
             height: calc(642px * var(--hero-phone-scale));
         }
         .hero-visual .demo-phone {
             transform: scale(var(--hero-phone-scale));
             transform-origin: top center;
+            box-shadow: 0 30px 70px -30px rgba(36,28,21,0.28);
         }
 
-        .hero-scroll {
-            position: absolute;
-            z-index: 2;
-            left: clamp(24px, 8vw, 120px);
-            bottom: 34px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
-            font-size: 10px;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            color: var(--muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .hero-scroll span {
-            width: 34px; height: 1px;
-            background: currentColor;
-            animation: scroll-cue 1.9s ease-in-out infinite;
-            transform-origin: left center;
-        }
-        .hero-scroll:hover { color: var(--gold); }
-        @keyframes scroll-cue {
-            0%, 100% { transform: scaleX(0.45); opacity: 0.5; }
-            50%      { transform: scaleX(1);    opacity: 1; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .hero-scroll span { animation: none; transform: none; }
-        }
+        .hero-scroll { display: none; }
 
-        /* 폰이 300px를 계속 차지해 이 구간의 카피 컬럼이 가장 좁다. 제목을 한 단계 더 줄인다. */
         @media (max-width: 1120px) {
-            .hero-visual { --hero-phone-scale: 0.86; }
-            .hero-title { font-size: clamp(34px, 4.4vw, 52px); }
+            .hero-title { font-size: clamp(38px, 5vw, 60px); }
         }
         @media (max-width: 940px) {
-            .hero-grid { grid-template-columns: 1fr; }
-            .hero-visual { --hero-phone-scale: 0.78; margin-top: 8px; }
-            .hero-scroll { display: none; }
+            .hero-visual { --hero-phone-scale: 0.9; }
         }
-        @media (max-width: 560px) { .hero-visual { --hero-phone-scale: 0.7; } }
+        @media (max-width: 560px) {
+            .hero { padding-top: 104px; }
+            .hero-visual { --hero-phone-scale: 0.74; }
+        }
 
         /* ── DIVIDERS ── */
         .rule { width: 100%; height: 1px; background: rgba(180,83,42,0.18); }
@@ -543,38 +499,54 @@
         }
 
         /* ── PARAMS TABLE ── */
+        /* 4숫자 섹션 — 괘선 상자에서 아이콘이 붙은 네 개의 열로. 미니멀 문법대로
+           테두리는 얇은 위아래 헤어라인만 남기고, 열 사이는 여백으로 나눈다. */
         .params {
-            display: flex;
-            border: 1px solid var(--border);
-            border-radius: 0;
-            overflow: hidden;
-            margin: 36px 0;
-            background: rgba(36,28,21,0.015);
-            font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: clamp(16px, 3vw, 40px);
+            margin: 48px 0;
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
         }
 
         .param {
-            flex: 1;
-            padding: 20px 12px;
-            border-right: 1px solid var(--border);
             text-align: center;
-            transition: background 0.25s ease;
+            padding: 0 8px;
         }
-        .param:last-child { border-right: none; }
-        .param:hover { background: var(--gold-dim); }
-
+        .param-ico {
+            width: 26px; height: 26px;
+            color: var(--gold);
+            margin: 0 auto 16px;
+            display: block;
+        }
         .param-val {
             font-family: var(--sans);
-            font-size: 27px;
+            font-size: clamp(30px, 3.6vw, 40px);
             font-weight: 600;
-            color: var(--gold);
-            margin-bottom: 5px;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+        .param-unit {
+            font-size: 0.5em;
+            font-weight: 500;
+            color: var(--muted);
+            margin-left: 3px;
         }
         .param-key {
-            font-size: 9px;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .param-desc {
+            font-size: 12.5px;
+            line-height: 1.5;
             color: var(--muted);
+            word-break: keep-all;
         }
 
         /* ── DARK BG SECTION ──
@@ -940,12 +912,6 @@
         .pd-mode { flex: 1; text-align: center; font-size: 9.5px; font-weight: 500; color: #7A6E60; background: #fff; border: 1px solid rgba(36,28,21,0.08); border-radius: 0; padding: 8px 0; }
         .pd-mode.is-active { background: #241C15; color: #fff; border-color: #241C15; }
 
-        .pd-progress { margin-bottom: 12px; }
-        .pd-progress-label { display: flex; justify-content: space-between; font-size: 8.5px; margin-bottom: 5px; }
-        .pd-progress-label span:first-child { color: #7A6E60; letter-spacing: 0.04em; }
-        .pd-progress-pct { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; color: #9E421D; }
-        .pd-progress-track { height: 3px; background: #EFE9DF; border-radius: 0; overflow: hidden; }
-        .pd-progress-fill { display: block; width: 40%; height: 100%; background: #9E421D; }
 
         .pd-panel { background: #fff; border: 1px solid rgba(36,28,21,0.08); border-radius: 0; padding: 14px; flex: 1; display: flex; flex-direction: column; }
 
@@ -1534,9 +1500,7 @@
         }
 
         @media (max-width: 540px) {
-            .params { flex-direction: column; }
-            .param { border-right: none; border-bottom: 1px solid var(--border); }
-            .param:last-child { border-bottom: none; }
+            .params { grid-template-columns: repeat(2, 1fr); gap: 32px 16px; }
         }
 
         /* 터치 입력일 때만 표적을 44px로. 데스크톱 조판은 그대로 둔다. */
@@ -1580,6 +1544,19 @@
     <symbol id="i-bean" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
         <ellipse cx="12" cy="12" rx="6.3" ry="8.7" transform="rotate(-34 12 12)"/>
         <path d="M7.6 5.4c2.4 2.6.5 5.4 1.9 7.7s4 3.6 7 6"/>
+    </symbol>
+    <!-- 4숫자 섹션(도징·온도·시간·수율)용 라인 아이콘. i-bean은 도징에 재사용한다. -->
+    <symbol id="i-thermo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 14.76V5a2 2 0 0 0-4 0v9.76a4 4 0 1 0 4 0z"/>
+        <line x1="12" y1="9" x2="12" y2="14.5"/>
+    </symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="13.5" r="7.5"/>
+        <line x1="12" y1="13.5" x2="12" y2="9.5"/>
+        <line x1="9.5" y1="2.5" x2="14.5" y2="2.5"/>
+    </symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3.2s6 6.4 6 10.4a6 6 0 0 1-12 0c0-4 6-10.4 6-10.4z"/>
     </symbol>
     <!-- ✓ ✦ → 는 이모지는 아니지만 웹폰트(IBM Plex 계열)에 없는 글리프라
          OS 폴백 서체로 떨어진다. 목업 안에서는 주변 서체와 어긋나므로 벡터로 고정한다. -->
@@ -1674,13 +1651,6 @@
                             <div class="pd-modes">
                                 <span class="pd-mode is-active"><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg> ESPRESSO</span>
                                 <span class="pd-mode"><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-leaf"/></svg> HAND DRIP</span>
-                            </div>
-                            <div class="pd-progress">
-                                <div class="pd-progress-label">
-                                    <span>RECIPE COMPLETENESS</span>
-                                    <span class="pd-progress-pct">100%</span>
-                                </div>
-                                <div class="pd-progress-track"><span class="pd-progress-fill" style="width:100%"></span></div>
                             </div>
                             <div class="pd-panel">
                                 <div class="pd-control">
@@ -1784,20 +1754,28 @@
 
             <div class="params">
                 <div class="param">
-                    <div class="param-val">18.0g</div>
-                    <div class="param-key">Dosing</div>
+                    <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-bean"/></svg>
+                    <div class="param-val">18.0<span class="param-unit">g</span></div>
+                    <div class="param-key">도징</div>
+                    <div class="param-desc">어떤 원두를, 얼마나 담을지</div>
                 </div>
                 <div class="param">
-                    <div class="param-val">92°C</div>
-                    <div class="param-key">Temp</div>
+                    <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-thermo"/></svg>
+                    <div class="param-val">92<span class="param-unit">°C</span></div>
+                    <div class="param-key">물 온도</div>
+                    <div class="param-desc">최적의 온도로 추출을 시작</div>
                 </div>
                 <div class="param">
-                    <div class="param-val">28sec</div>
-                    <div class="param-key">Time</div>
+                    <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-timer"/></svg>
+                    <div class="param-val">28.5<span class="param-unit">초</span></div>
+                    <div class="param-key">추출 시간</div>
+                    <div class="param-desc">흐르는 시간을 정확하게</div>
                 </div>
                 <div class="param">
-                    <div class="param-val">36g</div>
-                    <div class="param-key">Yield</div>
+                    <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-drop"/></svg>
+                    <div class="param-val">36.0<span class="param-unit">g</span></div>
+                    <div class="param-key">추출량</div>
+                    <div class="param-desc">원하는 만큼, 안정적으로</div>
                 </div>
             </div>
 
@@ -1944,13 +1922,6 @@
                             <div class="pd-modes">
                                 <span class="pd-mode is-active"><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg> ESPRESSO</span>
                                 <span class="pd-mode"><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-leaf"/></svg> HAND DRIP</span>
-                            </div>
-                            <div class="pd-progress">
-                                <div class="pd-progress-label">
-                                    <span>RECIPE COMPLETENESS</span>
-                                    <span class="pd-progress-pct" id="pd-prog-pct">40%</span>
-                                </div>
-                                <div class="pd-progress-track"><span class="pd-progress-fill" id="pd-prog-fill"></span></div>
                             </div>
                             <div class="pd-panel">
                                 <div class="pd-control">
@@ -2501,7 +2472,6 @@
         const el = {
             dv: $('pd-dosing-val'),   dBadge: $('pd-dosing-badge'), dVis: $('pd-dosing-vis'),
             dFill: $('pd-dosing-fill'), dThumb: $('pd-dosing-thumb'),
-            pFill: $('pd-prog-fill'), pPct: $('pd-prog-pct'),
             rNum: $('pd-ratio-num'),  rCoffee: $('pd-ratio-coffee'), rStatus: $('pd-ratio-status'),
             swTime: $('pd-sw-time'),  swStatus: $('pd-sw-status'),   swRing: $('pd-sw-ring'),
             swStart: $('pd-sw-start'), swApply: $('pd-sw-apply'),    swHint: $('pd-sw-hint'),
@@ -2518,10 +2488,6 @@
                 el.dThumb.style.left = pct + '%';
                 el.dVis.style.width = pct + '%';
                 el.dBadge.classList.toggle('is-on', t > 1950);
-
-                const prog = 40 + 35 * seg(t, 1200, 2600);
-                el.pFill.style.width = prog + '%';
-                el.pPct.textContent = Math.round(prog) + '%';
 
                 const r = 1.6 + 0.4 * seg(t, 2400, 3800);
                 el.rNum.textContent = '1 : ' + r.toFixed(1);
