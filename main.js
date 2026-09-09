@@ -8,6 +8,7 @@ import {
 } from "./firebase-config.js";
 import { signInWithChooser } from "./auth-ui.js";
 import CoffeeNotesStorage, { loadLang, saveLang } from "./storage.js";
+import { openBrewShareModal } from "./brew-card.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // 앱 페이지는 지금까지 GA4 히트가 0건이었다 — track()이 처음 호출될 때만
@@ -1322,6 +1323,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // 저장 중 재클릭을 막는다. 가드가 없으면 느린 연결·오프라인에서 사용자가
     // 여러 번 누르는 만큼 addDoc이 쌓이고, 재연결 시 전부 전송되어 중복 문서가 된다.
     let savingRecipe = false;
+    // 로그북(logbook.html)으로 향하는 레시피 전달 링크를 만든다. 인코딩은
+    // logbook.js의 buildShareData/buildShareUrl과 반드시 같아야 받는 쪽
+    // parseShareParam이 해석한다(그쪽은 클로저 내부 함수라 직접 재사용은 불가).
+    const buildLogbookShareUrl = (r) => {
+        const data = {
+            n: r.beanName || '', m: r.mode || 'espresso',
+            o: r.origin || '',   d: r.dosing,
+            t: r.temp,           e: r.time,
+            y: r.yield,          k: r.tasteNotes || '',
+            r: r.overallRating || 3, s: !!r.success,
+        };
+        const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        const base = new URL('logbook.html', window.location.href).href;
+        return `${base}?share=${encodeURIComponent(b64)}`;
+    };
+
     el.modalSaveRecipe.addEventListener('click', async () => {
         if (savingRecipe) return;
         try {
@@ -1394,14 +1411,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 success_flag: successResult,
             });
             if (saved) {
-                if (guestFirstSave) {
-                    alert(currentLang === 'ko'
-                        ? "체험 레시피가 저장됐어요! ☕\n레시피를 더 기록하려면 카카오나 구글로 로그인만 하면 됩니다."
-                        : "Your trial recipe is saved! ☕\nJust sign in to record more.");
-                } else {
-                    alert(i18n[currentLang].recipeSavedSuccess);
+                // 저장 직후가 페이지에서 몰입도 최고점 — 여기서 "체크인 자랑"(브루 카드)을
+                // 띄운다. 닫거나 "로그북으로 →"를 누르면 기존처럼 로그북으로 넘어간다.
+                const goLogbook = () => { window.location.href = 'logbook.html'; };
+                try {
+                    // 개인 기록(PR) 뱃지 계산용 전체 기록. 방금 저장한 것도 포함된다
+                    // (게스트는 로컬, 로그인 사용자는 클라우드). 실패해도 카드는 그려진다.
+                    const allRecipes = (await CoffeeNotesStorage.getRecipes()) || [];
+                    const shareUrl = buildLogbookShareUrl(recipe);
+                    closeRecipeModalDirect(); // 입력 모달을 닫아 카드가 깔끔히 보이게
+                    openBrewShareModal(recipe, {
+                        allRecipes,
+                        shareUrl,
+                        lang: currentLang,
+                        celebrate: true,
+                        notice: guestFirstSave
+                            ? (currentLang === 'ko'
+                                ? '체험 레시피가 저장됐어요 ☕ 카카오·구글로 로그인하면 계속 기록하고 기기 간 동기화됩니다.'
+                                : 'Trial recipe saved ☕ Sign in with Kakao or Google to keep logging and sync across devices.')
+                            : '',
+                        onContinue: goLogbook,
+                        onEvent: (name, params) => track(name, params),
+                    });
+                } catch (e) {
+                    // 축하 화면이 저장 성공을 가로막으면 안 된다 — 무슨 일이 있어도 로그북으로.
+                    console.warn('[BrewCard] 저장 후 공유 화면 표시 실패, 로그북으로 이동합니다.', e);
+                    goLogbook();
                 }
-                window.location.href = 'logbook.html';
             } else {
                 alert(i18n[currentLang].recipeSavedFail);
             }

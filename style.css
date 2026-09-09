@@ -1093,6 +1093,43 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 .recipe-share-btn--gold:hover { background: var(--gold); }
 .recipe-share-btn--gold:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* ── 브루 카드: 저장 직후 안내 한 줄(예: 게스트 로그인 유도) ── */
+.brew-notice {
+    margin: 0;
+    padding: 12px 20px;
+    background: rgba(180,83,42,0.06);
+    border-bottom: 1px solid rgba(21,18,14,0.07);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #544C41;
+}
+
+/* ── 브루 카드: 개인 기록(PR) 뱃지 칩 ── */
+.brew-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 14px 20px 0;
+}
+.brew-chip {
+    font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: var(--gold-light);
+    background: rgba(200,169,110,0.14);
+    border: 1px solid rgba(200,169,110,0.4);
+    border-radius: 999px;
+    padding: 5px 12px;
+}
+
+/* ── 브루 카드: 축하 모드의 "로그북으로 →" 이어가기 버튼 ── */
+.recipe-share-continue {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 0 20px 18px;
+}
+
 /* ── Import preview ── */
 .import-preview {
     padding: 22px 20px 16px;
