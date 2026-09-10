@@ -301,9 +301,7 @@ async function drawStoryCard(recipe, highlights) {
         ctx.font = font;
         const gap = 16;
         const widths = hls.map((h) => ctx.measureText(h).width + 44);
-        const totalW = widths.reduce((a, b) => a + b, 0) + gap * (hls.length - 1);
-        let x = 64 + totalW / 2; // _drawPill는 중심 x 기준
-        // 왼쪽 정렬로 배치하기 위해 누적 중심을 계산한다.
+        // _drawPill는 중심 x 기준이라, 왼쪽 정렬로 놓으려고 누적 시작점을 옮겨가며 그린다.
         let cursor = 64;
         hls.forEach((h, i) => {
             _drawPill(ctx, h, cursor + widths[i] / 2, 784, { font, padX: 22, h: 46 });
