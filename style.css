@@ -1563,3 +1563,24 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
     .app-shell { padding-bottom: 84px; }
     .fab-btn { display: none !important; }
 }
+
+/* ── 사진 선택: 안드로이드 갤러리 트리거 수정 ──
+   file input을 display:none 대신 화면에서만 숨긴다(일부 안드로이드 WebView·인앱
+   브라우저가 display:none file input의 선택창을 열지 않는 문제 회피). 트리거는
+   <label for>가 네이티브로 담당하므로 JS .click()이 필요 없다. */
+.visually-hidden-file {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+.photo-upload-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+}

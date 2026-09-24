@@ -1474,6 +1474,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 사진 선택 라벨의 키보드 접근성: <label for>는 탭(마우스/터치)엔 네이티브로
+    // 반응하지만 키보드 활성화는 안 되므로, Enter/Space에서 선택창을 연다.
+    // (데스크톱 키보드 경로 — 프로그램적 click이 정상 동작하는 환경이다.)
+    if (el.btnImageUpload) {
+        el.btnImageUpload.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                el.modalImageFile.click();
+            }
+        });
+    }
+
     el.modalImageFile.addEventListener('change', async (e) => {
         const f = e.target.files[0];
         if (!f) return;
