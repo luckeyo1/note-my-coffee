@@ -1489,6 +1489,14 @@ document.addEventListener('DOMContentLoaded', () => {
     el.modalImageFile.addEventListener('change', async (e) => {
         const f = e.target.files[0];
         if (!f) return;
+        // accept 제한을 풀어(삼성 선택창에 '갤러리'를 띄우기 위함) 이미지가 아닌
+        // 파일도 들어올 수 있으므로 여기서 거른다. type이 비어 오는 경우(일부
+        // 갤러리 앱)는 통과시키고 아래 압축 단계의 예외 처리에 맡긴다.
+        if (f.type && !f.type.startsWith('image/')) {
+            alert(currentLang === 'ko' ? '이미지 파일만 선택할 수 있어요.' : 'Please choose an image file.');
+            e.target.value = '';
+            return;
+        }
         el.fileNameDisplay.innerText = f.name;
         el.btnImageUpload.innerText = currentLang === 'ko' ? '사진 처리 중…' : 'Processing…';
         try {

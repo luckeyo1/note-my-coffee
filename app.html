@@ -360,8 +360,11 @@
             <label id="lbl-modal-image-url">COVER PHOTO</label>
             <div class="file-input-wrapper" style="display:flex; align-items:center;">
                 <!-- display:none 대신 화면에서만 숨긴다. 일부 안드로이드 WebView·인앱
-                     브라우저는 display:none file input의 선택창을 열지 않는다. -->
-                <input type="file" id="modal-image-file" accept="image/*" class="visually-hidden-file">
+                     브라우저는 display:none file input의 선택창을 열지 않는다.
+                     accept="image/*"는 삼성 선택창에서 '갤러리'를 빼버리는 알려진 동작이
+                     있어 일부러 걸지 않는다. 이미지가 아닌 파일은 main.js의 change
+                     핸들러에서 거른다. -->
+                <input type="file" id="modal-image-file" class="visually-hidden-file">
                 <!-- 버튼 대신 <label for>를 쓴다 — 탭하면 JS .click() 없이 네이티브로
                      사진 선택창이 열려, 안드로이드에서 갤러리가 안 뜨던 문제를 없앤다. -->
                 <label for="modal-image-file" class="result-btn photo-upload-label" id="btn-image-upload" tabindex="0" role="button" style="flex:1;">📷 Choose Photo</label>
