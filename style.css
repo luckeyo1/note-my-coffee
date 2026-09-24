@@ -66,6 +66,11 @@
 /* ===== RESET & BASE ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* 안드로이드 크롬/WebView는 큰 텍스트 블록을 자동으로 부풀린다(text autosizing/
+   font boosting). 그 결과 안드로이드에서만 화면이 '확대돼 보인다'. 100%로 고정해
+   우리가 지정한 px 그대로 렌더되게 한다(데스크톱·iOS 렌더는 그대로). */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 body {
     background: var(--cream);
     color: var(--ink);
