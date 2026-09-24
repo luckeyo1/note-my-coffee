@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentLang = loadLang();
     let successResult = false;
     let uploadedImageData = ''; // Base64 image string
+    // '다시 추출'로 넘어온 레시피. 저장 모달을 열 때 원두 정보를 채우는 데 쓴다
+    // (모달 열기 핸들러가 필드를 리셋하므로 그 직후에 다시 채워야 한다).
+    let pendingRebrew = null;
     let audioCtx = null;
 
     const compressImage = (file, maxWidth = 1600, maxHeight = 1600, quality = 0.72) => {
@@ -1307,8 +1310,25 @@ document.addEventListener('DOMContentLoaded', () => {
         el.modalImageFile.value = ''; uploadedImageData = ''; el.fileNameDisplay.innerText = ''; el.btnImageUpload.innerText = i18n[currentLang].selectPhoto; 
         el.modalTasteNotes.value = ''; el.modalTasteNotes.dispatchEvent(new Event('input'));
         
-        el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false; 
+        el.modalOverallRatingContainer.querySelector('input[value="3"]').checked = true; successResult = false; el.btnFail.classList.add('active'); el.btnSuccess.classList.remove('active'); el.modalSuccessFail.checked = false;
         setBeanStatus('new'); // Reset to new by default
+
+        // '다시 추출'로 들어온 경우, 위 리셋 직후 원두 정보를 이전 기록에서 채운다.
+        // (평점·성공 여부는 이번 추출의 결과이므로 채우지 않는다.)
+        if (pendingRebrew) {
+            const r = pendingRebrew;
+            el.modalBeanName.value = r.beanName || '';
+            if (r.origin) { el.modalOrigin.value = r.origin; el.modalOrigin.dispatchEvent(new Event('input')); }
+            if (r.purchaseUrl) el.modalPurchaseUrl.value = r.purchaseUrl;
+            if (r.tasteNotes) { el.modalTasteNotes.value = r.tasteNotes; el.modalTasteNotes.dispatchEvent(new Event('input')); }
+            if (r.imageUrl) {
+                uploadedImageData = r.imageUrl;
+                el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
+                el.fileNameDisplay.innerText = currentLang === 'ko' ? '이전 기록의 사진' : 'From last log';
+            }
+            setBeanStatus('open'); // 다시 추출하는 원두는 '개봉 중'이다
+        }
+
         setTimeout(() => el.modalBeanName.focus(), 400);
     });
 
@@ -1411,6 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 success_flag: successResult,
             });
             if (saved) {
+                pendingRebrew = null; // 재추출 prefill은 한 번 저장하면 소진된다
                 // 저장 직후가 페이지에서 몰입도 최고점 — 여기서 "체크인 자랑"(브루 카드)을
                 // 띄운다. 닫거나 "로그북으로 →"를 누르면 기존처럼 로그북으로 넘어간다.
                 const goLogbook = () => { window.location.href = 'logbook.html'; };
@@ -1481,6 +1502,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initRulers(); setMode('espresso'); setLang(currentLang); fetchWeather(); updateLogbookBadge();
+
+    // --- '다시 추출' (re-brew) ---
+    // 로그북 카드의 '다시 추출'은 app.html?rebrew=<id>로 넘어온다. 그 레시피의
+    // 모드·수치를 기록 화면에 그대로 얹고, 원두 정보는 저장 모달을 열 때 채운다.
+    const showRebrewToast = (msg) => {
+        const t = document.createElement('div');
+        t.className = 'nmc-toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        // 다음 프레임에 보이게 한 뒤 잠시 후 제거 (CSS 트랜지션)
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2400);
+    };
+
+    const applyRebrew = (r) => {
+        const mode = r.mode === 'drip' ? 'drip' : 'espresso';
+        // setMode는 modeValues[mode]에서 슬라이더를 복원하므로, 먼저 그 값을 덮는다.
+        VAR_IDS.forEach(id => {
+            const v = parseFloat(r[id]);
+            if (!Number.isNaN(v)) modeValues[mode][id] = v;
+        });
+        setMode(mode); // 슬라이더·눈금·비율·SCA 배지까지 한 번에 갱신
+        pendingRebrew = r; // 저장 모달 열 때 원두 정보를 채운다
+    };
+
+    const rebrewId = new URLSearchParams(location.search).get('rebrew');
+    if (rebrewId) {
+        (async () => {
+            try {
+                const list = (await CoffeeNotesStorage.getRecipes()) || [];
+                const r = list.find(x => x && String(x.id) === String(rebrewId));
+                if (r) {
+                    applyRebrew(r);
+                    showRebrewToast(currentLang === 'ko'
+                        ? '이전 레시피를 불러왔어요 ☕ 그대로 추출해보세요.'
+                        : 'Loaded your last recipe ☕ Brew it again.');
+                }
+            } catch (e) {
+                console.warn('[Rebrew] 레시피를 불러오지 못했습니다.', e);
+            } finally {
+                // 새로고침 시 다시 적용되지 않도록 쿼리스트링을 지운다.
+                history.replaceState({}, '', location.pathname);
+            }
+        })();
+    }
 
     // 첫 방문에만 서비스 안내를 자동으로 연다 (닫으면 다시 뜨지 않음)
     let obSeen = true;

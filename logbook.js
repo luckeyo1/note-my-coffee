@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // app.html에서 고른 언어를 그대로 이어받는다(storage.js)
     let currentLang = loadLang();
     let recipesCache = []; // for event delegation lookup
+    let searchQuery = '';   // 로그북 검색어
+    let modeFilter = 'all'; // 'all' | 'espresso' | 'drip'
 
     const i18n = {
         en: {
@@ -22,7 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
             time: "Time:", yield: "Yield:", tasteNotes: "Notes:",
             overallRating: "Rating:", success: "SUCCESS", fail: "FAIL",
             purchaseLink: "Purchase Link", delete: "Delete", weather: "Weather:",
-            share: "Share",
+            share: "Share", rebrew: "Brew again",
+            searchPlaceholder: "Search bean, notes…",
+            filterAll: "All", filterEspresso: "Espresso", filterDrip: "Hand drip",
+            noSearchResults: "No recipes match your search.",
             loadFailed: "Couldn't load your recipes. Your records are safe — this is a connection problem.",
             retry: "Try again",
             deleteFailed: "Couldn't delete this recipe. Check your connection and try again.",
@@ -36,7 +41,10 @@ document.addEventListener('DOMContentLoaded', () => {
             time: "추출 시간:", yield: "추출량:", tasteNotes: "맛 노트:",
             overallRating: "전체 평점:", success: "성공", fail: "실패",
             purchaseLink: "구매처 링크", delete: "삭제", weather: "날씨:",
-            share: "공유",
+            share: "공유", rebrew: "다시 추출",
+            searchPlaceholder: "원두명, 노트 검색…",
+            filterAll: "전체", filterEspresso: "에스프레소", filterDrip: "핸드드립",
+            noSearchResults: "검색 결과가 없습니다.",
             loadFailed: "기록을 불러오지 못했습니다. 기록은 그대로 있고, 연결 문제입니다.",
             retry: "다시 시도",
             deleteFailed: "삭제하지 못했습니다. 연결을 확인하고 다시 시도해주세요.",
@@ -50,6 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLangKo: document.getElementById('l-ko'),
         logbookTitle: document.querySelector('.logbook-title'),
         recipeCardsGrid: document.getElementById('recipe-cards-grid'),
+        tools: document.getElementById('logbook-tools'),
+        searchInput: document.getElementById('logbook-search'),
+        filters: document.getElementById('logbook-filters'),
     };
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -117,6 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
         recipesCache = recipes;
 
         if (!recipesCache.length) {
+            // 기록이 하나도 없으면 검색/필터 도구를 숨긴다.
+            if (elements.tools) elements.tools.hidden = true;
             // 빈 로그북. 앱은 크림색 라이트 테마라 랜딩의 다크 사진이 맞지 않아
             // 앱 팔레트의 골드 라인아트(인라인 SVG)로 둔다 — 요청 0건이고 어느
             // 화면 폭에서도 선명하다.
@@ -140,7 +153,49 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        recipesCache.forEach(recipe => {
+        // 기록이 있으면 검색/필터 도구를 켜고, 현재 검색어·필터를 적용해 그린다.
+        syncTools();
+        applyFilter();
+    };
+
+    // 검색/필터 도구의 표시 여부와 문구를 현재 상태에 맞춘다.
+    const syncTools = () => {
+        if (!elements.tools) return;
+        elements.tools.hidden = false;
+        if (elements.searchInput) elements.searchInput.placeholder = i18n[currentLang].searchPlaceholder;
+        if (elements.filters) {
+            const labels = { all: i18n[currentLang].filterAll, espresso: i18n[currentLang].filterEspresso, drip: i18n[currentLang].filterDrip };
+            elements.filters.querySelectorAll('.lb-chip').forEach(chip => {
+                const m = chip.dataset.mode;
+                if (labels[m]) chip.textContent = labels[m];
+                chip.classList.toggle('is-active', m === modeFilter);
+            });
+        }
+    };
+
+    // 검색어 + 모드 필터를 적용해 목록을 좁힌 뒤 렌더한다.
+    const applyFilter = () => {
+        const q = searchQuery.trim().toLowerCase();
+        const list = recipesCache.filter(r => {
+            if (!r) return false;
+            if (modeFilter !== 'all' && (r.mode || 'espresso') !== modeFilter) return false;
+            if (!q) return true;
+            const hay = [r.beanName, r.origin, r.tasteNotes, r.weather]
+                .filter(Boolean).join(' ').toLowerCase();
+            return hay.includes(q);
+        });
+        renderList(list);
+    };
+
+    // 주어진 목록으로 카드를 그린다. 목록이 비면(검색 결과 없음) 안내를 띄운다.
+    const renderList = (list) => {
+        elements.recipeCardsGrid.innerHTML = '';
+        if (!list.length) {
+            elements.recipeCardsGrid.innerHTML =
+                `<div class="no-recipes-message"><p class="no-recipes-text">${esc(i18n[currentLang].noSearchResults)}</p></div>`;
+            return;
+        }
+        list.forEach(recipe => {
             if (!recipe) return;
             const card = document.createElement('div');
             card.className = 'recipe-card';
@@ -201,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="delete-btn" data-id="${esc(recipe.id)}">${i18n[currentLang].delete}</button>
                     </div>
                 </div>
+                <button class="recipe-rebrew-btn" data-id="${esc(recipe.id)}">↻ ${i18n[currentLang].rebrew}</button>
             `;
             elements.recipeCardsGrid.appendChild(card);
         });
@@ -225,6 +281,27 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.btnLangEn.addEventListener('click', () => { track('language_changed', { lang: 'en', page: 'logbook' }); setLang('en'); });
     elements.btnLangKo.addEventListener('click', () => { track('language_changed', { lang: 'ko', page: 'logbook' }); setLang('ko'); });
 
+    // ── 검색 + 모드 필터 ────────────────────────────────────────────────────
+    if (elements.searchInput) {
+        elements.searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value || '';
+            applyFilter();
+        });
+    }
+    if (elements.filters) {
+        elements.filters.addEventListener('click', (e) => {
+            const chip = e.target.closest('.lb-chip');
+            if (!chip) return;
+            const mode = chip.dataset.mode || 'all';
+            if (mode === modeFilter) return;
+            modeFilter = mode;
+            track('logbook_filter', { mode });
+            elements.filters.querySelectorAll('.lb-chip')
+                .forEach(c => c.classList.toggle('is-active', c === chip));
+            applyFilter();
+        });
+    }
+
     elements.recipeCardsGrid.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
@@ -236,6 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (btn.classList.contains('share-btn')) {
             const recipe = recipesCache.find(r => r.id === id);
             if (recipe) { track('recipe_share_opened'); shareRecipe(recipe); }
+        } else if (btn.classList.contains('recipe-rebrew-btn')) {
+            // 이 레시피의 세팅을 기록 화면으로 그대로 가져간다(재현). main.js가
+            // ?rebrew=<id>를 읽어 모드·수치를 얹고 원두 정보를 채운다.
+            track('rebrew_started');
+            window.location.href = 'app.html?rebrew=' + encodeURIComponent(id);
         }
     });
 

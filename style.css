@@ -1327,3 +1327,239 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
         padding: 0;
     }
 }
+
+/* ============================================================
+   UI 고도화: 하단 탭바 · 설정 시트 · 토스트 · 로그북 검색 · 다시 추출
+   (신규 컴포넌트에만 부드러운 라운드를 쓰고, 전역 각진 디자인은 건드리지 않는다)
+   ============================================================ */
+
+/* ── 하단 탭바 (모바일 전용) ── */
+.tab-bar {
+    display: none; /* 데스크톱: 기존 헤더 네비를 쓰므로 숨긴다 */
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 90;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    box-shadow: 0 -6px 20px rgba(36,28,21,0.06);
+}
+.tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 9px 4px 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-ghost);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.tab-item svg { width: 22px; height: 22px; }
+.tab-item.is-active { color: var(--gold); }
+
+/* ── 설정 하단 시트 ── */
+.settings-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(36,28,21,0.42);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+/* display:flex가 기본 [hidden]{display:none}를 특이도로 눌러 무력화하므로,
+   hidden일 때를 명시적으로 되살린다(설정 시트·로그북 도구 공통). */
+.settings-sheet-overlay[hidden],
+.logbook-tools[hidden] { display: none !important; }
+.settings-sheet {
+    width: 100%;
+    max-width: 520px;
+    background: var(--cream);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    padding: 10px 18px calc(18px + env(safe-area-inset-bottom, 0));
+    box-shadow: 0 -10px 40px rgba(36,28,21,0.22);
+}
+.settings-sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--border-strong);
+    border-radius: 999px;
+    margin: 6px auto 12px;
+}
+.settings-sheet-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--border);
+}
+.settings-seg { display: flex; gap: 6px; }
+.settings-seg button {
+    min-width: 46px;
+    padding: 7px 12px;
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--ink-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+}
+.settings-link {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 14px 4px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    text-decoration: none;
+    cursor: pointer;
+}
+.settings-link:hover { color: var(--gold); }
+.settings-sheet-close {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ── 토스트 (다시 추출 안내 등) ── */
+.nmc-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 92px;
+    transform: translate(-50%, 12px);
+    z-index: 1100;
+    max-width: 88vw;
+    padding: 11px 18px;
+    background: var(--ink);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(36,28,21,0.28);
+    opacity: 0;
+    transition: opacity 0.28s ease, transform 0.28s ease;
+    pointer-events: none;
+}
+.nmc-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── 로그북 검색 + 필터칩 ── */
+.logbook-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 4px 0 22px;
+}
+.logbook-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.lb-search-icon {
+    position: absolute;
+    left: 14px;
+    width: 18px; height: 18px;
+    color: var(--ink-ghost);
+    pointer-events: none;
+}
+.lb-search-input {
+    width: 100%;
+    padding: 12px 14px 12px 42px;
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--ink);
+    -webkit-appearance: none;
+    appearance: none;
+}
+.lb-search-input::placeholder { color: var(--ink-ghost); }
+.lb-search-input:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: var(--panel);
+}
+.logbook-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.lb-chip {
+    padding: 8px 16px;
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--ink-muted);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.lb-chip:hover { color: var(--ink); }
+.lb-chip.is-active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #FBFAF8;
+}
+
+/* ── 카드의 '다시 추출' 버튼 ── */
+.recipe-rebrew-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    background: var(--gold-pale);
+    border: 1px solid var(--gold-border);
+    border-radius: 12px;
+    color: var(--gold-light);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+.recipe-rebrew-btn:hover { background: var(--gold-border); }
+
+/* ── 모바일: 탭바 노출 + 본문 하단 여백 + 중복 FAB 숨김 ── */
+@media (max-width: 768px) {
+    .tab-bar { display: flex; }
+    .app-shell { padding-bottom: 84px; }
+    .fab-btn { display: none !important; }
+}

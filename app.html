@@ -426,7 +426,45 @@
     </div>
 </div>
 
+<!-- 하단 탭바 (모바일 전용) -->
+<nav class="tab-bar" aria-label="주요 메뉴">
+    <a href="app.html" class="tab-item" data-tab="brew">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 9h2a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-2"/><line x1="7" y1="3" x2="7" y2="5"/><line x1="11" y1="3" x2="11" y2="5"/></svg>
+        <span>추출</span>
+    </a>
+    <a href="logbook.html" class="tab-item" data-tab="log">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <span>기록</span>
+    </a>
+    <button type="button" class="tab-item" data-tab="settings" id="tab-settings-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>설정</span>
+    </button>
+</nav>
+
+<!-- 설정 하단 시트 (탭바의 '설정'에서 열린다. 버튼은 헤더 컨트롤에 위임) -->
+<div class="settings-sheet-overlay" id="settings-sheet" hidden>
+    <div class="settings-sheet" role="dialog" aria-modal="true" aria-label="설정">
+        <div class="settings-sheet-handle" aria-hidden="true"></div>
+        <div class="settings-sheet-title">설정</div>
+        <div class="settings-row">
+            <span>언어</span>
+            <div class="settings-seg">
+                <button type="button" data-proxy="l-ko">KO</button>
+                <button type="button" data-proxy="l-en">EN</button>
+            </div>
+        </div>
+        <button type="button" class="settings-link" data-proxy="btn-help">서비스 가이드</button>
+        <button type="button" class="settings-link" data-proxy="btn-login">로그인</button>
+        <button type="button" class="settings-link" data-proxy="btn-logout">로그아웃</button>
+        <a class="settings-link" href="delete-account.html">계정 · 데이터 삭제</a>
+        <a class="settings-link" href="index.html">홈으로</a>
+        <button type="button" class="settings-sheet-close" id="settings-sheet-close">닫기</button>
+    </div>
+</div>
+
 <script type="module" src="main.js" defer></script>
+<script src="tabbar.js" defer></script>
 
 </body>
 </html>
