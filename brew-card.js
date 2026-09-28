@@ -439,7 +439,7 @@ const _esc = (s) => String(s ?? '').replace(/[&<>"']/g,
 export function openBrewShareModal(recipe, opts = {}) {
     const {
         shareUrl = '', allRecipes = [], lang = 'ko',
-        celebrate = false, notice = '', onContinue, onEvent,
+        celebrate = false, notice = '', onContinue, onEvent, onPublish,
     } = opts;
     const emit = (name, params) => { try { onEvent?.(name, params); } catch (e) { /* 계측이 본 기능을 막지 않는다 */ } };
     const T = lang === 'en' ? {
@@ -449,6 +449,7 @@ export function openBrewShareModal(recipe, opts = {}) {
         making: 'Generating…', cantMake: "Couldn't create the image",
         download: '↓ Save image', share: '↗ Share', copy: '🔗 Copy link', copied: '✓ Copied',
         toLogbook: 'To logbook →',
+        publish: '🌍 Share to community',
         brag: (n) => `Here's the ${n || 'coffee'} I just brewed ☕ #NoteMyCoffee`,
     } : {
         celebrateTitle: '☕ 기록 완료 — 자랑해보세요',
@@ -457,6 +458,7 @@ export function openBrewShareModal(recipe, opts = {}) {
         making: '생성 중…', cantMake: '이미지를 만들 수 없습니다',
         download: '↓ 이미지 저장', share: '↗ 공유', copy: '🔗 링크 복사', copied: '✓ 복사됨',
         toLogbook: '로그북으로 →',
+        publish: '🌍 커뮤니티에 공개',
         brag: (n) => `제가 방금 내린 "${n || '커피'}" 한 잔이에요 ☕ #NoteMyCoffee`,
     };
 
@@ -491,6 +493,7 @@ export function openBrewShareModal(recipe, opts = {}) {
                 ${navigator.share ? `<button class="recipe-share-btn" data-action="share">${T.share}</button>` : ''}
                 ${shareUrl ? `<button class="recipe-share-btn" data-action="copy">${T.copy}</button>` : ''}
             </div>
+            ${onPublish ? `<button class="recipe-share-btn recipe-share-btn--gold recipe-share-continue" data-action="publish">${T.publish}</button>` : ''}
             ${celebrate ? `<button class="recipe-share-btn recipe-share-btn--gold recipe-share-continue" data-action="continue">${T.toLogbook}</button>` : ''}
         </div>
     `;
@@ -541,6 +544,11 @@ export function openBrewShareModal(recipe, opts = {}) {
 
         const action = target.dataset.action;
         if (action === 'continue') { finish(); return; }
+        if (action === 'publish') {
+            _removeModal('brew-share-modal');
+            try { onPublish?.(recipe); } catch (e) { console.error('[BrewCard] onPublish 실패', e); }
+            return;
+        }
         if (!action || !currentCanvas) return;
 
         if (action === 'download') {

@@ -7,7 +7,9 @@
     function init() {
         // 현재 페이지에 맞는 탭을 활성화
         var path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-        var page = path.indexOf('logbook') !== -1 ? 'log' : 'brew';
+        var page = 'brew';
+        if (path.indexOf('logbook') !== -1) page = 'log';
+        else if (path.indexOf('discover') !== -1 || path.indexOf('post') !== -1) page = 'discover';
         document.querySelectorAll('.tab-item[data-tab]').forEach(function (el) {
             el.classList.toggle('is-active', el.getAttribute('data-tab') === page);
         });

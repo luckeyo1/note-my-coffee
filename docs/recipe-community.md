@@ -152,11 +152,26 @@ Firebase Storage로 옮긴다.
 | 1a | 순수 로직 모듈 `recipe-share-model.js` + 테스트 | ✅ 완료(node 33/33) |
 | 1b | 보안 규칙·인덱스 산출물(firestore.rules·indexes·storage.rules) | ✅ 파일 완료 / ⛔ 게시는 소유자 |
 | 1c | 추출·기록 화면 사용성(숫자 직접 입력 등) | ⬜ 예정 |
-| 2 | 공유 작성 + 상세 + 공유 해제 + 권한 | ⬜ 예정(사진 결정 선행) |
-| 3 | 가져오기 + 다시 추출 + 변경 비교 | ⬜ 예정 |
-| 4 | 발견 피드 + 필터 + 프로필 + 신고/차단/관리자 숨김 | ⬜ 예정 |
+| 2 | 공유 작성(share-compose.js) + 상세(post.html/js) + 공유 해제/삭제 | 🟡 코드 구현·레이아웃 검증 완료 / ⛔ 규칙 게시 후 프리뷰 E2E 대기 |
+| 3 | 가져오기(community.importPost) + 다시 추출(app.html?rebrew) + 중복 방지 | 🟡 코드 구현 / ⛔ 프리뷰 E2E 대기 |
+| 4 | 발견 피드(discover.html/js) + 방식 필터 | 🟡 코드 구현·레이아웃 검증 완료 / ⛔ 프리뷰 E2E 대기 · 프로필/신고/차단/관리자 숨김은 미구현 |
 | 5 | 랜딩페이지 개편 | ⬜ 예정 |
 | 6 | 통합 검증·회귀·인계 | ⬜ 예정 |
+
+### 이번에 추가된 파일 (SNS 공개 공유, additive)
+- `community.js` — posts CRUD + 피드(커서) + 가져오기(중복 방지) + Storage 사진 업로드/삭제
+- `discover.html`/`discover.js` — 발견 피드(최신순, 전체/에스프레소/핸드드립 필터, 더보기, 빈 상태)
+- `post.html`/`post.js` — 상세 + 가져오기 + 작성자 공유해제/삭제 + 이용불가 상태(비공개 정보 미노출)
+- `share-compose.js` — 공유 작성 모달(§5-3 순서, 기본 '나만 보기', 사진 포함 선택, 링크/전체공개)
+- `brew-card.js` — 공유 모달에 "🌍 커뮤니티에 공개" 진입점 추가(기존 기능 유지)
+- `logbook.js` — 위 진입점 배선 / `tabbar.js`·`app.html`·`logbook.html` — 하단 탭에 '발견' 추가
+- `firebase-config.js` — Storage(getStorage 등) + startAfter/serverTimestamp export
+
+기존 추출·기록·저장·로그인 흐름은 건드리지 않았다(추가만).
+
+### 미구현(이번 최소 범위에서 제외 — 요청: "가급적 공유 기능만")
+- 공개 프로필 페이지, 신고/차단 UI, 관리자 숨김 콘솔(규칙에는 대비돼 있음), 랜딩 개편.
+  필요 시 다음 단계로.
 
 각 단계는 독립적으로 진행하되, Firebase 연동 부분은 이 환경에서 E2E가 불가하므로
 **소유자 프리뷰(Firebase Studio) 검증을 각 단계 뒤에 요청**한다.

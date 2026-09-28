@@ -3,43 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note My Coffee | Logbook</title>
-    <meta name="description" content="원두별·날짜별로 쌓인 추출 기록. 원두가 바뀌는 날 지난 성공 세팅을 그대로 꺼내 쓰고, 레시피를 카드로 공유합니다.">
-
-    <!-- 로그북은 개인 기록 화면이라 색인 대상이 아니지만, 링크를 붙였을 때
-         회색 빈 박스로 뜨지 않도록 공유 카드는 채워둔다. -->
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Note My Coffee">
-    <meta property="og:locale" content="ko_KR">
-    <meta property="og:url" content="https://note-my-coffee.web.app/logbook">
-    <meta property="og:title" content="Note My Coffee — 레시피 로그북">
-    <meta property="og:description" content="원두별·날짜별로 쌓인 추출 기록이 다음 다이얼링의 출발점이 됩니다.">
-    <meta property="og:image" content="https://note-my-coffee.web.app/og-image.png">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Note My Coffee — 어제 내린 커피랑 오늘 내린 커피, 맛이 다르지 않으세요?">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Note My Coffee — 레시피 로그북">
-    <meta name="twitter:description" content="원두별·날짜별로 쌓인 추출 기록이 다음 다이얼링의 출발점이 됩니다.">
-    <meta name="twitter:image" content="https://note-my-coffee.web.app/og-image.png">
-
+    <title>Note My Coffee | 발견</title>
+    <meta name="description" content="다른 사람의 공개 레시피를 발견하고, 내 도구로 그대로 내려보세요.">
     <meta name="theme-color" content="#1C1410">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Note My Coffee">
     <script src="boot.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- IBM Plex 한 패밀리로 통일한다. Plex는 한글 정식 컷(Sans KR)이 있어 라틴과 한글이
-         같은 체계로 붙는다 — 예전처럼 제목·본문·한글 서체를 따로 섞지 않는다.
-         숫자는 전부 Plex Mono로 조판한다. 이 제품의 본질이 계측이기 때문이다. -->
-    <!-- Pretendard(자체 호스팅). 동적 서브셋이라 페이지에 실제로 쓰인 글자 범위의
-         woff2만 내려받는다. 동일 출처여서 서비스워커가 캐시 → 오프라인에서도 유지된다. -->
     <link rel="stylesheet" href="font/pretendard/pretendard.css">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -47,57 +21,37 @@
 <body>
 
 <div class="app-shell">
-    <!-- 헤더 (app.html과 통일) -->
     <header class="app-header">
         <a href="index.html" class="brand" style="text-decoration: none;">
             <div class="brand-mark"><img src="logo-dark.svg" alt="Note My Coffee 로고"></div>
             <div class="brand-text">
                 <span class="brand-name">Note My Coffee</span>
-                <span class="brand-tagline">LOGBOOK</span>
+                <span class="brand-tagline">DISCOVER</span>
             </div>
         </a>
         <div class="header-actions">
             <div class="lang-toggle">
-                <button class="lang-btn active" id="l-en">EN</button>
-                <button class="lang-btn" id="l-ko">KO</button>
+                <button class="lang-btn active" id="l-ko">KO</button>
+                <button class="lang-btn" id="l-en">EN</button>
             </div>
-            <!-- PC용 새 레시피 버튼 (헤더에 위치) -->
-            <button id="btn-new-recipe" class="logbook-btn primary-action-btn">
-                <span id="lbl-new-recipe">+ NEW RECIPE</span>
-            </button>
         </div>
     </header>
 
-    <div class="console-box" id="logbook-container">
-        <h2 class="logbook-title">나의 레시피 기록</h2>
+    <div class="console-box" id="discover-container">
+        <h2 class="logbook-title">발견</h2>
+        <p class="discover-sub">다른 사람의 한 잔에서 시작해보세요.</p>
 
-        <!-- 검색 + 모드 필터. 기록이 있을 때만 logbook.js가 보여준다(hidden 해제). -->
-        <div class="logbook-tools" id="logbook-tools" hidden>
-            <div class="logbook-search">
-                <svg class="lb-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input type="search" id="logbook-search" class="lb-search-input"
-                       placeholder="원두명, 노트 검색…" autocomplete="off">
-            </div>
-            <div class="logbook-filters" id="logbook-filters">
-                <button type="button" class="lb-chip is-active" data-mode="all">전체</button>
-                <button type="button" class="lb-chip" data-mode="espresso">에스프레소</button>
-                <button type="button" class="lb-chip" data-mode="drip">핸드드립</button>
-            </div>
+        <div class="logbook-filters" id="discover-filters">
+            <button type="button" class="lb-chip is-active" data-mode="all">전체</button>
+            <button type="button" class="lb-chip" data-mode="espresso">에스프레소</button>
+            <button type="button" class="lb-chip" data-mode="drip">핸드드립</button>
         </div>
 
-        <div id="recipe-cards-grid">
-            <!-- Recipe cards will be loaded here by logbook.js -->
-        </div>
+        <div id="feed-grid"><div class="loading">Loading…</div></div>
+
+        <button type="button" id="feed-more" class="recipe-share-btn" hidden style="margin-top:16px;">더 보기</button>
     </div>
 </div>
-
-<!-- 모바일용 플로팅 액션 버튼 (FAB) -->
-<button id="mobile-fab" class="fab-btn" title="Create New Recipe">
-    <span>+</span>
-</button>
 
 <!-- 하단 탭바 (모바일 전용) -->
 <nav class="tab-bar" aria-label="주요 메뉴">
@@ -119,7 +73,6 @@
     </button>
 </nav>
 
-<!-- 설정 하단 시트 (버튼은 헤더 컨트롤에 위임. 로그북엔 없는 항목은 자동 숨김) -->
 <div class="settings-sheet-overlay" id="settings-sheet" hidden>
     <div class="settings-sheet" role="dialog" aria-modal="true" aria-label="설정">
         <div class="settings-sheet-handle" aria-hidden="true"></div>
@@ -140,7 +93,7 @@
     </div>
 </div>
 
-<script type="module" src="logbook.js" defer></script>
+<script type="module" src="discover.js" defer></script>
 <script src="tabbar.js" defer></script>
 </body>
 </html>
