@@ -28,7 +28,10 @@
       "store/**",
       "package.json",
       "package-lock.json",
-      "생성된 이미지*.png"
+      "생성된 이미지*.png",
+
+      "firestore.rules",
+      "firestore.indexes.json"
     ]
   }
 }
