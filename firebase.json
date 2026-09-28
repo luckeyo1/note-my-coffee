@@ -31,7 +31,8 @@
       "생성된 이미지*.png",
 
       "firestore.rules",
-      "firestore.indexes.json"
+      "firestore.indexes.json",
+      "storage.rules"
     ]
   }
 }
