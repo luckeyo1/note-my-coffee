@@ -2,7 +2,7 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v20';
+const VERSION = 'v21';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -10,6 +10,8 @@ const PRECACHE_ASSETS = [
   'index.html',
   'app.html',
   'logbook.html',
+  'discover.html',
+  'post.html',
   'style.css',
   'main.js',
   'logbook.js',
