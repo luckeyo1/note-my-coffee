@@ -1698,3 +1698,15 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
 .compose-result-msg { font-size: 14px; color: var(--ink-soft); }
 .compose-linkrow { display: flex; gap: 8px; margin-top: 10px; }
 .compose-linkrow .compose-input { margin-bottom: 0; font-size: 12px; }
+
+/* 데모 모드 배너 */
+.demo-banner {
+    margin: -10px 0 16px;
+    padding: 10px 14px;
+    background: var(--gold-pale);
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+.demo-banner a { color: var(--gold-light); font-weight: 600; }

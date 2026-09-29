@@ -15,6 +15,7 @@ import CoffeeNotesStorage from "./storage.js";
 import {
     VISIBILITY, buildPublicSnapshot, buildImportedRecipe, generateShareToken,
 } from "./recipe-share-model.js";
+import { isDemo, demoFeed, demoGetPost } from "./demo.js";
 
 const POSTS = 'posts';
 const FEED_PAGE = 12;
@@ -48,6 +49,12 @@ async function deleteCover(uid, postId) {
  * @returns {Promise<{postId:string, visibility:string, shareToken?:string}>}
  */
 export async function publishPost({ recipe, pub, user }) {
+    // 데모: Firebase에 쓰지 않고 성공을 흉내낸다(로그인도 요구 안 함).
+    if (isDemo()) {
+        const visibility = (pub && pub.visibility) || 'private';
+        return { postId: 'demo-' + Date.now().toString(36), visibility,
+                 shareToken: visibility === 'unlisted' ? 'demotoken' : undefined };
+    }
     if (!user || !user.uid) throw new Error('로그인이 필요합니다.');
 
     // 문서 ID를 먼저 확보해 사진 경로에 쓴다(사진 → 문서 순서로 한 번만 쓴다).
@@ -115,6 +122,7 @@ export async function deletePost(postId, user) {
  * @returns {Promise<{items:Array, cursor:*, done:boolean}>}
  */
 export async function fetchFeed({ method = 'all', cursor = null } = {}) {
+    if (isDemo()) return demoFeed(method);
     const parts = [
         collection(db, POSTS),
         where('visibility', '==', VISIBILITY.PUBLIC),
@@ -134,6 +142,7 @@ export async function fetchFeed({ method = 'all', cursor = null } = {}) {
 
 /** 게시물 1건. 규칙이 접근을 검증한다(비공개·해제·숨김·잘못된 ID는 실패로 온다). */
 export async function getPost(postId) {
+    if (isDemo()) return demoGetPost(postId);
     const snap = await getDoc(doc(db, POSTS, postId));
     if (!snap.exists()) return null;
     return { id: snap.id, ...snap.data() };
@@ -161,6 +170,8 @@ export async function fetchUserPosts(ownerId) {
  * @returns {Promise<{recipeId:*, duplicated:boolean}>}
  */
 export async function importPost(post, user) {
+    // 데모: 실제 저장 없이 성공을 흉내낸다.
+    if (isDemo()) return { recipeId: 'demo', duplicated: false, demo: true };
     if (!user || !user.uid) throw new Error('로그인이 필요합니다.');
 
     // 중복 방지: 내 recipes 중 source.postId가 같은 것이 있으면 새로 만들지 않는다.

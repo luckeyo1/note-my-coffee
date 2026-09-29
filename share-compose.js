@@ -6,6 +6,7 @@ import { signInWithChooser } from "./auth-ui.js";
 import { publishPost } from "./community.js";
 import { fmtBrewTime, modeLabel } from "./brew-card.js";
 import { brewRatio, VISIBILITY } from "./recipe-share-model.js";
+import { isDemo } from "./demo.js";
 
 const _esc = (s) => String(s ?? '').replace(/[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -128,7 +129,7 @@ export function openComposeModal(recipe, opts = {}) {
         publishBtn.textContent = '게시하는 중…';
         try {
             let user = auth.currentUser;
-            if (!user) {
+            if (!user && !isDemo()) {
                 // 로그인 필요. 취소/오류여도 위에서 입력한 내용은 그대로 남는다.
                 user = await signInWithChooser({
                     source: 'share_compose', lang: 'ko',

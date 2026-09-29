@@ -3,11 +3,25 @@
 import { track, bumpVisit } from "./firebase-config.js";
 import { fetchFeed } from "./community.js";
 import { fmtBrewTime, modeLabel } from "./brew-card.js";
+import { isDemo } from "./demo.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('feed-grid');
     const moreBtn = document.getElementById('feed-more');
     const filters = document.getElementById('discover-filters');
+
+    // 데모 모드 안내: 가짜 데이터로 흐름만 보여준다는 표시 + 끄는 링크.
+    if (isDemo()) {
+        const container = document.getElementById('discover-container');
+        const sub = container && container.querySelector('.discover-sub');
+        if (sub) {
+            const b = document.createElement('p');
+            b.className = 'demo-banner';
+            b.innerHTML = '🧪 데모 모드예요 — 예시 데이터입니다(실제 게시·저장 안 됨). ' +
+                '<a href="?demo=0">데모 끄기</a>';
+            sub.insertAdjacentElement('afterend', b);
+        }
+    }
 
     let mode = 'all';
     let cursor = null;

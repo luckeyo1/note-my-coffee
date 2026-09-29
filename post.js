@@ -7,6 +7,7 @@ import CoffeeNotesStorage from "./storage.js";
 import { getPost, importPost, unpublishPost, deletePost } from "./community.js";
 import { fmtBrewTime, modeLabel } from "./brew-card.js";
 import { brewRatio } from "./recipe-share-model.js";
+import { isDemo } from "./demo.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const box = document.getElementById('post-container');
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const original = btn.textContent;
         btn.textContent = '가져오는 중…';
         try {
-            if (!currentUser) {
+            if (!currentUser && !isDemo()) {
                 const user = await signInWithChooser({
                     source: 'post_import', lang: 'ko',
                     desc: '레시피를 내 기록으로 가져오려면 로그인이 필요해요.',
@@ -130,6 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const res = await importPost(post, currentUser);
             track('recipe_imported', { post_id: post.id, duplicated: res.duplicated });
+            if (res.demo) {
+                // 데모: 실제 저장/이동 없이 결과만 보여준다.
+                btn.textContent = '✓ (데모) 내 기록에 저장돼요';
+                return;
+            }
             btn.textContent = res.duplicated ? '이미 가져온 레시피예요' : '✓ 내 기록에 저장됨';
             // 가져온 사본으로 바로 추출하러 가기.
             setTimeout(() => {
