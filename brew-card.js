@@ -105,6 +105,37 @@ function _rrect(ctx, x, y, w, h, r) {
 }
 function _trunc(s, max) { s = String(s ?? ''); return s.length > max ? s.slice(0, max) + '…' : s; }
 
+// letter-spacing이 캔버스에 없어 글자를 하나씩 옮겨 그린다(라벨·아이브로의 절제된 트래킹).
+function _measureTracked(ctx, text, sp) {
+    let w = 0;
+    const chars = [...String(text)];
+    chars.forEach((ch) => { w += ctx.measureText(ch).width + sp; });
+    return w - (chars.length ? sp : 0);
+}
+function _tracked(ctx, text, x, y, sp) {
+    let cx = x;
+    for (const ch of [...String(text)]) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + sp; }
+}
+// 폭에 맞춰 글자 단위로 줄바꿈(한글은 공백 경계가 없다). 최대 줄 수 초과분은 …로 자른다.
+function _wrap(ctx, text, maxW, maxLines) {
+    const chars = [...String(text)];
+    const lines = [];
+    let line = '';
+    for (const ch of chars) {
+        if (ctx.measureText(line + ch).width > maxW && line) { lines.push(line); line = ch; }
+        else line += ch;
+    }
+    if (line) lines.push(line);
+    if (lines.length > maxLines) {
+        const kept = lines.slice(0, maxLines);
+        let last = kept[maxLines - 1];
+        while (last.length && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+        kept[maxLines - 1] = last + '…';
+        return kept;
+    }
+    return lines;
+}
+
 function _loadImage(src) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -241,7 +272,7 @@ function drawShareCard(recipe, highlights) {
 }
 
 // 인스타 스토리 친화 4:5 카드 (1080×1350) — 사진을 배경으로, 텍스트를 위에 얹는다.
-async function drawStoryCard(recipe, highlights) {
+async function drawStoryCard(recipe, highlights, lang = 'ko') {
     const W = 1080, H = 1350;
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
@@ -263,116 +294,160 @@ async function drawStoryCard(recipe, highlights) {
         catch (e) { /* 그라데이션만으로 충분하다 */ }
     }
 
-    // 가독성 스크림 (상단 + 진한 하단)
-    const topG = ctx.createLinearGradient(0, 0, 0, 320);
-    topG.addColorStop(0, 'rgba(0,0,0,0.55)'); topG.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = topG; ctx.fillRect(0, 0, W, 320);
+    const L = lang === 'en' ? {
+        eyebrow: "TODAY'S BREW", dosing: 'DOSING', temp: 'TEMP', time: 'TIME', yield: 'YIELD',
+        ok: 'Success', fail: 'Missed',
+    } : {
+        eyebrow: '오늘의 커피 기록', dosing: '도징', temp: '물 온도', time: '추출 시간', yield: '추출량',
+        ok: '추출 완료', fail: '아쉬운 한 잔',
+    };
 
-    const botG = ctx.createLinearGradient(0, H - 760, 0, H);
-    botG.addColorStop(0, 'rgba(0,0,0,0)');
-    botG.addColorStop(0.45, 'rgba(0,0,0,0.55)');
-    botG.addColorStop(1, 'rgba(10,8,7,0.94)');
-    ctx.fillStyle = botG; ctx.fillRect(0, H - 760, W, 760);
+    // ── 하단을 살짝 눌러 패널이 사진 위에 떠 보이게 ──
+    const botG = ctx.createLinearGradient(0, H - 620, 0, H);
+    botG.addColorStop(0, 'rgba(8,6,4,0)');
+    botG.addColorStop(1, 'rgba(8,6,4,0.55)');
+    ctx.fillStyle = botG; ctx.fillRect(0, H - 620, W, 620);
 
-    const shadowOn = () => { ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 2; };
+    const shadowOn = () => { ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 2; };
     const shadowOff = () => { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; };
 
-    // 브랜드 (좌상단)
-    shadowOn();
-    ctx.fillStyle = GOLD;
-    ctx.font = "500 30px 'IBM Plex Mono', 'Pretendard Variable', monospace";
-    ctx.fillText('☕  NOTE MY COFFEE', 64, 84);
-
-    // 모드 뱃지 (우상단)
+    const PAD = 72;
+    const HAIR = 'rgba(255,255,255,0.14)';
     const mode = modeLabel(recipe.mode);
-    ctx.font = "bold 22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
-    const modeW = ctx.measureText(mode).width + 44;
-    shadowOff();
-    ctx.fillStyle = 'rgba(200,169,110,0.18)';
-    _rrect(ctx, W - 64 - modeW, 56, modeW, 44, 8); ctx.fill();
-    ctx.fillStyle = GOLD;
-    ctx.fillText(mode, W - 64 - modeW + 22, 86);
+    const dose = Number(recipe.dosing) || 0;
+    const yld = Number(recipe.yield) || 0;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 
-    // 자랑 뱃지(있으면) — 원두명 블록 위에 골드 알약으로. 최대 2개를 가로로.
-    const hls = (highlights || []).slice(0, 2);
-    if (hls.length) {
-        shadowOff();
-        const font = "bold 24px 'Pretendard Variable', sans-serif";
-        ctx.font = font;
-        const gap = 16;
-        const widths = hls.map((h) => ctx.measureText(h).width + 44);
-        // _drawPill는 중심 x 기준이라, 왼쪽 정렬로 놓으려고 누적 시작점을 옮겨가며 그린다.
-        let cursor = 64;
-        hls.forEach((h, i) => {
-            _drawPill(ctx, h, cursor + widths[i] / 2, 784, { font, padX: 22, h: 46 });
-            cursor += widths[i] + gap;
-        });
-    }
-
-    // 원두명 + 원산지 (하단 블록)
+    // 브랜드 워드마크 (사진 위, 좌상단)
     shadowOn();
     ctx.fillStyle = TEXT;
-    ctx.font = "bold 72px Georgia, 'Pretendard Variable', serif";
-    ctx.fillText(_trunc(recipe.beanName || 'Unknown Bean', 22), 64, 870);
+    ctx.font = "600 34px 'Pretendard Variable', sans-serif";
+    ctx.fillText('☕  Note My Coffee', PAD, 92);
 
-    const sub = [mode, recipe.origin].filter(Boolean).join('  ·  ');
+    // 모드 칩 (사진 위, 우상단, 외곽선 알약)
+    ctx.font = "600 22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
+    const mTextW = _measureTracked(ctx, mode, 3);
+    const chipW = mTextW + 56, chipH = 50, chipX = W - PAD - chipW, chipY = 54;
+    shadowOff();
+    ctx.fillStyle = 'rgba(18,13,9,0.35)';
+    _rrect(ctx, chipX, chipY, chipW, chipH, chipH / 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.5;
+    _rrect(ctx, chipX, chipY, chipW, chipH, chipH / 2); ctx.stroke();
+    ctx.fillStyle = TEXT; ctx.textBaseline = 'middle';
+    _tracked(ctx, mode, chipX + 28, chipY + chipH / 2 + 1, 3);
+    ctx.textBaseline = 'alphabetic';
+
+    // ── 정보 패널 (둥근 반투명 카드) ──
+    const panelX = 32, panelW = W - 64, panelTop = 796, panelBot = H - 32;
+    ctx.fillStyle = 'rgba(14,10,8,0.60)';
+    _rrect(ctx, panelX, panelTop, panelW, panelBot - panelTop, 34); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 1.5;
+    _rrect(ctx, panelX, panelTop, panelW, panelBot - panelTop, 34); ctx.stroke();
+
+    const CW = (W - PAD) - PAD; // 콘텐츠 가용 폭
+
+    // 아이브로 + (있으면) 개인기록 뱃지(우측)
     ctx.fillStyle = SUB;
-    ctx.font = "30px 'IBM Plex Mono', 'Pretendard Variable', monospace";
-    ctx.fillText(_trunc(sub, 42), 64, 916);
-    shadowOff();
-
-    _line(ctx, 64, W - 64, 958, 'rgba(255,255,255,0.16)');
-
-    const params = [
-        { k: 'DOSING', v: `${Number(recipe.dosing) || 0}g` },
-        { k: 'TEMP', v: `${Number(recipe.temp) || 0}°C` },
-        { k: 'TIME', v: fmtBrewTime(recipe) },
-        { k: 'YIELD', v: `${Number(recipe.yield) || 0}g` },
-    ];
-    const colW = (W - 128) / 4;
-    shadowOn();
-    params.forEach(({ k, v }, i) => {
-        const x = 64 + i * colW;
-        ctx.fillStyle = GOLD;
-        ctx.font = "bold 52px 'IBM Plex Mono', 'Pretendard Variable', monospace";
-        ctx.fillText(v, x, 1052);
-        ctx.fillStyle = MUTED;
-        ctx.font = "22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
-        ctx.fillText(k, x, 1088);
-    });
-    shadowOff();
-
-    _line(ctx, 64, W - 64, 1128, 'rgba(255,255,255,0.16)');
-
-    if (recipe.tasteNotes) {
-        shadowOn();
-        ctx.fillStyle = SUB;
-        ctx.font = "32px 'Pretendard Variable', sans-serif";
-        ctx.fillText('✦  ' + _trunc(recipe.tasteNotes, 40), 64, 1190);
-        shadowOff();
+    ctx.font = "500 24px 'Pretendard Variable', sans-serif";
+    _tracked(ctx, L.eyebrow, PAD, 862, 1);
+    const hl = (highlights || [])[0];
+    if (hl) {
+        const pf = "700 22px 'Pretendard Variable', sans-serif";
+        ctx.font = pf;
+        const pw = ctx.measureText(hl).width + 36;
+        _drawPill(ctx, hl, W - PAD - pw / 2, 838, { font: pf, padX: 18, h: 42 });
     }
 
-    const rat = parseInt(recipe.overallRating) || 0;
+    // 제목(원두명) — Pretendard 볼드, 최대 2줄
+    ctx.fillStyle = TEXT;
+    ctx.font = "700 58px 'Pretendard Variable', sans-serif";
+    const titleLines = _wrap(ctx, recipe.beanName || 'Unknown Bean', CW, 2);
+    let ty = 932;
+    titleLines.forEach((ln) => { ctx.fillText(ln, PAD, ty); ty += 66; });
+
+    _line(ctx, PAD, W - PAD, 1044, HAIR);
+
+    // 수치 4열 — 값(흰색, 단위 작게) + 한글 라벨, 세로 구분선
+    const metrics = [
+        { label: L.dosing, val: `${dose}`, unit: 'g' },
+        { label: L.temp, val: `${Number(recipe.temp) || 0}`, unit: '°C' },
+        { label: L.time, val: fmtBrewTime(recipe), unit: '' },
+        { label: L.yield, val: `${yld}`, unit: 'g' },
+    ];
+    const colW = (W - PAD * 2) / 4;
+    ctx.strokeStyle = HAIR; ctx.lineWidth = 1;
+    for (let i = 1; i < 4; i++) {
+        const x = PAD + colW * i;
+        ctx.beginPath(); ctx.moveTo(x, 1072); ctx.lineTo(x, 1160); ctx.stroke();
+    }
     shadowOn();
-    ctx.fillStyle = GOLD;
-    ctx.font = '44px serif';
-    ctx.fillText('★'.repeat(rat) + '☆'.repeat(5 - rat), 64, 1262);
-    shadowOff();
+    metrics.forEach((m, i) => {
+        const cx = PAD + colW * i + colW / 2;
+        ctx.textAlign = 'left';
+        ctx.font = "700 46px 'Pretendard Variable', sans-serif";
+        const wv = ctx.measureText(m.val).width;
+        ctx.font = "500 22px 'Pretendard Variable', sans-serif";
+        const wu = m.unit ? ctx.measureText(m.unit).width : 0;
+        const g = m.unit ? 6 : 0;
+        const sx = cx - (wv + g + wu) / 2;
+        ctx.fillStyle = TEXT;
+        ctx.font = "700 46px 'Pretendard Variable', sans-serif";
+        ctx.fillText(m.val, sx, 1118);
+        if (m.unit) {
+            ctx.fillStyle = MUTED; ctx.font = "500 22px 'Pretendard Variable', sans-serif";
+            ctx.fillText(m.unit, sx + wv + g, 1118);
+        }
+        // 라벨(한글) 중앙
+        ctx.fillStyle = MUTED; ctx.font = "500 22px 'Pretendard Variable', sans-serif";
+        const lw = ctx.measureText(m.label).width;
+        ctx.fillText(m.label, cx - lw / 2, 1152);
+    });
+    ctx.textAlign = 'left'; shadowOff();
+
+    // 테이스팅 노트 ( "A · B · C" )
+    if (recipe.tasteNotes) {
+        const notes = String(recipe.tasteNotes).replace(/\s*,\s*/g, ' · ');
+        ctx.fillStyle = SUB;
+        ctx.font = "400 28px 'Pretendard Variable', sans-serif";
+        ctx.fillText(_trunc(notes, 40), PAD, 1210);
+    }
+
+    // 별점(좌) + 결과(우, 아이콘 + 라벨)
+    const rat = parseInt(recipe.overallRating) || 0;
+    ctx.fillStyle = GOLD; ctx.font = '38px serif'; ctx.textAlign = 'left';
+    ctx.fillText('★'.repeat(rat) + '☆'.repeat(5 - rat), PAD, 1266);
 
     const ok = !!recipe.success;
-    const bText = ok ? '✓  SUCCESS' : '✗  FAIL';
-    ctx.font = "bold 24px 'IBM Plex Mono', 'Pretendard Variable', monospace";
-    const bW = ctx.measureText(bText).width + 40;
-    ctx.fillStyle = ok ? 'rgba(74,222,128,0.16)' : 'rgba(248,113,113,0.16)';
-    _rrect(ctx, W - 64 - bW, 1232, bW, 44, 8); ctx.fill();
-    ctx.fillStyle = ok ? '#4ADE80' : '#F87171';
-    ctx.fillText(bText, W - 64 - bW + 20, 1262);
+    const sCol = ok ? '#6FBF7F' : '#D98C76';
+    const sText = ok ? L.ok : L.fail;
+    ctx.font = "500 24px 'Pretendard Variable', sans-serif";
+    const stW = ctx.measureText(sText).width;
+    const iconR = 13, grp = iconR * 2 + 12 + stW;
+    const gx = W - PAD - grp, gy = 1256;
+    // 아이콘(성공=체크 원, 실패=× 원)
+    ctx.fillStyle = sCol;
+    ctx.beginPath(); ctx.arc(gx + iconR, gy - 8, iconR, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#1a1310'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    if (ok) {
+        ctx.moveTo(gx + iconR - 5, gy - 8); ctx.lineTo(gx + iconR - 1, gy - 4); ctx.lineTo(gx + iconR + 6, gy - 13);
+    } else {
+        ctx.moveTo(gx + iconR - 5, gy - 13); ctx.lineTo(gx + iconR + 5, gy - 3);
+        ctx.moveTo(gx + iconR + 5, gy - 13); ctx.lineTo(gx + iconR - 5, gy - 3);
+    }
+    ctx.stroke();
+    ctx.fillStyle = TEXT;
+    ctx.fillText(sText, gx + iconR * 2 + 12, gy);
 
-    ctx.fillStyle = MUTED;
-    ctx.font = "24px 'IBM Plex Mono', 'Pretendard Variable', monospace";
-    ctx.fillText('note-my-coffee.web.app', 64, 1318);
-    const ds = new Date().toLocaleDateString('ko-KR');
-    ctx.fillText(ds, W - 64 - ctx.measureText(ds).width, 1318);
+    // 푸터 (패널 안)
+    ctx.fillStyle = MUTED; ctx.textAlign = 'left';
+    ctx.font = "400 22px 'IBM Plex Mono', 'Pretendard Variable', monospace";
+    _tracked(ctx, 'note-my-coffee.web.app', PAD, 1302, 1);
+    const d = new Date();
+    const dd = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    ctx.textAlign = 'right';
+    ctx.fillText(dd, W - PAD, 1302);
+    ctx.textAlign = 'left';
 
     return c;
 }
@@ -406,10 +481,10 @@ async function waitForCardFonts(recipe, highlights) {
  * @param {string[]} highlights 자랑 뱃지
  * @returns {Promise<HTMLCanvasElement>}
  */
-export async function renderBrewCanvas(recipe, style, highlights) {
+export async function renderBrewCanvas(recipe, style, highlights, lang = 'ko') {
     await waitForCardFonts(recipe, highlights);
     return style === 'story'
-        ? drawStoryCard(recipe, highlights)
+        ? drawStoryCard(recipe, highlights, lang)
         : drawShareCard(recipe, highlights);
 }
 
@@ -439,7 +514,7 @@ const _esc = (s) => String(s ?? '').replace(/[&<>"']/g,
 export function openBrewShareModal(recipe, opts = {}) {
     const {
         shareUrl = '', allRecipes = [], lang = 'ko',
-        celebrate = false, notice = '', onContinue, onEvent,
+        celebrate = false, notice = '', onContinue, onEvent, onPublish,
     } = opts;
     const emit = (name, params) => { try { onEvent?.(name, params); } catch (e) { /* 계측이 본 기능을 막지 않는다 */ } };
     const T = lang === 'en' ? {
@@ -449,6 +524,7 @@ export function openBrewShareModal(recipe, opts = {}) {
         making: 'Generating…', cantMake: "Couldn't create the image",
         download: '↓ Save image', share: '↗ Share', copy: '🔗 Copy link', copied: '✓ Copied',
         toLogbook: 'To logbook →',
+        publish: '🌍 Share to community',
         brag: (n) => `Here's the ${n || 'coffee'} I just brewed ☕ #NoteMyCoffee`,
     } : {
         celebrateTitle: '☕ 기록 완료 — 자랑해보세요',
@@ -457,6 +533,7 @@ export function openBrewShareModal(recipe, opts = {}) {
         making: '생성 중…', cantMake: '이미지를 만들 수 없습니다',
         download: '↓ 이미지 저장', share: '↗ 공유', copy: '🔗 링크 복사', copied: '✓ 복사됨',
         toLogbook: '로그북으로 →',
+        publish: '🌍 커뮤니티에 공개',
         brag: (n) => `제가 방금 내린 "${n || '커피'}" 한 잔이에요 ☕ #NoteMyCoffee`,
     };
 
@@ -491,6 +568,7 @@ export function openBrewShareModal(recipe, opts = {}) {
                 ${navigator.share ? `<button class="recipe-share-btn" data-action="share">${T.share}</button>` : ''}
                 ${shareUrl ? `<button class="recipe-share-btn" data-action="copy">${T.copy}</button>` : ''}
             </div>
+            ${onPublish ? `<button class="recipe-share-btn recipe-share-btn--gold recipe-share-continue" data-action="publish">${T.publish}</button>` : ''}
             ${celebrate ? `<button class="recipe-share-btn recipe-share-btn--gold recipe-share-continue" data-action="continue">${T.toLogbook}</button>` : ''}
         </div>
     `;
@@ -513,7 +591,7 @@ export function openBrewShareModal(recipe, opts = {}) {
         spinner.style.display = 'flex';
         imgEl.style.opacity = '0.25';
         try {
-            currentCanvas = await renderBrewCanvas(recipe, style, highlights);
+            currentCanvas = await renderBrewCanvas(recipe, style, highlights, lang);
             imgEl.src = currentCanvas.toDataURL('image/png');
             imgEl.style.opacity = '1';
             spinner.style.display = 'none';
@@ -541,6 +619,11 @@ export function openBrewShareModal(recipe, opts = {}) {
 
         const action = target.dataset.action;
         if (action === 'continue') { finish(); return; }
+        if (action === 'publish') {
+            _removeModal('brew-share-modal');
+            try { onPublish?.(recipe); } catch (e) { console.error('[BrewCard] onPublish 실패', e); }
+            return;
+        }
         if (!action || !currentCanvas) return;
 
         if (action === 'download') {
