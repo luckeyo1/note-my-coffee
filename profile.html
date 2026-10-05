@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note My Coffee | 발견</title>
-    <meta name="description" content="다른 사람의 공개 레시피를 발견하고, 내 도구로 그대로 내려보세요.">
+    <title>Note My Coffee | 프로필</title>
+    <meta name="description" content="커피메이트의 공개 레시피를 모아봅니다.">
+    <!-- 공개 프로필은 검색엔진에 올리지 않는다(개인 페이지 노출 방지, post.html과 동일). -->
+    <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#1C1410">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
@@ -26,7 +28,7 @@
             <div class="brand-mark"><img src="logo-dark.svg" alt="Note My Coffee 로고"></div>
             <div class="brand-text">
                 <span class="brand-name">Note My Coffee</span>
-                <span class="brand-tagline">DISCOVER</span>
+                <span class="brand-tagline">PROFILE</span>
             </div>
         </a>
         <div class="header-actions">
@@ -37,19 +39,8 @@
         </div>
     </header>
 
-    <div class="console-box" id="discover-container">
-        <h2 class="logbook-title">발견</h2>
-        <p class="discover-sub">다른 사람의 한 잔에서 시작해보세요.</p>
-
-        <div class="logbook-filters" id="discover-filters">
-            <button type="button" class="lb-chip is-active" data-mode="all">전체</button>
-            <button type="button" class="lb-chip" data-mode="espresso">에스프레소</button>
-            <button type="button" class="lb-chip" data-mode="drip">핸드드립</button>
-        </div>
-
-        <div id="feed-grid"><div class="loading">Loading…</div></div>
-
-        <button type="button" id="feed-more" class="recipe-share-btn" hidden style="margin-top:16px;">더 보기</button>
+    <div class="console-box" id="profile-container">
+        <div class="loading">Loading…</div>
     </div>
 </div>
 
@@ -94,7 +85,7 @@
     </div>
 </div>
 
-<script type="module" src="discover.js" defer></script>
+<script type="module" src="profile.js" defer></script>
 <script src="tabbar.js" defer></script>
 </body>
 </html>

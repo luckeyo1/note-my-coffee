@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><span class="label">시간</span>${num(timeStr, '')}</div>
                         <div><span class="label">${yieldLabel}</span>${num(yld.toFixed(1), 'g')}</div>
                     </div>
-                    <p class="feed-card-author">☕ ${esc(post.ownerName || '커피메이트')}</p>
+                    <span class="feed-card-author" role="link" tabindex="0" data-uid="${esc(post.ownerId || '')}">☕ ${esc(post.ownerName || '커피메이트')}</span>
                 </div>
             </a>`;
     }
@@ -126,6 +126,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     moreBtn.addEventListener('click', () => load(false));
+
+    // 작성자 이름 클릭 → 공개 프로필. 카드 전체가 post.html <a>라 여기서 가로채
+    // 기본 이동(상세)을 막고 프로필로 보낸다. 중첩 anchor를 피하려 span[role=link]을 쓴다.
+    const goProfile = (el) => {
+        const uid = el.getAttribute('data-uid');
+        if (uid) { track('profile_open', { from: 'discover' }); location.href = 'profile.html?uid=' + encodeURIComponent(uid); }
+    };
+    grid.addEventListener('click', (e) => {
+        const a = e.target.closest('.feed-card-author');
+        if (!a) return;
+        e.preventDefault(); e.stopPropagation();
+        goProfile(a);
+    });
+    grid.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const a = e.target.closest('.feed-card-author');
+        if (!a) return;
+        e.preventDefault(); e.stopPropagation();
+        goProfile(a);
+    });
 
     load(true);
 });

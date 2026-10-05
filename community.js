@@ -15,10 +15,40 @@ import CoffeeNotesStorage from "./storage.js";
 import {
     VISIBILITY, buildPublicSnapshot, buildImportedRecipe, generateShareToken,
 } from "./recipe-share-model.js";
-import { isDemo, demoFeed, demoGetPost } from "./demo.js";
+import {
+    isDemo, demoFeed, demoGetPost, demoUserPosts, demoGetProfile,
+} from "./demo.js";
 
 const POSTS = 'posts';
+const PROFILES = 'profiles';
 const FEED_PAGE = 12;
+
+/**
+ * 공개 프로필(닉네임·소개)을 읽는다. 없으면 null.
+ * profiles/{uid}는 공개 읽기(규칙) — 이메일·개인 기록은 담기지 않는다.
+ */
+export async function getProfile(uid) {
+    if (!uid) return null;
+    if (isDemo()) return demoGetProfile(uid);
+    const snap = await getDoc(doc(db, PROFILES, uid));
+    return snap.exists() ? snap.data() : null;
+}
+
+/**
+ * 내 공개 프로필을 저장한다(본인만, 규칙이 소유자·길이 검증).
+ * @param {string} uid
+ * @param {{displayName?:string, bio?:string}} fields
+ */
+export async function saveProfile(uid, fields) {
+    if (isDemo()) return { demo: true };
+    if (!uid) throw new Error('로그인이 필요합니다.');
+    const data = {};
+    if (typeof fields.displayName === 'string') data.displayName = fields.displayName.trim().slice(0, 40);
+    if (typeof fields.bio === 'string') data.bio = fields.bio.trim().slice(0, 200);
+    data.updatedAt = serverTimestamp();
+    await setDoc(doc(db, PROFILES, uid), data, { merge: true });
+    return { ok: true };
+}
 
 // 공개 게시물의 커버 사진을 Storage에 올린다. 경로에 uid가 들어가 규칙이 소유자를
 // 검증한다. dataUrl은 이미 캔버스 재인코딩으로 EXIF가 제거된 JPEG/PNG다(main.js).
@@ -63,6 +93,18 @@ export async function publishPost({ recipe, pub, user }) {
 
     const snapshot = buildPublicSnapshot(recipe, pub);
 
+    // 공개 닉네임: 사용자가 설정한 프로필 닉네임을 우선, 없으면 계정 이름.
+    // (닉네임을 나중에 바꿔도 과거 게시물 카드의 이름은 그대로다 — 일반적인 SNS 동작.
+    //  프로필 페이지 헤더는 profiles 문서의 현재 닉네임을 보여준다.)
+    let ownerName = (user.displayName || '').trim();
+    try {
+        const prof = await getProfile(user.uid);
+        if (prof && typeof prof.displayName === 'string' && prof.displayName.trim()) {
+            ownerName = prof.displayName.trim();
+        }
+    } catch (e) { /* 프로필 읽기 실패 시 계정 이름으로 폴백 */ }
+    if (!ownerName) ownerName = '커피메이트';
+
     // 사진 업로드(포함을 선택했고 데이터가 있을 때만).
     let photoUrl = '';
     if (pub && pub.includePhoto && pub.photoUrl) {
@@ -81,7 +123,7 @@ export async function publishPost({ recipe, pub, user }) {
         photoUrl,
         hasPhoto: !!photoUrl,
         ownerId: user.uid,
-        ownerName: (user.displayName || '').trim() || '커피메이트',
+        ownerName,
         hiddenByAdmin: false,
         version: 1,
         createdAt: serverTimestamp(),
@@ -150,6 +192,7 @@ export async function getPost(postId) {
 
 /** 특정 작성자의 전체 공개 게시물(공개 프로필용). */
 export async function fetchUserPosts(ownerId) {
+    if (isDemo()) return demoUserPosts(ownerId);
     const q = query(
         collection(db, POSTS),
         where('ownerId', '==', ownerId),

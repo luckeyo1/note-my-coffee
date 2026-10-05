@@ -57,7 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
         box.innerHTML = `
             <p class="post-eyebrow">${esc(modeLabel(post.method))}</p>
             <h2 class="post-title">${esc(post.title) || esc(post.bean) || '이름 없는 레시피'}</h2>
-            <p class="post-author">☕ ${esc(post.ownerName || '커피메이트')}${dateStr ? ' · ' + esc(dateStr) : ''}</p>
+            <p class="post-author">☕ ${post.ownerId
+                ? `<a class="post-author-link" href="profile.html?uid=${esc(post.ownerId)}">${esc(post.ownerName || '커피메이트')}</a>`
+                : esc(post.ownerName || '커피메이트')}${dateStr ? ' · ' + esc(dateStr) : ''}</p>
 
             ${photo}
 

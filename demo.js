@@ -73,3 +73,22 @@ export function demoFeed(method) {
 export function demoGetPost(id) {
     return DEMO_POSTS.find((p) => p.id === id) || DEMO_POSTS[0];
 }
+
+// 공개 프로필 데모용 한 줄 소개(uid → bio). 없는 uid는 소개 없이.
+const DEMO_BIOS = {
+    'demo-u1': '아침마다 에스프레소 한 잔. 산미 있는 아프리카 원두를 좋아해요.',
+    'demo-u2': '주말 홈카페. V60로 균형 잡힌 드립을 연구 중입니다.',
+    'demo-u3': '초콜릿·견과 계열 다크 로스팅 취향. 기록은 힘이다.',
+};
+
+/** 특정 작성자의 공개 게시물(공개 프로필용) — 데모. */
+export function demoUserPosts(ownerId) {
+    return DEMO_POSTS.filter((p) => p.ownerId === ownerId);
+}
+
+/** 공개 프로필(닉네임·소개) — 데모. 게시물의 ownerName을 닉네임으로 쓴다. */
+export function demoGetProfile(uid) {
+    const post = DEMO_POSTS.find((p) => p.ownerId === uid);
+    if (!post) return null;
+    return { displayName: post.ownerName, bio: DEMO_BIOS[uid] || '' };
+}
