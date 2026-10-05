@@ -106,6 +106,11 @@ function isPassthrough(req, url) {
     // 캐시에 써두고, 오프라인이나 느린 연결에서 만료된 응답을 되돌려 로그인이 깨진다.
     url.hostname.endsWith('kakao.com') ||
     url.hostname.endsWith('kakaocdn.net') ||
+    // 공개 게시물 커버 사진(Firebase Storage)도 여기로 떨어진다:
+    //   firebasestorage.googleapis.com / storage.googleapis.com / *.firebasestorage.app
+    // 전부 아래 'firebase' 또는 'googleapis.com' 분기에 걸려 SW 캐시를 타지 않는다.
+    // 이게 §8을 지킨다 — 공유 해제·삭제 후 커버가 SW 캐시에서 되살아나면 안 되므로
+    // 이 사진들은 절대 캐시에 쓰지 않는다(브라우저 HTTP 캐시는 Storage 헤더가 관리).
     (url.hostname.endsWith('googleapis.com') && url.hostname !== 'fonts.googleapis.com')
   );
 }

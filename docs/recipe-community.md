@@ -223,3 +223,26 @@ Firebase Storage로 옮긴다.
 5. **Firebase Storage 활성화 + 요금제 확인** — 콘솔 > Storage. 신규 프로젝트는
    Blaze(종량제)가 필요할 수 있다. 무료 한도 내 사용이면 비용은 사실상 0이지만
    결제 수단 등록이 요구될 수 있다.
+
+---
+
+## 9. 출시 준비 상태 (Phase A, 2026-10) — 린 범위 확정
+
+사용자 결정: **린(공유·발견·가져오기만, 좋아요·댓글·팔로우·프로필 없음) · 사진 포함 ·
+에뮬레이터+프리뷰 채널 검증.**
+
+이번에 추가/확인한 것(브랜치 `claude/recipe-community`):
+- `firebase.json`에 `firestore`·`storage`·`emulators` 블록 추가 — 이제
+  `firebase emulators:start --only firestore,storage`로 규칙을 로컬 검증할 수 있고
+  `firebase deploy --only firestore,storage`가 동작한다. (rules 파일은 hosting에선 계속 ignore.)
+- `sw.js` — 공개 커버 사진(Firebase Storage)이 서비스워커 캐시를 **타지 않음**을 확인·명문화.
+  `isPassthrough`의 `firebase`/`googleapis.com` 분기가 이미 모든 Storage 호스트를 우회한다
+  (테스트 6/6). → §8 "공유 해제 후 캐시 잔존" 방지가 이미 성립.
+- 린 범위 점검: 죽은 프로필/좋아요/댓글/팔로우 UI 없음(탭바 = 추출/발견/기록/설정).
+- 회귀: `recipe-share-model` 33/33, `demo` 10/10 통과(라이브 파일 기준), 전 JS `node --check` 통과,
+  discover/post 격리 레이아웃 렌더 확인(데이터 흐름은 Firebase CDN 차단으로 여기선 미검증 →
+  소유자 에뮬레이터/프리뷰에서).
+
+**검증 경로(권장):** 에뮬레이터로 §12 규칙 시나리오 →
+`firebase hosting:channel:deploy preview-sns`로 실기기 E2E → 규칙 게시(위 2~5) →
+`main` 병합(hosting 자동 배포). **규칙이 코드보다 먼저.**
