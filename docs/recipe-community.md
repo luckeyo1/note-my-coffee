@@ -260,3 +260,44 @@ Firebase Storage로 옮긴다.
 **검증 경로(권장):** 에뮬레이터로 §12 규칙 시나리오 →
 `firebase hosting:channel:deploy preview-sns`로 실기기 E2E → 규칙 게시(위 2~5) →
 `main` 병합(hosting 자동 배포). **규칙이 코드보다 먼저.**
+
+---
+
+## 10. 롤백 런북 (배포 후 "마음에 안 들면 되돌리기")
+
+SNS·프로필은 **덧붙이기(additive)**다 — 지금 `main`은 기능 없는 원래 버전 그대로이고,
+빼면 원래대로 돌아간다. 상황별로 아래 중 하나를 쓴다. (아무것도 미리 안 해둬도 됨.)
+
+### A. 가장 빠름 — Firebase Hosting 콘솔 롤백 (코드 작업 0, 몇 초)
+1. Firebase 콘솔 → **Hosting** → 아래 **배포 이력(Release history)**.
+2. 기능 올리기 **직전** 버전(날짜·커밋으로 확인) 행의 **⋮ → 롤백(Rollback)**.
+3. 라이브가 즉시 그 버전으로 복구된다. (git·Action 무관)
+> 임시로 되돌릴 때 최선. 코드는 그대로라 나중에 다시 올리기도 쉽다.
+
+### B. 영구 제거 — Git revert 후 재배포
+1. 병합 커밋 확인: `git log --oneline --merges main` (또는 병합 커밋 해시).
+2. `git checkout main && git pull`
+3. `git revert -m 1 <병합_커밋_해시>`  ← `-m 1`은 main 쪽을 기준(parent)으로 되돌림.
+4. `git push origin main` → GitHub Action이 **기능 없는 버전**을 자동 재배포.
+- 덧붙이기라 충돌 없이 깔끔히 빠진다. 다시 넣고 싶으면 그 revert를 다시 revert.
+
+### C. 보안 규칙 되돌리기 (hosting과 별개 — 따로 해야 함)
+- Firestore: 콘솔 → **Firestore → 규칙 → 이력**에서 이전 버전 **복원**.
+- Storage: 콘솔 → **Storage → 규칙**에서 이전 규칙으로 교체/복원.
+- CLI로 올렸다면: 이전 `firestore.rules`/`storage.rules`로 되돌린 뒤
+  `firebase deploy --only firestore:rules,storage` 재실행.
+> 규칙을 더 좁히면(공유 기능 차단) 코드가 남아 있어도 공개 읽기/쓰기가 막힌다.
+
+### 데이터는 어떻게 되나 (중요)
+- 라이브 동안 **사용자가 올린 `posts`·`profiles` 문서, Storage 커버 사진은 남는다.**
+  코드를 되돌려도 자동 삭제되지 않는다(화면에서 안 보일 뿐).
+- 정리하려면 콘솔에서 `posts`·`profiles` 컬렉션, `posts/*` Storage 객체를 수동 삭제.
+- 되돌리기가 **개인 기록(`recipes`)·로그인·결제엔 영향 없다** — 공유 기능만 additive였다.
+
+### 순서 팁 (되돌릴 때)
+1. 급하면 **A(콘솔 롤백)** 먼저 — 즉시 사용자에게 원래 화면.
+2. 이어서 **B(git revert)** 로 코드에서 영구 제거(이력은 보존).
+3. 공개 접근까지 끊어야 하면 **C(규칙)** 까지. (규칙만 좁혀도 공유는 즉시 봉쇄됨)
+
+> 애초에 되돌릴 일을 줄이려면: **프리뷰 채널**(`firebase hosting:channel:deploy preview-sns`)
+> 에서 먼저 확인하고 마음에 들 때만 `main` 병합. 프리뷰는 프로덕션 URL을 건드리지 않는다.
