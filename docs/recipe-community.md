@@ -261,6 +261,16 @@ Firebase Storage로 옮긴다.
 `firebase hosting:channel:deploy preview-sns`로 실기기 E2E → 규칙 게시(위 2~5) →
 `main` 병합(hosting 자동 배포). **규칙이 코드보다 먼저.**
 
+### 규칙 에뮬레이터 검증 완료 (2026-10-07)
+`tests/rules/`로 `firestore.rules`·`storage.rules`를 에뮬레이터에 올려 자동 검증했다
+(실데이터·운영 무관, `demo-*` 프로젝트). 재현: `tests/rules/README.md`.
+- **Firestore: 36/36 통과** — 비공개 차단(§8), unlisted 열거 불가, 생성/수정 ownerId·
+  hiddenByAdmin 위조 거부, 관리자숨김 되돌리기 거부(§9), reports/blocks/profiles, recipes·users 회귀.
+- **Storage: 8/8 통과** — 공개 읽기, 경로 uid 소유자만 쓰기/삭제, 비이미지·5MB 초과 거부.
+
+또한 프리뷰 채널(PR #26)에서 `?demo=1`로 UX 확인 가능. **남은 건 소유자 작업뿐**:
+규칙·인덱스·Storage 규칙 게시 + Storage(Blaze) 활성화(§8) → 그다음 PR 병합.
+
 ---
 
 ## 10. 롤백 런북 (배포 후 "마음에 안 들면 되돌리기")
