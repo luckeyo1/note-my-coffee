@@ -6,6 +6,7 @@ import {
 } from "./firebase-config.js";
 import CoffeeNotesStorage, { loadLang, saveLang } from "./storage.js";
 import { openBrewShareModal } from "./brew-card.js";
+import { openComposeModal } from "./share-compose.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // app.html에서 고른 언어를 그대로 이어받는다(storage.js)
@@ -362,6 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
             allRecipes: recipesCache,
             lang: currentLang,
             onEvent: (name, params) => track(name, params),
+            // "🌍 커뮤니티에 공개" → 공개 공유 작성 모달(§5-3).
+            onPublish: (r) => openComposeModal(r, { onEvent: (n, p) => track(n, p) }),
         });
     }
 

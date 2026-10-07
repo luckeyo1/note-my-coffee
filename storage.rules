@@ -1,0 +1,37 @@
+rules_version = '2';
+// Note My Coffee — Firebase Storage 보안 규칙 (공개 게시물 사진)
+//
+// ⚠️ 산출물이다. 아직 게시되지 않았고 firebase.json에도 연결하지 않았다.
+//    게시: firebase deploy --only storage  또는 콘솔 > Storage > 규칙.
+//    (docs/recipe-community.md 참고)
+//
+// 개인 기록 사진은 지금처럼 Firestore 문서에 base64로 남는다(비공개, 규칙 불필요).
+// 여기 규칙은 '공개 게시물(posts)'의 커버 사진에만 적용된다.
+//
+// 경로 규약: posts/{userId}/{postId}/{fileName}
+//   - userId를 경로에 두어 규칙이 소유자를 검증할 수 있게 한다.
+//   - 공유 해제·삭제 시 클라이언트가 이 객체를 deleteObject로 지운다
+//     (§8: 공유 해제 후 사진 접근 차단). 이미 전달·저장된 사본 회수는 불가하며
+//     그렇게 안내하지도 않는다.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() { return request.auth != null; }
+
+    match /posts/{userId}/{postId}/{fileName} {
+      // 공개 게시물 커버라 누구나 읽기(피드·상세·공개 프로필에서 표시).
+      allow read: if true;
+
+      // 소유자만 업로드/교체. 이미지 타입 + 5MB 상한(클라이언트는 재인코딩으로
+      // 더 작게 만들지만, 서버에서도 상한을 강제한다).
+      allow create, update: if isSignedIn()
+                            && request.auth.uid == userId
+                            && request.resource.size < 5 * 1024 * 1024
+                            && request.resource.contentType.matches('image/.*');
+
+      // 소유자만 삭제(공유 해제/게시물 삭제 시).
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}

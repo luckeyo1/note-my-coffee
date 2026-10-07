@@ -29,8 +29,19 @@ import {
     // (docs/admin-roadmap.md Phase 1)
     increment,
     orderBy,
-    limit
+    limit,
+    startAfter,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// 공개 게시물 사진용 Storage (docs/recipe-community.md: 사진 A안).
+// 개인 기록 사진은 지금처럼 문서 base64로 남고, 공개 게시물 커버만 Storage에 올린다.
+import {
+    getStorage,
+    ref as storageRef,
+    uploadString,
+    getDownloadURL,
+    deleteObject
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 /**
  * Firebase Configuration
@@ -71,6 +82,9 @@ try {
     console.warn('[Firestore] 영속 캐시를 사용할 수 없습니다. 메모리 캐시로 계속합니다.', e);
     db = getFirestore(app);
 }
+// Storage 핸들. 실제 버킷 접근은 업로드/다운로드 시점에만 일어나므로, 버킷이
+// 아직 활성화 안 됐어도 이 호출 자체는 앱을 멈추지 않는다(호출부에서 try/catch).
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 // 카카오는 Firebase 기본 제공자가 아니라 OIDC 커스텀 제공자로 붙는다.
@@ -207,5 +221,13 @@ export {
     setDoc,
     increment,
     orderBy,
-    limit
+    limit,
+    startAfter,
+    serverTimestamp,
+    // Storage (공개 게시물 사진)
+    storage,
+    storageRef,
+    uploadString,
+    getDownloadURL,
+    deleteObject
 };
