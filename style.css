@@ -122,6 +122,23 @@ body {
     gap: 12px;
     padding: 20px 0 24px;
 }
+
+/* 데스크톱 헤더 네비(추출·발견·기록). 모바일(≤768px)은 하단 탭바가 대신하므로 숨긴다.
+   하단 탭바 주석대로 "데스크톱은 헤더 네비를 쓴다" — 공유/발견 추가로 비로소 완성. */
+.app-nav { display: flex; align-items: center; gap: 2px; }
+.app-nav a {
+    text-decoration: none;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: background var(--transition), color var(--transition);
+}
+.app-nav a:hover { background: var(--gold-pale); color: var(--gold); }
+.app-nav a.is-active { color: var(--gold); background: var(--gold-pale); }
 /* 좁은 화면에서 브랜드와 액션이 합쳐 뷰포트를 넘겨 페이지가 가로로 밀렸다
    (390px에서 scrollWidth 405).
 
@@ -1567,6 +1584,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
     .tab-bar { display: flex; }
     .app-shell { padding-bottom: 84px; }
     .fab-btn { display: none !important; }
+    .app-nav { display: none; }
 }
 
 /* ── 사진 선택: 안드로이드 갤러리 트리거 수정 ──
