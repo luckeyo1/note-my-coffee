@@ -9,6 +9,7 @@ import {
 import { signInWithChooser } from "./auth-ui.js";
 import CoffeeNotesStorage, { loadLang, saveLang } from "./storage.js";
 import { openBrewShareModal } from "./brew-card.js";
+import { openComposeModal } from "./share-compose.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // 앱 페이지는 지금까지 GA4 히트가 0건이었다 — track()이 처음 호출될 때만
@@ -1452,6 +1453,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 : 'Trial recipe saved ☕ Sign in with Kakao or Google to keep logging and sync across devices.')
                             : '',
                         onContinue: goLogbook,
+                        // 추출 직후가 가장 자연스러운 공유 순간 — 바로 커뮤니티에 올릴 수 있게.
+                        onPublish: (r) => openComposeModal(r, { onEvent: (n, p) => track(n, p) }),
                         onEvent: (name, params) => track(name, params),
                     });
                 } catch (e) {

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
         box.innerHTML = `
             <div class="no-recipes-message">
                 <p class="no-recipes-text">${esc(msg || '이용할 수 없는 레시피예요.')}</p>
-                <a class="recipe-share-btn recipe-share-btn--gold" href="discover.html" style="display:inline-block;margin-top:6px;">발견으로 가기</a>
+                <a class="recipe-share-btn recipe-share-btn--gold" href="discover.html" style="display:inline-block;margin-top:6px;">둘러보기로 가기</a>
             </div>`;
     }
 
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function onUnshare(e) {
-        if (!confirm('이 레시피의 공개를 해제할까요? 발견 피드와 링크에서 내려갑니다.')) return;
+        if (!confirm('이 레시피의 공개를 해제할까요? 둘러보기 피드와 링크에서 내려갑니다.')) return;
         const btn = e.currentTarget; btn.disabled = true;
         try {
             await unpublishPost(post.id, currentUser);

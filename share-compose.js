@@ -38,7 +38,7 @@ export function openComposeModal(recipe, opts = {}) {
     overlay.innerHTML = `
         <div class="recipe-share-box compose-box">
             <div class="recipe-share-header">
-                <span>🌍 커뮤니티에 공개</span>
+                <span>🌍 커뮤니티에 공유</span>
                 <button class="recipe-share-close" data-close>✕</button>
             </div>
             <div class="compose-scroll">
@@ -76,12 +76,12 @@ export function openComposeModal(recipe, opts = {}) {
 
                 <div class="compose-vis">
                     <p class="compose-label">공개 범위</p>
-                    <label class="compose-radio"><input type="radio" name="vis" value="private" checked>
-                        <span><b>나만 보기</b><small>나만 볼 수 있어요(기본값).</small></span></label>
+                    <label class="compose-radio"><input type="radio" name="vis" value="public" checked>
+                        <span><b>전체 공개 <em class="compose-reco">추천</em></b><small>둘러보기 피드와 내 프로필에 올라가 누구나 볼 수 있어요.</small></span></label>
                     <label class="compose-radio"><input type="radio" name="vis" value="unlisted">
-                        <span><b>링크로 공유</b><small>링크를 받은 사람은 누구나 볼 수 있어요. 발견 피드엔 안 나와요.</small></span></label>
-                    <label class="compose-radio"><input type="radio" name="vis" value="public">
-                        <span><b>전체 공개</b><small>발견 피드와 공개 프로필에 올라가요.</small></span></label>
+                        <span><b>링크로 공유</b><small>링크를 받은 사람만 볼 수 있어요. 둘러보기 피드엔 안 나와요.</small></span></label>
+                    <label class="compose-radio"><input type="radio" name="vis" value="private">
+                        <span><b>나만 보기</b><small>나만 볼 수 있어요. 나중에 언제든 공개로 바꿀 수 있어요.</small></span></label>
                 </div>
 
                 <p class="compose-error" id="compose-error" hidden></p>
@@ -161,7 +161,7 @@ export function openComposeModal(recipe, opts = {}) {
             body = `<p class="compose-result-msg">✓ 링크로 공유 준비됐어요. 이 링크를 받은 사람은 볼 수 있어요.</p>
                     <div class="compose-linkrow"><input class="compose-input" id="compose-link" readonly value="${_esc(link)}"><button class="recipe-share-btn" id="compose-copy">복사</button></div>`;
         } else {
-            body = `<p class="compose-result-msg">✓ 전체 공개했어요. 발견 피드에 올라갑니다.</p>
+            body = `<p class="compose-result-msg">✓ 전체 공개했어요. 둘러보기 피드에 올라갑니다.</p>
                     <div class="compose-linkrow"><a class="recipe-share-btn recipe-share-btn--gold" href="${_esc(link)}" style="flex:1;">공개된 레시피 보기</a></div>`;
         }
         box.innerHTML = body;
