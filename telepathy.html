@@ -401,6 +401,50 @@
     }
     .bean-link:hover { border-color: var(--clay); color: var(--clay-soft); background: rgba(216,121,78,0.08); }
 
+    /* 쿠팡 파트너스(제휴) 버튼 — 주 수익화 액션이라 클레이로 채운다 */
+    .coupang-btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; margin-top: 12px;
+        background: var(--clay); color: var(--esp-1);
+        border: 1px solid var(--clay);
+        font-family: var(--font); font-size: 14px; font-weight: 600;
+        padding: 14px 18px; text-decoration: none;
+        transition: filter 0.18s ease, transform 0.2s;
+    }
+    .coupang-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .coupang-disc { margin: 9px 0 0; font-size: 11px; line-height: 1.5; color: var(--ghost); text-align: left; }
+
+    /* 기구 추천 카드 */
+    .gear {
+        text-align: left;
+        background: rgba(252,250,246,0.045);
+        border: 1px solid var(--line);
+        padding: 17px 18px;
+    }
+    .gear-name { font-size: 15.5px; font-weight: 700; margin-bottom: 4px; }
+    .gear-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+    /* 카페 추천 카드 */
+    .cafe {
+        text-align: left;
+        background: rgba(252,250,246,0.045);
+        border: 1px solid var(--line);
+        padding: 17px 18px;
+    }
+    .cafe-type { font-size: 15.5px; font-weight: 700; margin-bottom: 4px; }
+    .cafe-line { font-size: 13px; color: var(--muted); line-height: 1.65; margin-bottom: 6px; }
+    .cafe-ex { font-size: 12px; color: var(--ghost); margin-bottom: 13px; }
+    .map-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+        width: 100%;
+        font-family: var(--font); font-size: 13.5px; font-weight: 600;
+        color: var(--cream); background: transparent;
+        border: 1px solid var(--line-2);
+        padding: 12px 16px; text-decoration: none;
+        transition: border-color 0.18s, color 0.18s, background 0.18s;
+    }
+    .map-btn:hover { border-color: var(--clay); color: var(--clay-soft); background: rgba(216,121,78,0.08); }
+
     /* 결과 하단 CTA(제품 복귀) */
     .cta-box {
         background: linear-gradient(180deg, rgba(216,121,78,0.14), rgba(216,121,78,0.04));
@@ -583,6 +627,51 @@
 
     const FLAVOR_AXES = ['산미', '단맛', '바디', '로스팅'];
 
+    /* ── 쿠팡 파트너스(제휴) ───────────────────────────────────────────────
+       ⚠️ 반드시 파트너스에서 생성한 link.coupang.com/a/… 링크만 수수료가 잡힌다.
+       임의 검색 URL(coupang.com/np/search…)은 상품으로 연결은 되지만 정산이 안 된다. */
+    const COUPANG_DISCLOSURE = '쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.';
+    const coupangSearch = (q) => 'https://www.coupang.com/np/search?q=' + encodeURIComponent(q);
+
+    // 원두: 취향 검사(index.html)와 동일한 실 파트너스 링크를 재사용한다.
+    const COUPANG_BEAN = {
+        A: { url: 'https://link.coupang.com/a/hHbtkCxghU', label: '쿠팡에서 산미 좋은 원두 보기' },
+        B: { url: 'https://link.coupang.com/a/hHbu6K1bLU', label: '쿠팡에서 데일리 블렌드 보기' },
+        C: { url: 'https://link.coupang.com/a/hHbwcjZSV2', label: '쿠팡에서 고소한 원두 보기' },
+        D: { url: 'https://link.coupang.com/a/hHbw5sLiqO', label: '쿠팡에서 다크로스트 원두 보기' },
+    };
+
+    /* 기구: 프로필에 맞는 추천 기구 + 쿠팡 파트너스 수익화.
+       👉 code를 채우기 전까지는 q(검색어)로 폴백한다 — 상품은 보이지만 수수료는
+          안 잡힌다. 파트너스에서 각 기구 검색/상품의 link.coupang.com/a/<코드>를
+          생성해 code에 '<코드>'만 넣으면 바로 수익화된다(원두 코드와 같은 방식). */
+    const GEAR = {
+        A: { name: '하리오 V60 드리퍼 세트', desc: '화사한 산미를 가장 잘 살리는 핸드드립 입문 세트(드리퍼+서버+필터).',
+             code: '', q: '하리오 V60 드립세트', label: '쿠팡에서 V60 핸드드립 세트 보기' },
+        B: { name: '드립 세트 + 전자저울', desc: '어떤 원두든 균형 있게 — 데일리 드립과 계량을 한 번에.',
+             code: '', q: '커피 드립세트 전자저울', label: '쿠팡에서 드립 세트·전자저울 보기' },
+        C: { name: '우유 거품기(밀크 프로더)', desc: '고소한 원두를 라떼로. 집에서 부드러운 우유거품을 내는 가장 쉬운 길.',
+             code: '', q: '우유거품기 밀크프로더', label: '쿠팡에서 밀크 프로더 보기' },
+        D: { name: '모카포트(비알레띠)', desc: '묵직한 바디를 진하게 — 불에 올려 내리는 가정용 에스프레소.',
+             code: '', q: '비알레띠 모카포트', label: '쿠팡에서 모카포트 보기' },
+    };
+    const gearUrl = (g) => g.code ? 'https://link.coupang.com/a/' + g.code : coupangSearch(g.q);
+
+    /* 카페: 프로필에 맞는 카페 '유형'과 내 주변 찾기(네이버 지도 검색). 수익화 없음.
+       특정 지점은 품절·폐업 위험이 있어 유형+지도검색으로 보내고, 대표 카페는
+       영감용 예시로만 적는다. */
+    const naverMap = (q) => 'https://map.naver.com/p/search/' + encodeURIComponent(q);
+    const CAFE = {
+        A: { type: '스페셜티 핸드드립 카페', line: '산미 살아있는 싱글오리진을 필터로 내려주는 곳',
+             examples: '센터커피 · 프릳츠 · 펠트', q: '스페셜티 핸드드립 카페' },
+        B: { type: '동네 로스터리 카페', line: '원두가 좋은, 어느 날 가도 실패 없는 데일리 카페',
+             examples: '테라로사 · 빈브라더스 · 필그림', q: '로스터리 카페' },
+        C: { type: '시그니처 라떼 맛집', line: '고소하고 달큰한 라떼가 맛있는 카페',
+             examples: '폴바셋 · 블루보틀 · 커피리브레', q: '라떼 맛집 카페' },
+        D: { type: '진한 에스프레소 바', line: '묵직한 한 잔을 제대로 내리는 에스프레소 바',
+             examples: '리사르커피 · 앤트러사이트 · 모모스', q: '에스프레소 바' },
+    };
+
     const stage = document.getElementById('stage');
     let step = 0;
     const answers = [];
@@ -738,6 +827,30 @@
                     '" target="_blank" rel="noopener noreferrer">' + s.store + ' 검색 →</a>').join('') +
                 '</div></div>').join('') +
             '</div>' +
+            // 원두 쿠팡 파트너스(제휴) — 취향 검사와 같은 실 링크.
+            (COUPANG_BEAN[key] ?
+            '<a class="coupang-btn" id="coupang-bean" href="' + COUPANG_BEAN[key].url + '" target="_blank" rel="noopener noreferrer sponsored">' +
+            '<span>' + esc(COUPANG_BEAN[key].label) + '</span><span aria-hidden="true">→</span></a>' : '') +
+
+            // ── 기구 추천 (쿠팡 파트너스 수익화) ──
+            '<div class="section-label" style="margin-top:30px;">이 취향에 어울리는 기구</div>' +
+            '<div class="gear">' +
+            '<div class="gear-name">' + esc(GEAR[key].name) + '</div>' +
+            '<div class="gear-desc">' + esc(GEAR[key].desc) + '</div>' +
+            '<a class="coupang-btn" id="coupang-gear" href="' + gearUrl(GEAR[key]) + '" target="_blank" rel="noopener noreferrer sponsored">' +
+            '<span>' + esc(GEAR[key].label) + '</span><span aria-hidden="true">→</span></a>' +
+            '</div>' +
+            '<p class="coupang-disc">' + esc(COUPANG_DISCLOSURE) + '</p>' +
+
+            // ── 카페 추천 (지도 검색, 수익화 없음) ──
+            '<div class="section-label" style="margin-top:30px;">오늘은 이런 카페 어때요</div>' +
+            '<div class="cafe">' +
+            '<div class="cafe-type">' + esc(CAFE[key].type) + '</div>' +
+            '<div class="cafe-line">' + esc(CAFE[key].line) + '</div>' +
+            '<div class="cafe-ex">이런 곳: ' + esc(CAFE[key].examples) + '</div>' +
+            '<a class="map-btn" id="cafe-map" href="' + naverMap(CAFE[key].q) + '" target="_blank" rel="noopener noreferrer">' +
+            '내 주변 ' + esc(CAFE[key].type) + ' 찾기 →</a>' +
+            '</div>' +
             '<div class="cta-box">' +
             '<p>운명의 원두를 만났다면, 첫 한 잔부터 기록해보세요.<br>도징·온도·시간만 남기면 다음 잔이 쉬워집니다.</p>' +
             '<button type="button" class="btn btn-primary" id="cta">무료로 기록 시작하기 →</button>' +
@@ -776,6 +889,15 @@
             a.addEventListener('click', () =>
                 window.nmcTrack && window.nmcTrack('bean_link_click', { profile: key, store: a.dataset.store, bean_name: b.name, source: 'telepathy' }));
         });
+
+        // 쿠팡 제휴 클릭 — 원두/기구를 kind로 구분해 센다(취향 검사와 같은 coupang_click).
+        document.getElementById('coupang-bean')?.addEventListener('click', () =>
+            window.nmcTrack && window.nmcTrack('coupang_click', { profile: key, kind: 'bean', source: 'telepathy' }));
+        document.getElementById('coupang-gear')?.addEventListener('click', () =>
+            window.nmcTrack && window.nmcTrack('coupang_click', { profile: key, kind: 'gear', source: 'telepathy', gear: GEAR[key].name }));
+        // 카페 지도 검색 클릭.
+        document.getElementById('cafe-map')?.addEventListener('click', () =>
+            window.nmcTrack && window.nmcTrack('cafe_click', { profile: key, cafe_type: CAFE[key].type, source: 'telepathy' }));
 
         document.getElementById('cta').addEventListener('click', () => {
             window.nmcTrack && window.nmcTrack('cta_click', { location: 'telepathy', profile: key });
