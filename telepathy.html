@@ -223,6 +223,13 @@
     }
     .progress span.on { background: var(--clay); }
 
+    .q-count {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        color: var(--ghost);
+        margin-bottom: 10px;
+    }
     .q {
         font-size: clamp(21px, 6vw, 26px);
         font-weight: 700;
@@ -503,6 +510,10 @@
     }
     .home-link:hover { color: var(--clay-soft); }
 
+    /* 프로그래매틱 포커스(스크린리더 위치 이동)용 — 비상호작용 제목엔 외곽선을 숨긴다.
+       버튼·입력 등 실제 조작 요소의 포커스 링은 그대로 둔다. */
+    #stage:focus, [data-focus]:focus { outline: none; }
+
     @media (prefers-reduced-motion: reduce) {
         .stage, .signal .ring, .signal .core, .opt, .btn, .transmit-msg, .result-art { animation: none !important; transition: none !important; }
         .result-art { filter: none !important; }
@@ -512,7 +523,7 @@
 </head>
 <body>
     <a class="home-link" href="index.html">← Note My Coffee</a>
-    <main class="stage" id="stage" aria-live="polite"></main>
+    <main class="stage" id="stage" aria-live="polite" tabindex="-1"></main>
 
     <!-- 경험 본체는 '클래식' 스크립트다(모듈 아님). Firebase/계측 모듈 로드가
          실패해도(오프라인·CDN 차단) 교신·결과 화면은 끝까지 동작해야 하기 때문이다.
@@ -685,6 +696,12 @@
         void stage.offsetWidth;
         stage.style.animation = '';
         stage.innerHTML = html;
+        // 화면 전환마다 상단으로(긴 결과 화면에서 중간부터 보이지 않게) + 포커스 이동.
+        // innerHTML 교체는 포커스를 body로 날려 키보드·스크린리더 사용자가 위치를 잃는다.
+        // 각 화면의 대표 요소([data-focus], tabindex=-1)로 옮겨 다음 조작을 이어가게 한다.
+        try { window.scrollTo(0, 0); } catch (e) { /* 무시 */ }
+        const f = stage.querySelector('[data-focus]') || stage;
+        try { f.focus({ preventScroll: true }); } catch (e) { try { f.focus(); } catch (e2) {} }
     }
 
     /* ── 인트로 ── */
@@ -694,7 +711,7 @@
             '<div class="signal" aria-hidden="true">' +
             '<div class="ring"></div><div class="ring"></div><div class="ring"></div>' +
             '<div class="core">☕</div></div>' +
-            '<h1>지금 마시고 싶은 그 맛,<br>커피가 먼저 알아요</h1>' +
+            '<h1 data-focus tabindex="-1">지금 마시고 싶은 그 맛,<br>커피가 먼저 알아요</h1>' +
             '<p class="lede">눈을 감고 떠올려 보세요. 당신이 지금 바라는 한 잔을, 운명의 원두가 텔레파시로 찾아옵니다.</p>' +
             '<button class="btn btn-primary" id="start">교신 시작하기 →</button>' +
             '<p class="micro">30초 · 로그인 없이</p>'
@@ -710,10 +727,11 @@
     function renderQuestion() {
         const Q = QUESTIONS[step];
         show(
-            '<div class="progress">' +
+            '<div class="progress" aria-hidden="true">' +
             QUESTIONS.map((_, i) => '<span' + (i <= step ? ' class="on"' : '') + '></span>').join('') +
             '</div>' +
-            '<div class="q">' + esc(Q.q) + '</div>' +
+            '<div class="q-count">질문 ' + (step + 1) + ' / ' + QUESTIONS.length + '</div>' +
+            '<div class="q" data-focus tabindex="-1">' + esc(Q.q) + '</div>' +
             '<div class="opts">' +
             Q.opts.map((o, i) =>
                 '<button type="button" class="opt" data-i="' + i + '">' +
@@ -747,7 +765,7 @@
         const key = winningKey();
         new Image().src = artSrc(key);
         show(
-            '<div class="eyebrow">Transmitting…</div>' +
+            '<div class="eyebrow" data-focus tabindex="-1">Transmitting…</div>' +
             '<div class="signal" aria-hidden="true">' +
             '<div class="ring"></div><div class="ring"></div><div class="ring"></div>' +
             '<div class="core">📡</div></div>' +
@@ -807,7 +825,7 @@
             '<img class="result-art" id="result-art" src="' + artSrc(key) + '" alt="' + esc(r.title) + ' — 운명의 원두 이미지">' +
             '<div class="result-persona" id="result-persona" aria-hidden="true" hidden>' + r.emoji + '</div>' +
             '<div class="result-kicker">교신 완료 · 운명의 원두</div>' +
-            '<div class="result-title">' + esc(r.title) + '</div>' +
+            '<div class="result-title" data-focus tabindex="-1">' + esc(r.title) + '</div>' +
             '<div class="sync">텔레파시 싱크로율 <b>' + sync + '%</b></div>' +
             '<div class="quote">“' + esc(r.message) + '”' +
             '<span class="from">— 당신에게 닿은 원두가</span></div>' +
@@ -866,6 +884,7 @@
             '</div>' +
             '<div class="actions">' +
             '<button type="button" class="btn btn-ghost" id="share">결과 카드 공유하기</button>' +
+            '<button type="button" class="btn btn-ghost" id="copy-link">친구에게 테스트 링크 보내기</button>' +
             '<button type="button" class="btn btn-ghost" id="restart">다시 교신하기 ↺</button>' +
             '</div>' +
             '<p class="footnote">각 스토어의 검색 결과로 연결됩니다. 판매처·가격·재고는 그때그때 다를 수 있어요. ' +
@@ -907,6 +926,36 @@
         document.getElementById('restart').addEventListener('click', () => {
             window.nmcTrack && window.nmcTrack('telepathy_restart', { profile: key });
             renderIntro();
+        });
+
+        // 테스트 링크 보내기 — 결과 카드(이미지)와 달리 '검사 자체'를 퍼뜨리는 바이럴 동선.
+        // 데스크톱에선 공유 카드가 다운로드로만 떨어지는데, 링크 공유는 어디서나 된다.
+        // Web Share가 되면 공유 시트, 아니면 클립보드 복사로 폴백한다.
+        const copyBtn = document.getElementById('copy-link');
+        copyBtn.addEventListener('click', async () => {
+            const url = 'https://note-my-coffee.web.app/telepathy';
+            const original = copyBtn.textContent;
+            let method = 'none';
+            try {
+                if (navigator.share) {
+                    await navigator.share({ title: '원두 텔레파시', text: '지금 마시고 싶은 그 맛, 커피가 먼저 알아맞혀요 ☕', url });
+                    method = 'share';
+                } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(url);
+                    method = 'copy';
+                    copyBtn.textContent = '링크 복사됨 ✓';
+                    setTimeout(() => { copyBtn.textContent = original; }, 2200);
+                } else {
+                    throw new Error('no-share-api');
+                }
+                window.nmcTrack && window.nmcTrack('telepathy_link_share', { profile: key, method });
+            } catch (e) {
+                // 사용자가 공유 시트를 닫은 건 오류가 아니다. 복사도 실패했을 때만 안내한다.
+                if (method === 'none') {
+                    copyBtn.textContent = '주소: note-my-coffee.web.app/telepathy';
+                    setTimeout(() => { copyBtn.textContent = original; }, 3000);
+                }
+            }
         });
 
         // 공유 카드 — 취향 검사와 같은 share-card.js를 첫 클릭에서만 받는다.
