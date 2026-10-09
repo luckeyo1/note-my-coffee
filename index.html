@@ -494,22 +494,29 @@
         .story-text p:last-child { margin-bottom: 0; }
         .story-text strong { color: var(--text); font-weight: 500; }
 
-        /* ── STORY BAND: 01 섹션의 풀블리드 사진 띠 ──
-           빈 노트 사진이 "기록하지 않았다"는 은유를 대신한다. 장식이라 <img>가 아니라
-           background로 둔다 — 파일이 없으면 깨진 이미지 아이콘 대신 그냥 비어 보인다.
-           높이를 고정해 이미지 유무와 무관하게 레이아웃이 흔들리지 않는다(CLS 0). */
+        /* 본문 아래 커피·노트 사진. 고정 높이로 레이아웃 이동을 막고,
+           실제 img로 넣어 화면 가까이 왔을 때만 다운로드한다. */
         .story-band {
             position: relative;
             height: clamp(200px, 30vw, 340px);
             margin: 40px 0;
-            background: none;
+            overflow: hidden;
+            background: var(--bg);
         }
-        /* 위아래를 배경색으로 녹여 본문과 이어붙인다. */
+        .story-band img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            object-position: 72% 55%;
+        }
+        /* 가장자리만 녹여 사진의 컵과 원두가 보이도록 한다. */
         .story-band::after {
             content: "";
             position: absolute;
             inset: 0;
-            background: var(--bg);
+            pointer-events: none;
+            background: linear-gradient(180deg, var(--bg), transparent 15%, transparent 85%, var(--bg));
         }
 
         .pull-quote {
@@ -1858,7 +1865,10 @@
                 </p>
             </div>
 
-            <div class="story-band" aria-hidden="true"></div>
+            <div class="story-band" aria-hidden="true">
+                <img src="img/coffee-journal-bright.webp" alt="" width="1536" height="1024"
+                     loading="lazy" decoding="async">
+            </div>
 
             <div class="params">
                 <div class="param">
