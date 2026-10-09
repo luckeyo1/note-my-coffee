@@ -168,6 +168,12 @@
             --gold: var(--signal);
             --gold-dim: var(--signal-dim);
             --gold-border: var(--signal-line);
+            /* --gold-light는 이 :root에 정의가 없어 .nav-btn(헤더 CTA)·.btn-text:hover가
+               var() 폴백으로 투명/currentColor로 떨어져 있었다 — 헤더 버튼 배경이 종이색
+               위에서 보이지 않았다. style.css와 같은 값(= --signal, #9E421D)으로 정의해
+               복구한다. 이 톤은 종이색 글자가 4.5:1을 넘도록 잡힌 값이라 버튼·링크 양쪽에
+               안전하다. */
+            --gold-light: var(--signal);
             /* --gold-glow 는 제거했다. 글로우는 이 디자인에 존재하지 않는다. */
             --bg: var(--paper);
             --bg2: var(--paper-2);
