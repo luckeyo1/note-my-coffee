@@ -1147,6 +1147,56 @@
             padding: clamp(24px, 4.5vw, 40px);
         }
 
+        /* ── 원두 텔레파시 진입(취향 검사의 놀이형 자매 버전) ── */
+        .telepathy-entry {
+            max-width: 640px;
+            margin-top: 14px;
+            border: 1px solid var(--gold-border);
+            background: linear-gradient(180deg, rgba(180,83,42,0.07), rgba(180,83,42,0.02));
+            padding: clamp(18px, 3.5vw, 26px);
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.25s, transform 0.25s ease;
+        }
+        .telepathy-entry:hover { border-color: var(--gold); transform: translateY(-2px); }
+        .telepathy-entry .te-mark {
+            flex-shrink: 0;
+            width: 52px; height: 52px;
+            display: grid; place-items: center;
+            font-size: 28px; line-height: 1;
+            background: var(--gold-dim);
+            border: 1px solid var(--gold-border);
+        }
+        .telepathy-entry .te-body { flex: 1; min-width: 190px; }
+        .telepathy-entry .te-kicker {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--gold); margin-bottom: 5px;
+        }
+        .telepathy-entry .te-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 3px; letter-spacing: -0.01em; }
+        .telepathy-entry .te-sub { font-size: 13px; color: var(--sub); line-height: 1.6; }
+        .telepathy-entry .te-go {
+            flex-shrink: 0;
+            display: inline-flex; align-items: center; gap: 7px;
+            font-family: var(--sans); font-size: 14px; font-weight: 500;
+            /* --gold(#9E421D)은 종이색 글자가 4.5:1을 넘도록 잡힌 값이다(토큰 주석 참고).
+               index.html에는 --gold-light가 정의돼 있지 않아 var() 폴백이 투명으로
+               떨어지므로 여기서는 쓰지 않는다. */
+            color: #FCFAF6; background: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 13px 20px;
+            transition: filter 0.18s, transform 0.2s;
+        }
+        .telepathy-entry:hover .te-go { filter: brightness(1.05); transform: translateX(2px); }
+        @media (max-width: 560px) {
+            .telepathy-entry { gap: 14px; }
+            .telepathy-entry .te-go { width: 100%; justify-content: center; }
+        }
+
         .quiz-progress { display: flex; gap: 6px; margin-bottom: 28px; }
         .quiz-progress span { height: 2px; flex: 1; background: rgba(36,28,21,0.08); border-radius: 0; transition: background 0.35s; }
         .quiz-progress span.on { background: var(--gold); }
@@ -2174,6 +2224,19 @@
             </div>
 
             <div class="quiz-card" id="quiz-card"></div>
+
+            <!-- 놀이형 자매 버전으로 가는 진입. 취향 검사가 '정밀'이라면 텔레파시는
+                 '직관·공유'다. 공유로 퍼지는 바이럴 동선이라 별도 페이지(/telepathy)로 보낸다. -->
+            <a class="telepathy-entry reveal" href="telepathy.html"
+               id="link-telepathy" aria-label="원두 텔레파시 해보기">
+                <span class="te-mark" aria-hidden="true">☕</span>
+                <span class="te-body">
+                    <span class="te-kicker">Bean Telepathy</span>
+                    <span class="te-title">눈 감고, 운명의 원두를 만나볼까요?</span>
+                    <span class="te-sub">지금 마시고 싶은 그 맛을 커피가 먼저 알아맞혀요. 30초 교신, 결과는 친구와 공유.</span>
+                </span>
+                <span class="te-go">원두 텔레파시 해보기 →</span>
+            </a>
         </div>
     </section>
 
@@ -2425,6 +2488,12 @@
         { threshold: 0.08 }
     );
     document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // 원두 텔레파시 진입 클릭 — 취향 검사 섹션에서 놀이형 페이지로 넘어간 비율을 본다.
+    // 링크는 기본 내비게이션으로 동작하므로 추적 실패가 이동을 막지 않는다.
+    document.getElementById('link-telepathy')?.addEventListener('click', () => {
+        window.nmcTrack?.('telepathy_entry_click', { location: 'quiz_section' });
+    });
 
     // ── 섹션 도달 계측: 랜딩 어디까지 스크롤하다 이탈하는지(미드퍼널) ──
     // 랜딩 상단→CTA 사이가 그동안 깜깜했다. 핵심 구간이 처음 뷰포트에 들어올 때
