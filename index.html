@@ -1289,6 +1289,21 @@
         }
         .bean-link:hover { background: var(--gold); color: var(--bg); }
 
+        /* 쿠팡 파트너스(제휴) 추천 버튼 + 고지 문구 */
+        .quiz-coupang { margin-top: 20px; }
+        .quiz-coupang-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%;
+            background: var(--gold); color: var(--bg);
+            border: 1px solid var(--gold);
+            font-family: var(--sans); font-size: 14px; font-weight: 600;
+            padding: 14px 18px;
+            text-decoration: none;
+            transition: filter 0.18s ease;
+        }
+        .quiz-coupang-btn:hover { filter: brightness(1.06); }
+        .quiz-coupang-disc { margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
+
         .quiz-restart {
             display: inline-block;
             margin-top: 24px;
@@ -2666,6 +2681,18 @@
             { store: '네이버', url: naverSearch },
         ];
 
+        // 쿠팡 파트너스(제휴) — 결과 유형별 전용 추적 링크. 반드시 파트너스에서
+        // 생성한 link.coupang.com/a/… 링크만 쓴다(임의 검색 URL은 수수료가 안 잡힌다).
+        // 스페셜티 로스터리는 쿠팡에 거의 없어 원두별이 아니라 '취향 키워드' 검색으로 보낸다.
+        // 약관상 아래 고지 문구를 버튼 근처에 함께 노출한다(renderResult).
+        const COUPANG = {
+            A: { url: 'https://link.coupang.com/a/hHbtkCxghU', label: '쿠팡에서 산미 좋은 원두 보기' },
+            B: { url: 'https://link.coupang.com/a/hHbu6K1bLU', label: '쿠팡에서 데일리 블렌드 보기' },
+            C: { url: 'https://link.coupang.com/a/hHbwcjZSV2', label: '쿠팡에서 고소한 원두 보기' },
+            D: { url: 'https://link.coupang.com/a/hHbw5sLiqO', label: '쿠팡에서 다크로스트 원두 보기' },
+        };
+        const COUPANG_DISCLOSURE = '쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.';
+
         const RESULTS = {
             A: {
                 title: '화사한 향미 탐험가',
@@ -2845,6 +2872,14 @@
                     '</div>' +
                     '</div>').join('') +
                 '</div>' +
+                // 쿠팡 파트너스(제휴) 추천 — 결과 유형에 맞는 쿠팡 검색으로. 고지 문구 동반.
+                (COUPANG[key] ?
+                '<div class="quiz-coupang">' +
+                '<a class="quiz-coupang-btn" href="' + COUPANG[key].url + '"' +
+                ' target="_blank" rel="noopener noreferrer sponsored" data-cpkey="' + key + '">' +
+                '<span>' + COUPANG[key].label + '</span><span aria-hidden="true">→</span></a>' +
+                '<p class="quiz-coupang-disc">' + COUPANG_DISCLOSURE + '</p>' +
+                '</div>' : '') +
                 // 리드마그넷 — 몰입 절정(결과 직후)에서 이메일 옵트인. 추천은 이미
                 // 무료로 줬고, 여기서는 '앞으로도' 받아볼지를 묻는다(관계의 연장).
                 '<div class="quiz-lead" id="quiz-lead">' +
@@ -2890,6 +2925,12 @@
                         bean_name: b.name,
                     });
                 });
+            });
+
+            // 쿠팡 제휴 버튼 클릭 — 제휴 수익화 지표(원두 검색 클릭과 구분해 센다).
+            const cpBtn = card.querySelector('.quiz-coupang-btn');
+            if (cpBtn) cpBtn.addEventListener('click', () => {
+                window.nmcTrack?.('coupang_click', { profile: key });
             });
 
             document.getElementById('quiz-cta-btn').addEventListener('click', () => {
