@@ -111,7 +111,7 @@ body {
 .app-shell {
     max-width: 480px;
     margin: 0 auto;
-    padding: 20px 16px 60px;
+    padding: 20px 16px 88px; /* 하단 고정 탭바(모든 폭)에 본문이 가리지 않게 */
 }
 
 /* ===== HEADER ===== */
@@ -123,22 +123,6 @@ body {
     padding: 20px 0 24px;
 }
 
-/* 데스크톱 헤더 네비(추출·발견·기록). 모바일(≤768px)은 하단 탭바가 대신하므로 숨긴다.
-   하단 탭바 주석대로 "데스크톱은 헤더 네비를 쓴다" — 공유/발견 추가로 비로소 완성. */
-.app-nav { display: flex; align-items: center; gap: 2px; }
-.app-nav a {
-    text-decoration: none;
-    color: var(--ink-soft);
-    font-family: var(--font-body);
-    font-size: 14px;
-    font-weight: 600;
-    padding: 7px 14px;
-    border-radius: 8px;
-    white-space: nowrap;
-    transition: background var(--transition), color var(--transition);
-}
-.app-nav a:hover { background: var(--gold-pale); color: var(--gold); }
-.app-nav a.is-active { color: var(--gold); background: var(--gold-pale); }
 /* 좁은 화면에서 브랜드와 액션이 합쳐 뷰포트를 넘겨 페이지가 가로로 밀렸다
    (390px에서 scrollWidth 405).
 
@@ -592,7 +576,7 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 480px) {
-    .app-shell { padding: 16px 14px 60px; }
+    .app-shell { padding: 16px 14px 88px; }
     .console-box { padding: 22px 18px; }
     .control-value > span:first-child { font-size: 40px; }
     .modal-row { flex-direction: column; }
@@ -1151,6 +1135,14 @@ input[type=range]::-moz-range-thumb:hover { border-color: var(--gold); }
     width: calc(100% - 40px);
     margin: 0 20px 18px;
 }
+/* 커뮤니티 공유(주요 CTA) 아래 안내 한 줄 */
+.recipe-share-subhint {
+    margin: -10px 20px 14px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--ink-muted);
+    text-align: center;
+}
 
 /* ── Import preview ── */
 .import-preview {
@@ -1357,14 +1349,27 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
 
 /* ── 하단 탭바 (모바일 전용) ── */
 .tab-bar {
-    display: none; /* 데스크톱: 기존 헤더 네비를 쓰므로 숨긴다 */
+    /* 모바일·데스크톱 모두 노출한다. 앱 본문이 480px 중앙 컬럼이라, 바도 같은 폭으로
+       중앙에 띄워 데스크톱에서도 '앱 하단 바'처럼 보이게 한다. */
+    display: flex;
     position: fixed;
     left: 0; right: 0; bottom: 0;
+    margin: 0 auto;
+    max-width: 480px;
     z-index: 90;
     background: var(--panel);
     border-top: 1px solid var(--border);
     padding-bottom: env(safe-area-inset-bottom, 0);
     box-shadow: 0 -6px 20px rgba(36,28,21,0.06);
+}
+/* 데스크톱: 좌우 테두리 + 상단 둥근 모서리로 '떠 있는 바'처럼. 모바일(≤480px)은
+   화면 폭을 꽉 채우므로 이 장식이 자연스럽게 사라진다. */
+@media (min-width: 481px) {
+    .tab-bar {
+        border-left: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        border-radius: 16px 16px 0 0;
+    }
 }
 .tab-item {
     flex: 1;
@@ -1581,10 +1586,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
 
 /* ── 모바일: 탭바 노출 + 본문 하단 여백 + 중복 FAB 숨김 ── */
 @media (max-width: 768px) {
-    .tab-bar { display: flex; }
-    .app-shell { padding-bottom: 84px; }
     .fab-btn { display: none !important; }
-    .app-nav { display: none; }
 }
 
 /* ── 사진 선택: 안드로이드 갤러리 트리거 수정 ──
@@ -1711,6 +1713,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
 .compose-radio input { margin-top: 3px; }
 .compose-radio b { display: block; font-size: 14px; color: var(--ink); }
 .compose-radio small { display: block; font-size: 12px; color: var(--ink-ghost); margin-top: 1px; }
+.compose-reco {
+    font-style: normal; font-size: 10px; font-weight: 700;
+    color: var(--gold); background: var(--gold-pale);
+    border: 1px solid var(--gold-border); border-radius: 999px;
+    padding: 1px 7px; margin-left: 6px; vertical-align: middle;
+}
 .compose-error { color: var(--danger); font-size: 13px; margin-top: 10px; }
 .compose-result { margin-top: 14px; padding: 14px; background: var(--gold-pale); border: 1px solid var(--gold-border); border-radius: 12px; }
 .compose-result-msg { font-size: 14px; color: var(--ink-soft); }

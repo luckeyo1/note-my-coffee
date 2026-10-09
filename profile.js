@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const [profile, posts] = await Promise.all([getProfile(uid), fetchUserPosts(uid)]);
             if (!profile && posts.length === 0 && !isSelf) {
                 message('이용할 수 없는 프로필이에요.',
-                    '<a class="recipe-share-btn recipe-share-btn--gold" href="discover.html" style="display:inline-block;margin-top:6px;">발견으로 가기</a>');
+                    '<a class="recipe-share-btn recipe-share-btn--gold" href="discover.html" style="display:inline-block;margin-top:6px;">둘러보기로 가기</a>');
                 return;
             }
             render(uid, profile, posts, isSelf);

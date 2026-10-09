@@ -525,6 +525,7 @@ export function openBrewShareModal(recipe, opts = {}) {
         download: '↓ Save image', share: '↗ Share', copy: '🔗 Copy link', copied: '✓ Copied',
         toLogbook: 'To logbook →',
         publish: '🌍 Share to community',
+        publishHint: 'Post it to the feed so others can find and brew it.',
         brag: (n) => `Here's the ${n || 'coffee'} I just brewed ☕ #NoteMyCoffee`,
     } : {
         celebrateTitle: '☕ 기록 완료 — 자랑해보세요',
@@ -533,7 +534,8 @@ export function openBrewShareModal(recipe, opts = {}) {
         making: '생성 중…', cantMake: '이미지를 만들 수 없습니다',
         download: '↓ 이미지 저장', share: '↗ 공유', copy: '🔗 링크 복사', copied: '✓ 복사됨',
         toLogbook: '로그북으로 →',
-        publish: '🌍 커뮤니티에 공개',
+        publish: '🌍 커뮤니티에 공유',
+        publishHint: '피드에 올리면 다른 사람도 보고 따라 내릴 수 있어요.',
         brag: (n) => `제가 방금 내린 "${n || '커피'}" 한 잔이에요 ☕ #NoteMyCoffee`,
     };
 
@@ -563,13 +565,14 @@ export function openBrewShareModal(recipe, opts = {}) {
                 <img class="recipe-share-img" alt="Brew Card">
                 <div class="recipe-share-spinner">${T.making}</div>
             </div>
+            ${onPublish ? `<button class="recipe-share-btn recipe-share-btn--gold recipe-share-continue" data-action="publish">${T.publish}</button>
+            <p class="recipe-share-subhint">${T.publishHint}</p>` : ''}
             <div class="recipe-share-actions">
                 <button class="recipe-share-btn" data-action="download">${T.download}</button>
                 ${navigator.share ? `<button class="recipe-share-btn" data-action="share">${T.share}</button>` : ''}
                 ${shareUrl ? `<button class="recipe-share-btn" data-action="copy">${T.copy}</button>` : ''}
             </div>
-            ${onPublish ? `<button class="recipe-share-btn recipe-share-btn--gold recipe-share-continue" data-action="publish">${T.publish}</button>` : ''}
-            ${celebrate ? `<button class="recipe-share-btn recipe-share-btn--gold recipe-share-continue" data-action="continue">${T.toLogbook}</button>` : ''}
+            ${celebrate ? `<button class="recipe-share-btn recipe-share-continue" data-action="continue">${T.toLogbook}</button>` : ''}
         </div>
     `;
     document.body.appendChild(overlay);
