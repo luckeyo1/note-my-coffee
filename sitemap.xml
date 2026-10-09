@@ -22,6 +22,12 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+  <!-- 원두 텔레파시: 공유·바이럴 유입용 놀이형 랜딩. -->
+  <url>
+    <loc>https://note-my-coffee.web.app/telepathy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
   <url>
     <loc>https://note-my-coffee.web.app/privacy</loc>
     <changefreq>yearly</changefreq>
