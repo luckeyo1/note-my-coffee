@@ -277,6 +277,25 @@
     @keyframes msg-flicker { from { opacity: 0.2; } to { opacity: 1; } }
 
     /* ===== 결과 ===== */
+    /* 운명의 원두 히어로 이미지. 서비스의 프로필 일러스트(어두운 정물)를 '현상된
+       사진'처럼 액자에 담는다. 브랜드 규율상 라운드는 사진에만 허용되므로 14px.
+       3:2로 잘라 세로 높이를 줄이고, 피사체가 아래쪽에 있어 object-position을 내린다. */
+    .result-art {
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        object-fit: cover;
+        object-position: 50% 62%;
+        border-radius: 14px;
+        display: block;
+        margin: 0 auto 22px;
+        border: 1px solid var(--line);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        animation: art-in 0.7s var(--ease) both;
+    }
+    @keyframes art-in {
+        from { opacity: 0; transform: scale(0.97); filter: blur(6px); }
+        to   { opacity: 1; transform: none; filter: none; }
+    }
     .result-persona { font-size: 46px; margin-bottom: 6px; line-height: 1; }
     .result-kicker {
         font-family: var(--mono);
@@ -441,7 +460,8 @@
     .home-link:hover { color: var(--clay-soft); }
 
     @media (prefers-reduced-motion: reduce) {
-        .stage, .signal .ring, .signal .core, .opt, .btn, .transmit-msg { animation: none !important; transition: none !important; }
+        .stage, .signal .ring, .signal .core, .opt, .btn, .transmit-msg, .result-art { animation: none !important; transition: none !important; }
+        .result-art { filter: none !important; }
         .signal .ring { opacity: 0.25; }
     }
     </style>
@@ -624,8 +644,19 @@
         if (back) back.addEventListener('click', () => { step -= 1; renderQuestion(); });
     }
 
+    /* 득표 최다 프로필(동점이면 A→B→C→D 순 먼저). 교신 중 프리로드와 결과가 공유한다. */
+    function winningKey() {
+        const counts = {};
+        answers.forEach((k) => { counts[k] = (counts[k] || 0) + 1; });
+        return ['A', 'B', 'C', 'D'].reduce((best, k) => (counts[k] || 0) > (counts[best] || 0) ? k : best, 'A');
+    }
+    const artSrc = (key) => 'img/profile-' + String(key).toLowerCase() + '.webp';
+
     /* ── 교신 중(리드 연출) ── */
     function renderTransmit() {
+        // 결과 히어로 이미지를 교신 애니메이션 동안 미리 받아둔다 — 결과 전환 시 깜빡이지 않게.
+        const key = winningKey();
+        new Image().src = artSrc(key);
         show(
             '<div class="eyebrow">Transmitting…</div>' +
             '<div class="signal" aria-hidden="true">' +
@@ -675,13 +706,17 @@
     function renderResult() {
         const counts = {};
         answers.forEach((k) => { counts[k] = (counts[k] || 0) + 1; });
-        const key = ['A', 'B', 'C', 'D'].reduce((best, k) => (counts[k] || 0) > (counts[best] || 0) ? k : best, 'A');
+        const key = winningKey();
         const r = RESULTS[key];
         // 싱크로율 — 득표가 한쪽으로 쏠릴수록 높다(연출용 지표). 72~99% 범위.
         const sync = Math.round(72 + ((counts[key] || 0) / answers.length) * 27);
 
         show(
-            '<div class="result-persona" aria-hidden="true">' + r.emoji + '</div>' +
+            // 운명의 원두를 '현상된 사진'처럼 보여준다. 서비스의 프로필 일러스트(어두운
+            // 정물)가 이 페이지 배경과 같은 톤이라 그대로 녹아든다. 로드 실패 시 아래
+            // onerror가 이모지 배지로 대체한다(빈 액자를 남기지 않는다).
+            '<img class="result-art" id="result-art" src="' + artSrc(key) + '" alt="' + esc(r.title) + ' — 운명의 원두 이미지">' +
+            '<div class="result-persona" id="result-persona" aria-hidden="true" hidden>' + r.emoji + '</div>' +
             '<div class="result-kicker">교신 완료 · 운명의 원두</div>' +
             '<div class="result-title">' + esc(r.title) + '</div>' +
             '<div class="sync">텔레파시 싱크로율 <b>' + sync + '%</b></div>' +
@@ -725,6 +760,14 @@
         );
 
         window.nmcTrack && window.nmcTrack('telepathy_complete', { profile: key, profile_title: r.title, sync });
+
+        // 히어로 이미지가 없으면(아트 누락·오프라인) 빈 액자 대신 이모지 배지로 대체한다.
+        const artEl = document.getElementById('result-art');
+        if (artEl) artEl.addEventListener('error', () => {
+            artEl.remove();
+            const p = document.getElementById('result-persona');
+            if (p) p.hidden = false;
+        });
 
         // 원두 링크 클릭 — 제휴 수익화 판단 지표(취향 검사와 동일 이벤트명)
         stage.querySelectorAll('.bean-link').forEach((a) => {
