@@ -4,57 +4,49 @@
 <meta charset="UTF-8">
 <title>Feature Graphic 1024x500</title>
 <!--
-  Google Play 피처 그래픽 원본 (1024x500, PNG).
+  Google Play 피처 그래픽 원본 (1024x500, PNG) — v3 "실사 + 어두운 프리미엄".
   렌더: 리포지토리 루트에서 로컬 서버 → /store/android/feature-graphic.html 를
   1024x500 뷰포트(배율 1)로 스크린샷 → store/android/feature-graphic.png.
-  디자인: 프리미엄 "계측기 노트" — 따뜻한 그라데이션 + 필름 그레인 + 조명 글로우,
-  왼쪽 브랜드/태그라인/칩, 오른쪽 계측값 카드. 한글 Pretendard 자체 호스팅.
+  배경은 실제 추출 사진(src/photos/real-1.webp)을 블러 처리, 오른쪽에 실제 공유 카드.
+  한글 Pretendard 자체 호스팅.
 -->
 <link rel="stylesheet" href="../../font/pretendard/pretendard.css">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root{--ink:#2A1D14;--ink2:#6B5B4A;--ink3:#8A7A68;--signal:#9E421D}
   html,body{width:1024px;height:500px;overflow:hidden}
   body{font-family:'Pretendard Variable',Pretendard,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
-    background:linear-gradient(168deg,#FBF6EF 0%,#F4EADB 50%,#EBDBC4 100%);
-    display:flex;align-items:center;padding:0 72px;gap:40px;position:relative}
-  .glow{position:absolute;width:560px;height:560px;right:-150px;top:-170px;border-radius:50%;
-    background:radial-gradient(circle,rgba(158,66,29,0.14),transparent 64%);pointer-events:none;z-index:0}
-  .grain{position:absolute;inset:0;z-index:1;opacity:0.06;mix-blend-mode:multiply;pointer-events:none;
+    background:#0E0A07;display:flex;align-items:center;padding:0 72px;gap:30px;position:relative}
+  .bg{position:absolute;inset:0;z-index:0;background:url(src/photos/real-1.webp) center 34%/cover;
+    filter:blur(44px) brightness(0.52) saturate(1.05);transform:scale(1.2)}
+  .scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(120% 90% at 20% 20%, rgba(158,66,29,0.16), transparent 60%),
+      linear-gradient(90deg, rgba(12,8,5,0.78) 0%, rgba(12,8,5,0.45) 45%, rgba(12,8,5,0.30) 100%)}
+  .grain{position:absolute;inset:0;z-index:2;opacity:0.10;mix-blend-mode:overlay;pointer-events:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-  .left{position:relative;z-index:2;flex:1 1 auto}
-  .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--signal);margin-bottom:16px}
-  .eyebrow .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--signal);padding:4px;
-    background:conic-gradient(var(--signal) 0 62%,transparent 62%) content-box}
-  .name{font-size:64px;font-weight:800;line-height:1;letter-spacing:-0.03em;color:var(--ink);margin-bottom:16px}
-  .name em{font-style:normal;color:var(--signal)}
-  .tag{font-size:21px;line-height:1.5;color:var(--ink2);max-width:21ch;word-break:keep-all;margin-bottom:22px}
+  .left{position:relative;z-index:3;flex:1 1 auto}
+  .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:#E7A478;margin-bottom:16px}
+  .eyebrow .dot{width:22px;height:22px;border-radius:50%;border:2px solid #E7A478;padding:4px;
+    background:conic-gradient(#E7A478 0 62%,transparent 62%) content-box}
+  .name{font-size:62px;font-weight:800;line-height:1;letter-spacing:-0.03em;color:#F8EFE2;margin-bottom:16px;text-shadow:0 2px 16px rgba(0,0,0,0.5)}
+  .name em{font-style:normal;color:#F0975A}
+  .tag{font-size:20px;line-height:1.5;color:rgba(248,239,226,0.82);max-width:21ch;word-break:keep-all;margin-bottom:20px;text-shadow:0 1px 10px rgba(0,0,0,0.5)}
   .chips{display:flex;gap:8px}
-  .chip{font-size:14px;font-weight:600;color:var(--signal);background:rgba(158,66,29,0.08);
-    border:1.5px solid rgba(158,66,29,0.30);border-radius:999px;padding:7px 16px}
-  .stats{position:relative;z-index:2;flex:0 0 auto;display:grid;grid-template-columns:repeat(2,138px);gap:12px}
-  .stat{background:rgba(255,255,255,0.62);border:1px solid rgba(36,28,21,0.12);border-radius:16px;
-    padding:15px 16px 13px;box-shadow:0 10px 24px -16px rgba(48,28,15,0.35)}
-  .k{font-size:11px;font-weight:600;color:var(--ink3);margin-bottom:8px}
-  .v{font-size:30px;font-weight:800;line-height:1;letter-spacing:-0.02em;color:var(--ink)}
-  .v span{font-size:14px;font-weight:500;color:var(--ink3);margin-left:2px}
-  .bar{height:3px;border-radius:2px;background:rgba(36,28,21,0.14);margin-top:11px}
-  .bar i{display:block;height:100%;border-radius:2px;background:var(--signal)}
+  .chip{font-size:13px;font-weight:600;color:#F3C7A6;background:rgba(240,151,90,0.12);
+    border:1.5px solid rgba(240,151,90,0.40);border-radius:999px;padding:7px 15px}
+  .right{position:relative;z-index:3;flex:0 0 auto;width:330px;display:flex;justify-content:center}
+  .rcard{width:300px;border-radius:26px;overflow:hidden;background:#000;transform:rotate(3deg);
+    box-shadow:0 2px 1px rgba(255,255,255,0.08) inset,0 50px 90px -28px rgba(0,0,0,0.85),0 20px 40px -24px rgba(0,0,0,0.6)}
+  .rcard img{display:block;width:100%}
 </style>
 </head>
 <body>
-  <div class="glow"></div><div class="grain"></div>
+  <div class="bg"></div><div class="scrim"></div><div class="grain"></div>
   <div class="left">
     <div class="eyebrow"><span class="dot"></span>바리스타가 만든 커피 기록</div>
     <div class="name">Note My <em>Coffee</em></div>
     <p class="tag">숫자 네 개, 30초.<br>어제의 완벽한 한 잔을 오늘 그대로.</p>
     <div class="chips"><span class="chip">기록</span><span class="chip">공유</span><span class="chip">둘러보기</span></div>
   </div>
-  <div class="stats">
-    <div class="stat"><div class="k">도징</div><div class="v">18.0<span>g</span></div><div class="bar"><i style="width:62%"></i></div></div>
-    <div class="stat"><div class="k">물 온도</div><div class="v">92.0<span>°C</span></div><div class="bar"><i style="width:48%"></i></div></div>
-    <div class="stat"><div class="k">추출 시간</div><div class="v">28<span>s</span></div><div class="bar"><i style="width:55%"></i></div></div>
-    <div class="stat"><div class="k">추출량</div><div class="v">36<span>g</span></div><div class="bar"><i style="width:70%"></i></div></div>
-  </div>
+  <div class="right"><div class="rcard"><img src="src/photos/real-1.webp" alt=""></div></div>
 </body>
 </html>
