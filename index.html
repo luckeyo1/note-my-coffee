@@ -756,6 +756,21 @@
             .compare tbody td.col-ours::before { color: var(--gold); }
         }
 
+        /* 비교 섹션 상단 — 수치 차별점 타일 + 경쟁 지형 한 줄 */
+        .nm { color: var(--gold); font-weight: 600; }
+        .diff-strip { display: flex; gap: 12px; max-width: 640px; margin: 24px 0 0; flex-wrap: wrap; }
+        .diff-tile { flex: 1 1 150px; background: var(--paper-2); border: 1px solid var(--rule); border-radius: 16px; padding: 18px 18px 15px; }
+        .diff-num { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; color: var(--gold); line-height: 1; font-family: var(--sans); }
+        .diff-num span { font-size: 16px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+        .diff-k { margin-top: 9px; font-size: 13px; font-weight: 700; color: var(--sub); }
+        .diff-sub { margin-top: 3px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+        .diff-note { max-width: 640px; margin: 16px 0 4px; font-size: 14.5px; line-height: 1.65; color: var(--sub); }
+        .diff-note b { color: var(--text); font-weight: 700; }
+        @media (max-width: 560px) {
+            .diff-tile { flex: 1 1 calc(50% - 6px); padding: 15px 14px 13px; }
+            .diff-num { font-size: 28px; }
+        }
+
         /* ── MID CTA: 페이지 중간 전환 배너 ──
            배경 사진은 선택이다. img/mid-cta-plate.* 가 없으면 CSS가 조용히 그라데이션만
            남기므로(없는 background-image는 그냥 무시된다) 이미지 전에도 완성돼 보인다. */
@@ -2250,7 +2265,18 @@
         <div class="section-tag">비교</div>
         <h2 class="section-title" style="max-width:620px;">메모장에 적어도<br>되지 <em>않나요</em>.</h2>
         <div class="story-text" style="max-width:640px;">
-            <p>됩니다. 저도 그렇게 시작했습니다. 다만 매일 반복하면 이런 차이가 남습니다.</p>
+            <p>됩니다. 저도 그렇게 시작했고, <span class="nm">Beanconqueror</span>·<span class="nm">Filtru</span> 같은 전문 기록 앱도 다 써봤습니다. 다들 훌륭하지만 공통의 벽이 하나 있었어요 — 매일 아침 빠르게 남기기엔 손이 많이 간다는 것.</p>
+        </div>
+
+        <div class="diff-strip">
+            <div class="diff-tile"><div class="diff-num">4<span>개</span></div><div class="diff-k">채우는 숫자</div><div class="diff-sub">도징·온도·시간·수율</div></div>
+            <div class="diff-tile"><div class="diff-num">30<span>초</span></div><div class="diff-k">추출당 기록</div><div class="diff-sub">슬라이더 네 번이면 끝</div></div>
+            <div class="diff-tile"><div class="diff-num">0<span>단계</span></div><div class="diff-k">설치·앱스토어</div><div class="diff-sub">웹에서 바로 · 안드로이드·iOS·PC</div></div>
+        </div>
+        <p class="diff-note">전문 앱이 10가지 넘는 항목으로 <b>깊이</b>를 준다면, Note My Coffee는 <b>네 개로 매일</b>을 지킵니다. 설치도 로그인 장벽도 없이, 어느 기기에서나 같은 기록으로.</p>
+
+        <div class="story-text" style="max-width:640px; margin-top:4px;">
+            <p>매일 반복하면 이런 차이가 남습니다.</p>
         </div>
 
         <div class="compare-scroll">
