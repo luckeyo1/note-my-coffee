@@ -155,6 +155,46 @@
         .seg button:hover { background: var(--grid); }
         .seg button[aria-pressed="true"] { background: var(--ink); color: var(--page); }
 
+        /* ── 섹션 점프 내비: 긴 대시보드를 탐색 가능하게 ── */
+        .section-nav {
+            position: sticky; top: 0; z-index: 30;
+            display: flex; gap: 4px; flex-wrap: wrap;
+            padding: 10px 0;
+            margin: 0 0 20px;
+            background: var(--page);
+            background: color-mix(in srgb, var(--page) 86%, transparent);
+            -webkit-backdrop-filter: saturate(140%) blur(10px);
+            backdrop-filter: saturate(140%) blur(10px);
+            border-bottom: 1px solid var(--hairline);
+        }
+        .section-nav a {
+            font-size: 13px; font-weight: 500; color: var(--ink-2);
+            text-decoration: none; border-radius: 999px;
+            padding: 6px 14px; transition: background 0.18s, color 0.18s;
+            white-space: nowrap;
+        }
+        .section-nav a:hover { background: var(--grid); color: var(--ink); }
+        .section-nav a.active { background: var(--ink); color: var(--page); }
+        /* 스티키 내비·상단바가 앵커 대상을 가리지 않도록 착지 여백을 준다 */
+        [data-anchor] { scroll-margin-top: 72px; }
+        @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+        /* ── 사용자 테이블: 검색 + Top N + 더 보기 ── */
+        .users-search {
+            font-family: inherit; font-size: 13px; color: var(--ink);
+            background: var(--surface); border: 1px solid var(--hairline);
+            border-radius: 999px; padding: 7px 14px; width: min(220px, 48vw);
+            transition: border-color 0.18s;
+        }
+        .users-search:focus { outline: none; border-color: var(--series-1); }
+        .users-more {
+            font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink-2);
+            background: none; border: 1px solid var(--hairline); border-radius: 999px;
+            padding: 9px 18px; margin-top: 12px; cursor: pointer; width: 100%;
+            transition: border-color 0.18s, color 0.18s;
+        }
+        .users-more:hover { border-color: var(--series-1); color: var(--ink); }
+
         /* ── hero figure: exactly one per view ── */
         .hero {
             background: var(--surface); border: 1px solid var(--hairline);
@@ -390,8 +430,18 @@
         </span>
     </div>
 
+    <!-- 섹션 점프 내비: 아래 그룹으로 바로 이동. 스크롤 시 현재 구역을 표시한다. -->
+    <nav class="section-nav" id="section-nav" aria-label="섹션 이동">
+        <a href="#g-overview" data-nav>개요</a>
+        <a href="#g-usage" data-nav>유입</a>
+        <a href="#g-users" data-nav>사용자</a>
+        <a href="#g-retention" data-nav>유지</a>
+        <a href="#g-beans" data-nav>원두</a>
+        <a href="#g-records" data-nav>기록</a>
+    </nav>
+
     <!-- 히어로: 한 화면에 하나 -->
-    <section class="hero">
+    <section class="hero" id="g-overview" data-anchor>
         <div>
             <div class="hero-label" id="hero-label">최근 30일 기록된 레시피</div>
             <div class="hero-value" id="hero-value">—</div>
@@ -426,7 +476,7 @@
 
     <!-- 사이트 방문: stats_visits(익명 카운터). 기록을 남기지 않고 떠난 방문자까지
          포함하는 유일한 카드라, 기록 추이 앞에 둬서 '유입 → 기록' 순서로 읽힌다. -->
-    <section class="card">
+    <section class="card" id="g-usage" data-anchor>
         <div class="card-head">
             <h2 class="card-title">사이트 방문</h2>
             <button class="card-toggle" type="button" data-tv="tv-visits">표로 보기</button>
@@ -462,12 +512,13 @@
 
     <!-- 사용자 목록: 행을 누르면 그 사용자의 상세(개인 지표 + 레시피 이력)를 연다.
          집계 경로에서는 users 컬렉션을, 폴백/데모에서는 recipes를 묶어 만든다. -->
-    <section class="card">
+    <section class="card" id="g-users" data-anchor>
         <div class="card-head">
             <h2 class="card-title">사용자</h2>
             <button class="card-toggle" type="button" id="users-sort">기록순</button>
         </div>
         <p class="card-sub" id="users-sub">행을 눌러 개별 사용자의 기록을 봅니다</p>
+        <input type="search" class="users-search" id="users-search" placeholder="이름 · 이메일 · ID 검색" autocomplete="off" aria-label="사용자 검색" style="margin-bottom:14px">
         <div id="users-wrap"></div>
     </section>
 
@@ -486,7 +537,7 @@
          '제품이 어떻게 쓰이나'와 별개로 '마케팅이 되고 있나'에 답하는 카드들.
          신규 유입·리텐션은 기간 필터와 무관하게 전체 기록으로 계산한다(admin.js 주석 참고). -->
 
-    <section class="card">
+    <section class="card" id="g-retention" data-anchor>
         <div class="card-head">
             <h2 class="card-title">신규 사용자 유입</h2>
             <button class="card-toggle" type="button" data-tv="tv-newusers">표로 보기</button>
@@ -532,7 +583,7 @@
         <div class="tableview" id="tv-dormancy"></div>
     </section>
 
-    <div class="grid-2">
+    <div class="grid-2" id="g-beans" data-anchor>
         <section class="card">
             <div class="card-head">
                 <h2 class="card-title">급상승 원두</h2>
@@ -627,7 +678,7 @@
     </section>
 
     <!-- 최근 레시피 -->
-    <section class="card">
+    <section class="card" id="g-records" data-anchor>
         <div class="card-head">
             <h2 class="card-title">최근 기록</h2>
         </div>

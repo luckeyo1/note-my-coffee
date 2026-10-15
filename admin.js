@@ -1582,12 +1582,39 @@ function sortedUserRows() {
     return rows;
 }
 
+// 사용자 테이블은 기본 상위 N명만 보여주고, 검색·더보기로 넓힌다. 예전엔 전체
+// (수십~수백 명)를 한 번에 그려 페이지가 수천 px로 늘어났다.
+const USERS_PREVIEW = 12;
+let userQuery = '';
+let usersExpanded = false;
+
 function renderUsers(wrap, rows) {
     clear(wrap);
-    el('users-sub').textContent = rows.length
-        ? `전체 ${fmt(rows.length)}명 · 누적 기준(기간 필터와 무관) · 행을 눌러 상세 보기`
-        : '아직 기록을 남긴 사용자가 없습니다.';
+
+    const q = userQuery.trim().toLowerCase();
+    const filtered = q
+        ? rows.filter((r) =>
+            (r.name || '').toLowerCase().includes(q) ||
+            (r.email || '').toLowerCase().includes(q) ||
+            (r.uid || '').toLowerCase().includes(q))
+        : rows;
+
+    el('users-sub').textContent = !rows.length
+        ? '아직 기록을 남긴 사용자가 없습니다.'
+        : q
+            ? `“${userQuery.trim()}” 검색 ${fmt(filtered.length)}명 / 전체 ${fmt(rows.length)}명`
+            : `전체 ${fmt(rows.length)}명 · 누적 기준(기간 필터와 무관) · 행을 눌러 상세 보기`;
     if (!rows.length) return;
+
+    if (!filtered.length) {
+        const empty = document.createElement('p');
+        empty.className = 'modal-empty';
+        empty.textContent = '검색 결과가 없습니다.';
+        wrap.appendChild(empty);
+        return;
+    }
+
+    const shown = usersExpanded ? filtered : filtered.slice(0, USERS_PREVIEW);
 
     const scroll = document.createElement('div');
     scroll.className = 'scroll-x';
@@ -1606,7 +1633,7 @@ function renderUsers(wrap, rows) {
     t.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    rows.forEach((row) => {
+    shown.forEach((row) => {
         const tr = document.createElement('tr');
         tr.className = 'user-row';
         tr.tabIndex = 0;
@@ -1642,6 +1669,21 @@ function renderUsers(wrap, rows) {
     t.appendChild(tbody);
     scroll.appendChild(t);
     wrap.appendChild(scroll);
+
+    // 접기/더보기 — 미리보기 한도를 넘는 결과가 있을 때만
+    if (filtered.length > USERS_PREVIEW) {
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'users-more';
+        more.textContent = usersExpanded
+            ? '접기'
+            : `전체 ${fmt(filtered.length)}명 보기 (상위 ${USERS_PREVIEW}명 표시 중)`;
+        more.addEventListener('click', () => {
+            usersExpanded = !usersExpanded;
+            renderUsers(wrap, rows);
+        });
+        wrap.appendChild(more);
+    }
 }
 
 // 스캔/데모엔 이미 전체 레시피가 있으니 거기서 거른다(추가 조회 없음).
@@ -2448,6 +2490,37 @@ function wireUI() {
             sortBtn.textContent = userSort === 'count' ? '기록순' : '최근순';
             renderUsers(el('users-wrap'), sortedUserRows());
         });
+    }
+    // 사용자 검색: 입력 즉시 필터. 검색을 바꾸면 미리보기로 되돌린다.
+    const userSearch = el('users-search');
+    if (userSearch) {
+        userSearch.addEventListener('input', () => {
+            userQuery = userSearch.value;
+            usersExpanded = false;
+            renderUsers(el('users-wrap'), sortedUserRows());
+        });
+    }
+
+    // ── 섹션 내비 스크롤 스파이 ──
+    // 현재 뷰포트에 들어온 구역을 내비에서 강조한다. 앵커는 정적이라 showDash
+    // 이후 보일 때부터 자연히 동작한다.
+    const navLinks = [...document.querySelectorAll('#section-nav a[data-nav]')];
+    const anchors = [...document.querySelectorAll('[data-anchor]')];
+    if (navLinks.length && anchors.length && 'IntersectionObserver' in window) {
+        const byId = new Map(navLinks.map((a) => [a.getAttribute('href').slice(1), a]));
+        let activeId = '';
+        const setActive = (id) => {
+            if (id === activeId) return;
+            activeId = id;
+            navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href').slice(1) === id));
+        };
+        const spy = new IntersectionObserver((entries) => {
+            // 화면 상단에 가장 가까운, 교차 중인 앵커를 활성으로.
+            const vis = entries.filter((e) => e.isIntersecting)
+                .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+            if (vis.length) setActive(vis[0].target.id);
+        }, { rootMargin: '-72px 0px -62% 0px', threshold: 0 });
+        anchors.forEach((a) => spy.observe(a));
     }
     const modal = el('user-modal');
     if (modal) {
