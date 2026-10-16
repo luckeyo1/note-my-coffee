@@ -53,6 +53,15 @@ const T = {
         blocked: 'Your browser blocked the sign-in window. Allow pop-ups and try again.',
         failed: 'Sign-in failed. Please try again in a moment.',
     },
+    ja: {
+        title: 'ログイン',
+        desc: '記録がアカウントに保存され、スマホでもカフェのPCでもそのまま続けられます。',
+        kakao: 'Kakaoでログイン',
+        google: 'Googleでログイン',
+        close: '閉じる',
+        blocked: 'ブラウザがログイン画面をブロックしました。ポップアップを許可して再度お試しください。',
+        failed: 'ログインに失敗しました。しばらくしてからもう一度お試しください。',
+    },
 };
 
 // 사용자가 스스로 창을 닫은 것은 실패가 아니다 — 실패율 지표가 부풀고,
@@ -130,7 +139,7 @@ let openSheet = null; // 동시에 두 개가 뜨는 것을 막는다
  */
 export function signInWithChooser(opts = {}) {
     const source = opts.source || 'unknown';
-    const t = T[opts.lang === 'en' ? 'en' : 'ko'];
+    const t = T[opts.lang] || T.ko;
 
     // 이미 로그인돼 있으면 물어볼 게 없다.
     if (auth.currentUser) return Promise.resolve(auth.currentUser);

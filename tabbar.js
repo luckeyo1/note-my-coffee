@@ -44,7 +44,7 @@
             el.addEventListener('click', function () {
                 target.click();
                 // 언어 토글은 시트를 열어둔 채로, 나머지 동작은 시트를 닫는다.
-                if (proxy !== 'l-ko' && proxy !== 'l-en') close();
+                if (proxy !== 'l-ko' && proxy !== 'l-en' && proxy !== 'l-ja') close();
             });
         });
     }

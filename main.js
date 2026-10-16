@@ -68,6 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 레시피 저장 시 함께 기록되는 날씨 문자열 (HTML이 아닌 순수 텍스트).
     let lastWeatherText = '';
 
+    // 3개 언어용 인라인 문자열 선택기. i18n 객체 밖에 흩어진 짧은 문구(날씨 힌트·알림
+    // 등)를 고른다. ja 인자가 없으면 en으로 떨어진다. currentLang은 setLang이 갱신한다.
+    const tx = (ko, en, ja) => currentLang === 'ko' ? ko : (currentLang === 'ja' ? (ja ?? en) : en);
+
     const i18n = {
         en: {
             dosing: "DOSING", temp: "WATER TEMP", time: "EXTRACTION TIME", yield: "YIELD",
@@ -274,6 +278,109 @@ document.addEventListener('DOMContentLoaded', () => {
             obSkip: "건너뛰기",
             obNext: "다음 →",
             obDone: "시작하기 ☕"
+        },
+        ja: {
+            dosing: "粉量", temp: "湯温", time: "抽出時間", yield: "抽出量",
+            save: "このレシピを記録",
+            weather: "📍 位置情報を取得中...",
+            locationDenied: "📍 位置情報が拒否されました",
+            weatherError: "📍 天気情報を取得できません",
+            viewLogbook: "ログブック",
+            brandTagline: "抽出をサイエンスに",
+            lblLogin: "ログイン",
+            modalBeanStatus: "豆の状態", statusNew: "🆕 新しい豆", statusOpen: "📦 開封済み",
+            modalBeanName: "豆の名前", modalOrigin: "産地", modalPurchaseUrl: "購入先URL",
+            modalImageUrl: "表紙の写真", modalTasteNotes: "テイスティングノート",
+            modalOverallRating: "評価", modalSuccessFail: "結果",
+            modalSave: "レシピを保存 →", modalCancel: "キャンセル",
+            recipeSavedSuccess: "レシピを記録しました！ログブックを開きます...",
+            recipeSavedFail: "レシピの保存に失敗しました。",
+            confirmExitModal: "このレシピを破棄しますか？",
+            proHintDosing: "プロ範囲: {min}–{max}g",
+            proHintTemp: "プロ範囲: {min}–{max}°C",
+            proHintTime: "プロ範囲: {min}–{max}秒",
+            proHintTimeDrip: "プロ範囲: {min}–{max}",
+            proHintYield: "抽出比率: 1:{ratio}",
+            ratioLabel: "抽出比率",
+            ratioIdeal: "✓ SCA推奨範囲",
+            ratioWarning: "⚡ バランスのため調整を",
+            savingNudge: "記録しないとこのレシピは消えてしまいます",
+            modalTitle: "レシピを仕上げる",
+            modalSubtitle: "豆の情報を加えると、この一杯を再現できます",
+            trustPrefix: "Pro Barista Edition · 本日 ",
+            trustSuffix: "件のレシピが記録されました",
+            selectPhoto: "📷 写真を選ぶ",
+            photoSelected: "✓ 写真を選択しました",
+            swStart: "スタート", swStop: "ストップ", swRestart: "リスタート", swApply: "適用", swReset: "リセット",
+            swStatusReady: "準備完了", swStatusRunning: "抽出中", swStatusDone: "完了",
+            swHintReady: "スタートを押して抽出を始めましょう",
+            swHintRunning: "抽出中... ストップを押すと記録されます",
+            swHintUnder: "⚡ {time} — 未抽出の可能性",
+            swHintOver: "⚡ {time} — 過抽出の可能性",
+            swHintIdeal: "✓ {time} — SCA推奨範囲内",
+            swApplied: "✓ {time} — 抽出時間に反映しました",
+            swBtnOpen: "⏱ ストップウォッチを開く", swBtnClose: "⏱ ストップウォッチを閉じる",
+            scaTitle: "SCA抽出ガイド",
+            scaGuide: {
+                espresso: {
+                    dosing: {
+                        std: "プロ基準: ダブルバスケットで18–21g",
+                        up: { l: "増やすと", t: "ボディが濃く重くなります。挽き目と時間が同じだと未抽出になり酸味が出ることも。" },
+                        down: { l: "減らすと", t: "ボディが軽く流速が速くなり、過抽出(苦味)のリスクが高まります。" },
+                        note: "0.5g単位で調整し、抽出比率も一緒に確認しましょう。"
+                    },
+                    temp: {
+                        std: "SCA基準: 90.5–96.1°C (195–205°F)",
+                        up: { l: "高くすると", t: "抽出が速くなり苦味とロースト香が強まります。浅煎りに向きます。" },
+                        down: { l: "低くすると", t: "抽出が遅くなり酸味は生きますが、酸っぱく薄く感じることも。深煎りに向きます。" }
+                    },
+                    time: {
+                        std: "一般的なエスプレッソショット: 25–30秒",
+                        up: { l: "長くすると", t: "過抽出 — 苦く渋く、後味が乾いた印象に。" },
+                        down: { l: "短くすると", t: "未抽出 — 酸っぱく塩気があり、甘みが不足します。" },
+                        note: "抽出時間は挽き目の結果です。時計より先に挽き目を調整しましょう。"
+                    },
+                    yield: {
+                        std: "業界標準比率: 1:2 (豆18g → 36g抽出)",
+                        up: { l: "増やす (ルンゴ)", t: "抽出率が上がりボディは軽く、甘みの後に苦味が続きます。" },
+                        down: { l: "減らす (リストレット)", t: "シロップのように濃く酸味が際立ち、全体の抽出率は低くなります。" }
+                    }
+                },
+                drip: {
+                    dosing: {
+                        std: "SCAゴールデンカップ: 水1Lあたり55g ±10% (≈1:15–1:18)",
+                        up: { l: "増やすと", t: "濃く重い一杯に — 比率が狭まり、くどく未抽出な味になることも。" },
+                        down: { l: "減らすと", t: "軽く紅茶のような一杯に — 過抽出で苦味が出やすくなります。" }
+                    },
+                    temp: {
+                        std: "SCA基準: 90.5–96.1°C (195–205°F)",
+                        up: { l: "高くすると", t: "抽出が速くなり苦味とロースト香が強まります。浅煎りに向きます。" },
+                        down: { l: "低くすると", t: "抽出が遅くなり酸味は生きますが、薄く酸っぱくなることも。深煎りに向きます。" }
+                    },
+                    time: {
+                        std: "SCA総抽出時間: 2–4分 (プアオーバー)",
+                        up: { l: "長くすると", t: "接触時間が増え、苦味と渋味が積み重なります。" },
+                        down: { l: "短くすると", t: "抽出が足りず、酸っぱく薄く甘みが不足します。" },
+                        note: "主な変数は挽き目です。細かく = 遅く、粗く = 速く。"
+                    },
+                    yield: {
+                        std: "SCAゴールデンカップ比率: 1:15–1:18",
+                        up: { l: "水を増やすと", t: "薄く軽い一杯に — 風味が薄まります。" },
+                        down: { l: "水を減らすと", t: "濃くなりますが抽出が不均一になり、重く濁ることも。" }
+                    }
+                }
+            },
+            originTags: ["エチオピア", "コロンビア", "ブラジル", "ケニア", "グアテマラ", "インドネシア", "コスタリカ", "パナマ"],
+            tasteTags: ["フローラル", "フルーティー", "ナッツ", "チョコレート", "甘み", "酸味", "苦味", "スパイシー"],
+            obSteps: [
+                { title: "抽出方法を選ぶ", desc: "エスプレッソとハンドドリップから今日の抽出方法を選びましょう。プロ範囲とガイドが方法に合わせて変わります。" },
+                { title: "変数を調整", desc: "粉量・湯温・抽出時間・抽出量をスライダーで合わせます。ⓘボタンでSCAガイドを見たり、内蔵ストップウォッチで抽出時間を計れます。" },
+                { title: "レシピを記録", desc: "「このレシピを記録」を押して豆の情報とテイスティングノートを加えましょう。最初の一杯はログインなしで記録でき、ログインすればすべての記録がクラウドに保存されます。" },
+                { title: "ログブック & 共有", desc: "記録したレシピはログブックで見返し、カードとして共有できます。この案内は上部の?ボタンでいつでも開けます。" }
+            ],
+            obSkip: "スキップ",
+            obNext: "次へ →",
+            obDone: "抽出を始める ☕"
         }
     };
 
@@ -283,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnDrip: document.getElementById('btn-drip'),
         btnLangEn: document.getElementById('l-en'),
         btnLangKo: document.getElementById('l-ko'),
+        btnLangJa: document.getElementById('l-ja'),
         btnViewLogbook: document.getElementById('btn-view-logbook'),
         lblLogbook: document.getElementById('lbl-logbook'),
         trustPrefix: document.getElementById('trust-prefix'),
@@ -499,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (r.imageUrl) {
             uploadedImageData = r.imageUrl;
             el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
-            el.fileNameDisplay.innerText = currentLang === 'ko' ? '이전 기록의 사진' : 'From last log';
+            el.fileNameDisplay.innerText = tx('이전 기록의 사진', 'From last log', '前回の記録の写真');
         }
     };
 
@@ -525,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = Math.round(secs);
             return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
         }
-        return `${secs.toFixed(1)}${currentLang === 'ko' ? '초' : 's'}`;
+        return `${secs.toFixed(1)}${tx('초', 's', '秒')}`;
     };
 
     const swUpdateRing = (elapsed) => {
@@ -841,22 +949,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const reverseGeocode = async (lat, lon) => {
-        const d = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${currentLang === 'ko' ? 'ko' : 'en'}`);
+        const d = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${tx('ko', 'en', 'ja')}`);
         return d.city || d.locality || d.principalSubdivision || '';
     };
 
     const hintFor = (temp, hum) => {
-        if (hum > 65) return currentLang === 'ko' ? `습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요` : `Humidity ${hum}% — try slightly coarser grind`;
-        if (hum < 40) return currentLang === 'ko' ? `습도 ${hum}% — 추출 강도 +0.5g 권장` : `Humidity ${hum}% — consider +0.5g dosing`;
-        if (temp <= 5) return currentLang === 'ko' ? `기온 ${temp.toFixed(0)}°C — 잔과 장비를 충분히 예열하세요` : `${temp.toFixed(0)}°C — preheat your cup and gear`;
-        return currentLang === 'ko' ? '추출 조건 최적' : 'Ideal conditions';
+        if (hum > 65) return tx(`습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요`, `Humidity ${hum}% — try slightly coarser grind`, `湿度 ${hum}% — 挽き目を少し粗めに`);
+        if (hum < 40) return tx(`습도 ${hum}% — 추출 강도 +0.5g 권장`, `Humidity ${hum}% — consider +0.5g dosing`, `湿度 ${hum}% — 粉量 +0.5g を推奨`);
+        if (temp <= 5) return tx(`기온 ${temp.toFixed(0)}°C — 잔과 장비를 충분히 예열하세요`, `${temp.toFixed(0)}°C — preheat your cup and gear`, `気温 ${temp.toFixed(0)}°C — カップと器具を十分に予熱`);
+        return tx('추출 조건 최적', 'Ideal conditions', '抽出コンディション良好');
     };
 
     const relAge = (ms) => {
         const m = Math.max(1, Math.round(ms / 60000));
-        if (m < 60) return currentLang === 'ko' ? `${m}분 전` : `${m}m ago`;
+        if (m < 60) return tx(`${m}분 전`, `${m}m ago`, `${m}分前`);
         const h = Math.round(m / 60);
-        return currentLang === 'ko' ? `${h}시간 전` : `${h}h ago`;
+        return tx(`${h}시간 전`, `${h}h ago`, `${h}時間前`);
     };
 
     // 캐시와 네트워크 양쪽이 같은 경로로 그리게 한다 — 갈라지면 한쪽만 고치게 된다.
@@ -865,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const temp = cur.temperature_2m;
         const hum = cur.relative_humidity_2m;
         const city = readGeo(loc.lat, loc.lon, currentLang) || loc.city
-            || (currentLang === 'ko' ? '내 위치' : 'My location');
+            || tx('내 위치', 'My location', '現在地');
 
         lastWeatherText = `📍 ${city} · ${wmoEmoji(cur.weather_code, cur.is_day === 1)} ${temp.toFixed(1)}°C · 💧 ${hum}%`;
         if (infoSpan) {
@@ -877,7 +985,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 s.textContent = txt;
                 infoSpan.appendChild(s);
             };
-            if (loc.approx) tag(currentLang === 'ko' ? '(추정 위치)' : '(approx.)');
+            if (loc.approx) tag(tx('(추정 위치)', '(approx.)', '(おおよその位置)'));
             // 옛 값을 보여주는 중이면 숨기지 않고 나이를 밝힌다. 새로 받으면
             // 이 태그는 사라진다 — 지금 기온인 척하지 않는 게 요점이다.
             if (ageMs > WX_FRESH_MS) tag(relAge(ageMs));
@@ -902,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchWeather = async ({ force = false } = {}) => {
         if (weatherBusy) return;
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
-        el.weatherInfo.title = currentLang === 'ko' ? '클릭하면 새로고침' : 'Click to refresh';
+        el.weatherInfo.title = tx('클릭하면 새로고침', 'Click to refresh', 'クリックで更新');
 
         const cached = readJson(WX_KEY);
         const age = cached && cached.ts ? Date.now() - cached.ts : Infinity;
@@ -930,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try { loc = await locateByGps(); }
                 catch (gpsErr) {
                     try { loc = await locateByIp(); }
-                    catch (ipErr) { loc = { lat: 37.5665, lon: 126.9780, city: currentLang === 'ko' ? '서울' : 'Seoul', approx: true }; }
+                    catch (ipErr) { loc = { lat: 37.5665, lon: 126.9780, city: tx('서울', 'Seoul', 'ソウル'), approx: true }; }
                 }
             }
 
@@ -1229,7 +1337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setLang = (lang) => {
-        currentLang = lang; saveLang(lang); ['btnLangEn','btnLangKo'].forEach(k => el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)));
+        currentLang = lang; saveLang(lang); ['btnLangEn','btnLangKo','btnLangJa'].forEach(k => { if (el[k]) el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)); });
         const t = i18n[lang]; 
         
         ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline'].forEach(k => {
@@ -1269,6 +1377,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnDrip.addEventListener('click', () => { track('mode_selected', { mode: 'drip' }); setMode('drip'); });
     el.btnLangEn.addEventListener('click', () => { track('language_changed', { lang: 'en', page: 'app' }); setLang('en'); });
     el.btnLangKo.addEventListener('click', () => { track('language_changed', { lang: 'ko', page: 'app' }); setLang('ko'); });
+    if (el.btnLangJa) el.btnLangJa.addEventListener('click', () => { track('language_changed', { lang: 'ja', page: 'app' }); setLang('ja'); });
     el.btnViewLogbook.addEventListener('click', () => {
         track('logbook_opened', { from: 'app_header' });
         window.location.href = 'logbook.html';
@@ -1325,7 +1434,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (r.imageUrl) {
                 uploadedImageData = r.imageUrl;
                 el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
-                el.fileNameDisplay.innerText = currentLang === 'ko' ? '이전 기록의 사진' : 'From last log';
+                el.fileNameDisplay.innerText = tx('이전 기록의 사진', 'From last log', '前回の記録の写真');
             }
             setBeanStatus('open'); // 다시 추출하는 원두는 '개봉 중'이다
         }
@@ -1383,9 +1492,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const user = await signInWithChooser({
                         source: 'guest_gate',
                         lang: currentLang,
-                        desc: currentLang === 'ko'
-                            ? '무료 체험은 레시피 1개까지 저장할 수 있어요. 로그인하면 체험으로 남긴 기록도 계정으로 함께 옮겨갑니다.'
-                            : 'The free trial saves 1 recipe. Sign in to keep going — your trial recipe moves into your account too.'
+                        desc: tx(
+                            '무료 체험은 레시피 1개까지 저장할 수 있어요. 로그인하면 체험으로 남긴 기록도 계정으로 함께 옮겨갑니다.',
+                            'The free trial saves 1 recipe. Sign in to keep going — your trial recipe moves into your account too.',
+                            '無料体験はレシピ1件まで保存できます。ログインすると続けて記録でき、体験で残した記録もアカウントに引き継がれます。')
                     });
                     if (!user) {
                         track('guest_gate_declined');
@@ -1403,11 +1513,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const ratingInput = el.modalOverallRatingContainer.querySelector('input[name="overallRating"]:checked');
-            const weatherValue = lastWeatherText || (currentLang === 'ko' ? '날씨 정보 없음' : 'Weather unavailable');
+            const weatherValue = lastWeatherText || tx('날씨 정보 없음', 'Weather unavailable', '天気情報なし');
 
             // Limit to 1MB (Firestore document limit)
             if (uploadedImageData && uploadedImageData.length > 1 * 1024 * 1024) {
-                alert(currentLang === 'ko' ? '이미지 크기가 너무 큽니다. 다른 사진을 선택해 주세요.' : 'Image size is too large. Please choose another photo.');
+                alert(tx('이미지 크기가 너무 큽니다. 다른 사진을 선택해 주세요.', 'Image size is too large. Please choose another photo.', '画像サイズが大きすぎます。別の写真を選んでください。'));
                 return;
             }
 
@@ -1448,9 +1558,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         lang: currentLang,
                         celebrate: true,
                         notice: guestFirstSave
-                            ? (currentLang === 'ko'
-                                ? '체험 레시피가 저장됐어요 ☕ 카카오·구글로 로그인하면 계속 기록하고 기기 간 동기화됩니다.'
-                                : 'Trial recipe saved ☕ Sign in with Kakao or Google to keep logging and sync across devices.')
+                            ? tx(
+                                '체험 레시피가 저장됐어요 ☕ 카카오·구글로 로그인하면 계속 기록하고 기기 간 동기화됩니다.',
+                                'Trial recipe saved ☕ Sign in with Kakao or Google to keep logging and sync across devices.',
+                                '体験レシピを保存しました ☕ KakaoまたはGoogleでログインすると記録を続けられ、デバイス間で同期されます。')
                             : '',
                         onContinue: goLogbook,
                         // 추출 직후가 가장 자연스러운 공유 순간 — 바로 커뮤니티에 올릴 수 있게.
@@ -1496,12 +1607,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // 파일도 들어올 수 있으므로 여기서 거른다. type이 비어 오는 경우(일부
         // 갤러리 앱)는 통과시키고 아래 압축 단계의 예외 처리에 맡긴다.
         if (f.type && !f.type.startsWith('image/')) {
-            alert(currentLang === 'ko' ? '이미지 파일만 선택할 수 있어요.' : 'Please choose an image file.');
+            alert(tx('이미지 파일만 선택할 수 있어요.', 'Please choose an image file.', '画像ファイルのみ選択できます。'));
             e.target.value = '';
             return;
         }
         el.fileNameDisplay.innerText = f.name;
-        el.btnImageUpload.innerText = currentLang === 'ko' ? '사진 처리 중…' : 'Processing…';
+        el.btnImageUpload.innerText = tx('사진 처리 중…', 'Processing…', '写真を処理中…');
         try {
             // Downscale + JPEG-compress so a full-size phone photo (several MB)
             // fits Firestore's 1MB per-document limit instead of being rejected.
@@ -1520,7 +1631,7 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadedImageData = '';
             el.fileNameDisplay.innerText = '';
             el.btnImageUpload.innerText = i18n[currentLang].selectPhoto;
-            alert(currentLang === 'ko' ? '이미지를 처리할 수 없습니다. 다른 사진을 선택해 주세요.' : 'Could not process this image. Please choose another photo.');
+            alert(tx('이미지를 처리할 수 없습니다. 다른 사진을 선택해 주세요.', 'Could not process this image. Please choose another photo.', '画像を処理できませんでした。別の写真を選んでください。'));
         }
     });
 
@@ -1558,9 +1669,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const r = list.find(x => x && String(x.id) === String(rebrewId));
                 if (r) {
                     applyRebrew(r);
-                    showRebrewToast(currentLang === 'ko'
-                        ? '이전 레시피를 불러왔어요 ☕ 그대로 추출해보세요.'
-                        : 'Loaded your last recipe ☕ Brew it again.');
+                    showRebrewToast(tx(
+                        '이전 레시피를 불러왔어요 ☕ 그대로 추출해보세요.',
+                        'Loaded your last recipe ☕ Brew it again.',
+                        '前回のレシピを読み込みました ☕ そのまま抽出してみましょう。'));
                 }
             } catch (e) {
                 console.warn('[Rebrew] 레시피를 불러오지 못했습니다.', e);
