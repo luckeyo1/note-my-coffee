@@ -68,9 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 레시피 저장 시 함께 기록되는 날씨 문자열 (HTML이 아닌 순수 텍스트).
     let lastWeatherText = '';
 
-    // 3개 언어용 인라인 문자열 선택기. i18n 객체 밖에 흩어진 짧은 문구(날씨 힌트·알림
-    // 등)를 고른다. ja 인자가 없으면 en으로 떨어진다. currentLang은 setLang이 갱신한다.
-    const tx = (ko, en, ja) => currentLang === 'ko' ? ko : (currentLang === 'ja' ? (ja ?? en) : en);
+    // 다국어용 인라인 문자열 선택기. i18n 객체 밖에 흩어진 짧은 문구(날씨 힌트·알림
+    // 등)를 고른다. 해당 언어 인자가 없으면 en으로 떨어진다. currentLang은 setLang이 갱신한다.
+    const tx = (ko, en, ja, zh) => ({ ko, en, ja, zh }[currentLang]) ?? en;
 
     const i18n = {
         en: {
@@ -381,6 +381,109 @@ document.addEventListener('DOMContentLoaded', () => {
             obSkip: "スキップ",
             obNext: "次へ →",
             obDone: "抽出を始める ☕"
+        },
+        zh: {
+            dosing: "粉量", temp: "水溫", time: "萃取時間", yield: "萃取量",
+            save: "記錄這杯配方",
+            weather: "📍 定位中...",
+            locationDenied: "📍 定位被拒",
+            weatherError: "📍 無法取得天氣",
+            viewLogbook: "沖煮筆記",
+            brandTagline: "讓萃取成為科學",
+            lblLogin: "登入",
+            modalBeanStatus: "咖啡豆狀態", statusNew: "🆕 新豆", statusOpen: "📦 已開封",
+            modalBeanName: "咖啡豆名稱", modalOrigin: "產區", modalPurchaseUrl: "購買網址",
+            modalImageUrl: "封面照片", modalTasteNotes: "風味筆記",
+            modalOverallRating: "評分", modalSuccessFail: "結果",
+            modalSave: "儲存配方 →", modalCancel: "取消",
+            recipeSavedSuccess: "已記錄配方！正在開啟筆記...",
+            recipeSavedFail: "配方儲存失敗。",
+            confirmExitModal: "要捨棄這份配方嗎？",
+            proHintDosing: "專業範圍: {min}–{max}g",
+            proHintTemp: "專業範圍: {min}–{max}°C",
+            proHintTime: "專業範圍: {min}–{max}秒",
+            proHintTimeDrip: "專業範圍: {min}–{max}",
+            proHintYield: "萃取比例: 1:{ratio}",
+            ratioLabel: "萃取比例",
+            ratioIdeal: "✓ SCA 建議範圍",
+            ratioWarning: "⚡ 需調整以求平衡",
+            savingNudge: "不記錄的話，這份配方就會消失",
+            modalTitle: "完成你的配方",
+            modalSubtitle: "加入咖啡豆資訊，就能完美重現這杯",
+            trustPrefix: "Pro Barista Edition · 今日 ",
+            trustSuffix: " 份配方已記錄",
+            selectPhoto: "📷 選擇照片",
+            photoSelected: "✓ 已選擇照片",
+            swStart: "開始", swStop: "停止", swRestart: "重新開始", swApply: "套用", swReset: "重設",
+            swStatusReady: "準備就緒", swStatusRunning: "萃取中", swStatusDone: "完成",
+            swHintReady: "按下開始來進行萃取",
+            swHintRunning: "萃取中... 按下停止即可記錄",
+            swHintUnder: "⚡ {time} — 可能萃取不足",
+            swHintOver: "⚡ {time} — 可能過度萃取",
+            swHintIdeal: "✓ {time} — 在 SCA 建議範圍內",
+            swApplied: "✓ {time} — 已套用到萃取時間",
+            swBtnOpen: "⏱ 開啟計時器", swBtnClose: "⏱ 關閉計時器",
+            scaTitle: "SCA 萃取指南",
+            scaGuide: {
+                espresso: {
+                    dosing: {
+                        std: "專業基準: 雙份濾杯 18–21g",
+                        up: { l: "增加", t: "酒體更濃厚 — 但研磨與時間不變可能萃取不足、偏酸。" },
+                        down: { l: "減少", t: "酒體較輕、流速變快 — 萃取率上升，可能轉為苦味。" },
+                        note: "以 0.5g 為單位調整，並留意你的萃取比例。"
+                    },
+                    temp: {
+                        std: "SCA 基準: 90.5–96.1°C (195–205°F)",
+                        up: { l: "調高", t: "萃取加快 — 苦味與烘焙調性更明顯。適合淺焙。" },
+                        down: { l: "調低", t: "萃取變慢 — 酸質明亮但可能偏酸、單薄。適合深焙。" }
+                    },
+                    time: {
+                        std: "一般 Espresso 萃取: 25–30 秒",
+                        up: { l: "拉長", t: "過度萃取 — 苦澀，收尾乾澀。" },
+                        down: { l: "縮短", t: "萃取不足 — 偏酸、死鹹，甜感不足。" },
+                        note: "萃取時間取決於研磨度。先調研磨，別只看時間。"
+                    },
+                    yield: {
+                        std: "業界標準比例: 1:2 (18g 豆 → 36g 液)",
+                        up: { l: "增加 (Lungo)", t: "萃取率提高、酒體較輕 — 先甜後苦。" },
+                        down: { l: "減少 (Ristretto)", t: "糖漿般濃稠、酸質突出 — 整體萃取率較低。" }
+                    }
+                },
+                drip: {
+                    dosing: {
+                        std: "SCA 黃金杯: 每公升水 55g ±10% (≈1:15–1:18)",
+                        up: { l: "增加", t: "濃厚紮實的一杯 — 比例收緊，可能厚重、萃取不足。" },
+                        down: { l: "減少", t: "清淡如茶的一杯 — 較易過度萃取而偏苦。" }
+                    },
+                    temp: {
+                        std: "SCA 基準: 90.5–96.1°C (195–205°F)",
+                        up: { l: "調高", t: "萃取加快 — 苦味與烘焙調性更明顯。適合淺焙。" },
+                        down: { l: "調低", t: "萃取變慢 — 酸質明亮但可能偏酸、單薄。適合深焙。" }
+                    },
+                    time: {
+                        std: "SCA 總萃取時間: 2–4 分鐘 (手沖)",
+                        up: { l: "拉長", t: "接觸時間增加 — 苦味與澀感逐漸累積。" },
+                        down: { l: "縮短", t: "萃取不足 — 偏酸、單薄，甜感不足。" },
+                        note: "主要變因是研磨度: 細 = 慢，粗 = 快。"
+                    },
+                    yield: {
+                        std: "SCA 黃金杯比例: 1:15–1:18",
+                        up: { l: "加水", t: "較淡、較薄的一杯 — 風味被稀釋。" },
+                        down: { l: "減水", t: "較濃，但萃取可能不均 — 厚重混濁。" }
+                    }
+                }
+            },
+            originTags: ["衣索比亞", "哥倫比亞", "巴西", "肯亞", "瓜地馬拉", "印尼", "哥斯大黎加", "巴拿馬"],
+            tasteTags: ["花香", "果香", "堅果", "巧克力", "甜感", "酸質", "苦味", "辛香"],
+            obSteps: [
+                { title: "選擇萃取方式", desc: "從 Espresso 和手沖中選擇今天的萃取方式。專業範圍與指南會隨方式調整。" },
+                { title: "調整變因", desc: "用滑桿設定粉量、水溫、萃取時間與萃取量。點 ⓘ 查看 SCA 指南，或用內建計時器為萃取計時。" },
+                { title: "記錄配方", desc: "按下「記錄這杯配方」，加入咖啡豆資訊與風味筆記。第一杯免登入即可記錄，登入後所有紀錄都會保存到雲端。" },
+                { title: "回顧與分享", desc: "在沖煮筆記裡回顧每一杯，並以卡片分享配方。隨時可用右上角的 ? 重新開啟這份導覽。" }
+            ],
+            obSkip: "略過",
+            obNext: "下一步 →",
+            obDone: "開始萃取 ☕"
         }
     };
 
@@ -391,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLangEn: document.getElementById('l-en'),
         btnLangKo: document.getElementById('l-ko'),
         btnLangJa: document.getElementById('l-ja'),
+        btnLangZh: document.getElementById('l-zh'),
         btnViewLogbook: document.getElementById('btn-view-logbook'),
         lblLogbook: document.getElementById('lbl-logbook'),
         trustPrefix: document.getElementById('trust-prefix'),
@@ -607,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (r.imageUrl) {
             uploadedImageData = r.imageUrl;
             el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
-            el.fileNameDisplay.innerText = tx('이전 기록의 사진', 'From last log', '前回の記録の写真');
+            el.fileNameDisplay.innerText = tx('이전 기록의 사진', 'From last log', '前回の記録の写真', '上一筆紀錄的照片');
         }
     };
 
@@ -633,7 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = Math.round(secs);
             return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
         }
-        return `${secs.toFixed(1)}${tx('초', 's', '秒')}`;
+        return `${secs.toFixed(1)}${tx('초', 's', '秒', '秒')}`;
     };
 
     const swUpdateRing = (elapsed) => {
@@ -949,22 +1053,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const reverseGeocode = async (lat, lon) => {
-        const d = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${tx('ko', 'en', 'ja')}`);
+        const d = await fetchJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${tx('ko', 'en', 'ja', 'zh')}`);
         return d.city || d.locality || d.principalSubdivision || '';
     };
 
     const hintFor = (temp, hum) => {
-        if (hum > 65) return tx(`습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요`, `Humidity ${hum}% — try slightly coarser grind`, `湿度 ${hum}% — 挽き目を少し粗めに`);
-        if (hum < 40) return tx(`습도 ${hum}% — 추출 강도 +0.5g 권장`, `Humidity ${hum}% — consider +0.5g dosing`, `湿度 ${hum}% — 粉量 +0.5g を推奨`);
-        if (temp <= 5) return tx(`기온 ${temp.toFixed(0)}°C — 잔과 장비를 충분히 예열하세요`, `${temp.toFixed(0)}°C — preheat your cup and gear`, `気温 ${temp.toFixed(0)}°C — カップと器具を十分に予熱`);
-        return tx('추출 조건 최적', 'Ideal conditions', '抽出コンディション良好');
+        if (hum > 65) return tx(`습도 ${hum}% — 분쇄도를 약간 굵게 조정하세요`, `Humidity ${hum}% — try slightly coarser grind`, `湿度 ${hum}% — 挽き目を少し粗めに`, `濕度 ${hum}% — 建議研磨略粗一些`);
+        if (hum < 40) return tx(`습도 ${hum}% — 추출 강도 +0.5g 권장`, `Humidity ${hum}% — consider +0.5g dosing`, `湿度 ${hum}% — 粉量 +0.5g を推奨`, `濕度 ${hum}% — 建議粉量 +0.5g`);
+        if (temp <= 5) return tx(`기온 ${temp.toFixed(0)}°C — 잔과 장비를 충분히 예열하세요`, `${temp.toFixed(0)}°C — preheat your cup and gear`, `気温 ${temp.toFixed(0)}°C — カップと器具を十分に予熱`, `氣溫 ${temp.toFixed(0)}°C — 請充分預熱杯子與器具`);
+        return tx('추출 조건 최적', 'Ideal conditions', '抽出コンディション良好', '萃取條件理想');
     };
 
     const relAge = (ms) => {
         const m = Math.max(1, Math.round(ms / 60000));
-        if (m < 60) return tx(`${m}분 전`, `${m}m ago`, `${m}分前`);
+        if (m < 60) return tx(`${m}분 전`, `${m}m ago`, `${m}分前`, `${m}分鐘前`);
         const h = Math.round(m / 60);
-        return tx(`${h}시간 전`, `${h}h ago`, `${h}時間前`);
+        return tx(`${h}시간 전`, `${h}h ago`, `${h}時間前`, `${h}小時前`);
     };
 
     // 캐시와 네트워크 양쪽이 같은 경로로 그리게 한다 — 갈라지면 한쪽만 고치게 된다.
@@ -973,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const temp = cur.temperature_2m;
         const hum = cur.relative_humidity_2m;
         const city = readGeo(loc.lat, loc.lon, currentLang) || loc.city
-            || tx('내 위치', 'My location', '現在地');
+            || tx('내 위치', 'My location', '現在地', '我的位置');
 
         lastWeatherText = `📍 ${city} · ${wmoEmoji(cur.weather_code, cur.is_day === 1)} ${temp.toFixed(1)}°C · 💧 ${hum}%`;
         if (infoSpan) {
@@ -985,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 s.textContent = txt;
                 infoSpan.appendChild(s);
             };
-            if (loc.approx) tag(tx('(추정 위치)', '(approx.)', '(おおよその位置)'));
+            if (loc.approx) tag(tx('(추정 위치)', '(approx.)', '(おおよその位置)', '(概略位置)'));
             // 옛 값을 보여주는 중이면 숨기지 않고 나이를 밝힌다. 새로 받으면
             // 이 태그는 사라진다 — 지금 기온인 척하지 않는 게 요점이다.
             if (ageMs > WX_FRESH_MS) tag(relAge(ageMs));
@@ -1010,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchWeather = async ({ force = false } = {}) => {
         if (weatherBusy) return;
         const infoSpan = el.weatherInfo.querySelector('span:last-child');
-        el.weatherInfo.title = tx('클릭하면 새로고침', 'Click to refresh', 'クリックで更新');
+        el.weatherInfo.title = tx('클릭하면 새로고침', 'Click to refresh', 'クリックで更新', '點擊即可重新整理');
 
         const cached = readJson(WX_KEY);
         const age = cached && cached.ts ? Date.now() - cached.ts : Infinity;
@@ -1038,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try { loc = await locateByGps(); }
                 catch (gpsErr) {
                     try { loc = await locateByIp(); }
-                    catch (ipErr) { loc = { lat: 37.5665, lon: 126.9780, city: tx('서울', 'Seoul', 'ソウル'), approx: true }; }
+                    catch (ipErr) { loc = { lat: 37.5665, lon: 126.9780, city: tx('서울', 'Seoul', 'ソウル', '首爾'), approx: true }; }
                 }
             }
 
@@ -1337,7 +1441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setLang = (lang) => {
-        currentLang = lang; saveLang(lang); ['btnLangEn','btnLangKo','btnLangJa'].forEach(k => { if (el[k]) el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)); });
+        currentLang = lang; saveLang(lang); ['btnLangEn','btnLangKo','btnLangJa','btnLangZh'].forEach(k => { if (el[k]) el[k].classList.toggle('active', k.toLowerCase().endsWith(lang)); });
         const t = i18n[lang]; 
         
         ['lblDosing','lblTemp','lblTime','lblYield','lblSave','saveNudge','brandTagline'].forEach(k => {
@@ -1378,6 +1482,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnLangEn.addEventListener('click', () => { track('language_changed', { lang: 'en', page: 'app' }); setLang('en'); });
     el.btnLangKo.addEventListener('click', () => { track('language_changed', { lang: 'ko', page: 'app' }); setLang('ko'); });
     if (el.btnLangJa) el.btnLangJa.addEventListener('click', () => { track('language_changed', { lang: 'ja', page: 'app' }); setLang('ja'); });
+    if (el.btnLangZh) el.btnLangZh.addEventListener('click', () => { track('language_changed', { lang: 'zh', page: 'app' }); setLang('zh'); });
     el.btnViewLogbook.addEventListener('click', () => {
         track('logbook_opened', { from: 'app_header' });
         window.location.href = 'logbook.html';
@@ -1434,7 +1539,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (r.imageUrl) {
                 uploadedImageData = r.imageUrl;
                 el.btnImageUpload.innerText = i18n[currentLang].photoSelected;
-                el.fileNameDisplay.innerText = tx('이전 기록의 사진', 'From last log', '前回の記録の写真');
+                el.fileNameDisplay.innerText = tx('이전 기록의 사진', 'From last log', '前回の記録の写真', '上一筆紀錄的照片');
             }
             setBeanStatus('open'); // 다시 추출하는 원두는 '개봉 중'이다
         }
@@ -1495,7 +1600,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         desc: tx(
                             '무료 체험은 레시피 1개까지 저장할 수 있어요. 로그인하면 체험으로 남긴 기록도 계정으로 함께 옮겨갑니다.',
                             'The free trial saves 1 recipe. Sign in to keep going — your trial recipe moves into your account too.',
-                            '無料体験はレシピ1件まで保存できます。ログインすると続けて記録でき、体験で残した記録もアカウントに引き継がれます。')
+                            '無料体験はレシピ1件まで保存できます。ログインすると続けて記録でき、体験で残した記録もアカウントに引き継がれます。',
+                            '免費體驗最多可儲存 1 份配方。登入後即可繼續記錄，體驗期間留下的紀錄也會一併移轉到你的帳號。')
                     });
                     if (!user) {
                         track('guest_gate_declined');
@@ -1513,11 +1619,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const ratingInput = el.modalOverallRatingContainer.querySelector('input[name="overallRating"]:checked');
-            const weatherValue = lastWeatherText || tx('날씨 정보 없음', 'Weather unavailable', '天気情報なし');
+            const weatherValue = lastWeatherText || tx('날씨 정보 없음', 'Weather unavailable', '天気情報なし', '無天氣資訊');
 
             // Limit to 1MB (Firestore document limit)
             if (uploadedImageData && uploadedImageData.length > 1 * 1024 * 1024) {
-                alert(tx('이미지 크기가 너무 큽니다. 다른 사진을 선택해 주세요.', 'Image size is too large. Please choose another photo.', '画像サイズが大きすぎます。別の写真を選んでください。'));
+                alert(tx('이미지 크기가 너무 큽니다. 다른 사진을 선택해 주세요.', 'Image size is too large. Please choose another photo.', '画像サイズが大きすぎます。別の写真を選んでください。', '圖片太大了，請選擇其他照片。'));
                 return;
             }
 
@@ -1561,7 +1667,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             ? tx(
                                 '체험 레시피가 저장됐어요 ☕ 카카오·구글로 로그인하면 계속 기록하고 기기 간 동기화됩니다.',
                                 'Trial recipe saved ☕ Sign in with Kakao or Google to keep logging and sync across devices.',
-                                '体験レシピを保存しました ☕ KakaoまたはGoogleでログインすると記録を続けられ、デバイス間で同期されます。')
+                                '体験レシピを保存しました ☕ KakaoまたはGoogleでログインすると記録を続けられ、デバイス間で同期されます。',
+                                '體驗配方已儲存 ☕ 使用 Kakao 或 Google 登入即可繼續記錄，並在裝置間同步。')
                             : '',
                         onContinue: goLogbook,
                         // 추출 직후가 가장 자연스러운 공유 순간 — 바로 커뮤니티에 올릴 수 있게.
@@ -1607,12 +1714,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // 파일도 들어올 수 있으므로 여기서 거른다. type이 비어 오는 경우(일부
         // 갤러리 앱)는 통과시키고 아래 압축 단계의 예외 처리에 맡긴다.
         if (f.type && !f.type.startsWith('image/')) {
-            alert(tx('이미지 파일만 선택할 수 있어요.', 'Please choose an image file.', '画像ファイルのみ選択できます。'));
+            alert(tx('이미지 파일만 선택할 수 있어요.', 'Please choose an image file.', '画像ファイルのみ選択できます。', '只能選擇圖片檔案。'));
             e.target.value = '';
             return;
         }
         el.fileNameDisplay.innerText = f.name;
-        el.btnImageUpload.innerText = tx('사진 처리 중…', 'Processing…', '写真を処理中…');
+        el.btnImageUpload.innerText = tx('사진 처리 중…', 'Processing…', '写真を処理中…', '照片處理中…');
         try {
             // Downscale + JPEG-compress so a full-size phone photo (several MB)
             // fits Firestore's 1MB per-document limit instead of being rejected.
@@ -1631,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadedImageData = '';
             el.fileNameDisplay.innerText = '';
             el.btnImageUpload.innerText = i18n[currentLang].selectPhoto;
-            alert(tx('이미지를 처리할 수 없습니다. 다른 사진을 선택해 주세요.', 'Could not process this image. Please choose another photo.', '画像を処理できませんでした。別の写真を選んでください。'));
+            alert(tx('이미지를 처리할 수 없습니다. 다른 사진을 선택해 주세요.', 'Could not process this image. Please choose another photo.', '画像を処理できませんでした。別の写真を選んでください。', '無法處理這張圖片，請選擇其他照片。'));
         }
     });
 
@@ -1672,7 +1779,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     showRebrewToast(tx(
                         '이전 레시피를 불러왔어요 ☕ 그대로 추출해보세요.',
                         'Loaded your last recipe ☕ Brew it again.',
-                        '前回のレシピを読み込みました ☕ そのまま抽出してみましょう。'));
+                        '前回のレシピを読み込みました ☕ そのまま抽出してみましょう。',
+                        '已載入上一份配方 ☕ 直接再沖一次吧。'));
                 }
             } catch (e) {
                 console.warn('[Rebrew] 레시피를 불러오지 못했습니다.', e);

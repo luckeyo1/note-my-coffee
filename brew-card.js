@@ -32,7 +32,7 @@ export function modeLabel(m) {
  * @returns {string[]} 뱃지 문자열 배열 (0~2개)
  */
 export function computeHighlights(recipe, all, lang = 'ko') {
-    const t = (ko, en, ja) => (lang === 'ja' ? (ja ?? en) : (lang === 'en' ? en : ko));
+    const t = (ko, en, ja, zh) => ({ ko, en, ja, zh }[lang]) ?? en;
     const list = Array.isArray(all) ? all.filter(Boolean) : [];
 
     // 전체 목록에서 "이 레시피 자신"을 딱 하나만 뺀 나머지(others)를 만든다.
@@ -56,18 +56,18 @@ export function computeHighlights(recipe, all, lang = 'ko') {
     const out = [];
 
     // 첫 기록 — 가장 강력한 순간이라 이것만 나오면 충분하다.
-    if (total === 1) return [t('첫 기록 ☕', 'First brew ☕', '初めての記録 ☕')];
+    if (total === 1) return [t('첫 기록 ☕', 'First brew ☕', '初めての記録 ☕', '第一杯紀錄 ☕')];
 
     // 같은 원두 안에서의 성취 (원두명이 있을 때만)
     if (bean) {
         const earlier = others.filter((r) => (r.beanName || '').trim() === bean);
         if (recipe.success && earlier.length && !earlier.some((r) => r.success)) {
-            out.push(t('이 원두 첫 성공', 'First success on this bean', 'この豆で初成功'));
+            out.push(t('이 원두 첫 성공', 'First success on this bean', 'この豆で初成功', '這支豆首次成功'));
         }
         if (earlier.length >= 1 && rating >= 4) {
             const maxOther = earlier.reduce(
                 (m, r) => Math.max(m, parseInt(r.overallRating, 10) || 0), 0);
-            if (rating > maxOther) out.push(t('이 원두 최고 기록', 'New best on this bean', 'この豆での最高記録'));
+            if (rating > maxOther) out.push(t('이 원두 최고 기록', 'New best on this bean', 'この豆での最高記録', '這支豆的最佳紀錄'));
         }
     }
 
@@ -75,12 +75,12 @@ export function computeHighlights(recipe, all, lang = 'ko') {
     if (out.length < 2 && rating >= 4 && total >= 3) {
         const maxOther = others.reduce(
             (m, r) => Math.max(m, parseInt(r.overallRating, 10) || 0), 0);
-        if (rating > maxOther) out.push(t('★ 역대 최고 평점', '★ Your best cup yet', '★ 自己ベストの一杯'));
+        if (rating > maxOther) out.push(t('★ 역대 최고 평점', '★ Your best cup yet', '★ 自己ベストの一杯', '★ 歷來最佳的一杯'));
     }
 
     // 마일스톤 — 아무 뱃지도 못 뽑았을 때만, 딱 떨어지는 회차에서.
     if (out.length === 0 && total >= 10 && (total % 10 === 0 || total % 25 === 0)) {
-        out.push(t(`${total}번째 기록 🎉`, `Brew #${total} 🎉`, `${total}杯目の記録 🎉`));
+        out.push(t(`${total}번째 기록 🎉`, `Brew #${total} 🎉`, `${total}杯目の記録 🎉`, `第 ${total} 杯紀錄 🎉`));
     }
 
     return out.slice(0, 2);
@@ -307,6 +307,10 @@ async function drawStoryCard(recipe, highlights, lang = 'ko') {
             eyebrow: '오늘의 커피 기록', dosing: '도징', temp: '물 온도', time: '추출 시간', yield: '추출량',
             ok: '추출 완료', fail: '아쉬운 한 잔',
         },
+        zh: {
+            eyebrow: '今日咖啡紀錄', dosing: '粉量', temp: '水溫', time: '萃取時間', yield: '萃取量',
+            ok: '萃取完成', fail: '可惜的一杯',
+        },
     };
     const L = _L[lang] || _L.ko;
 
@@ -471,7 +475,10 @@ async function waitForCardFonts(recipe, highlights) {
         '이 원두 최고 기록', '이 원두 첫 성공', '번째 기록',
         // 일본어 라벨·뱃지 글자(서브셋 폰트가 캔버스에서 두부로 찍히지 않게 미리 로드)
         '今日のコーヒー記録', '粉量', '湯温', '抽出時間', '抽出量', '抽出完了', '惜しい一杯',
-        '初めての記録', '自己ベストの一杯', 'この豆での最高記録', 'この豆で初成功', '杯目の記録'
+        '初めての記録', '自己ベストの一杯', 'この豆での最高記録', 'この豆で初成功', '杯目の記録',
+        // 번체 중국어 라벨·뱃지 글자
+        '今日咖啡紀錄', '水溫', '萃取時間', '萃取量', '萃取完成', '可惜的一杯',
+        '第一杯紀錄', '歷來最佳的一杯', '這支豆的最佳紀錄', '這支豆首次成功', '杯紀錄'
     ].filter(Boolean).join(' ');
     const faces = [
         "bold 72px 'Pretendard Variable'", "bold 26px 'Pretendard Variable'",
@@ -562,6 +569,17 @@ export function openBrewShareModal(recipe, opts = {}) {
             publish: '🌍 커뮤니티에 공유',
             publishHint: '피드에 올리면 다른 사람도 보고 따라 내릴 수 있어요.',
             brag: (n) => `제가 방금 내린 "${n || '커피'}" 한 잔이에요 ☕ #NoteMyCoffee`,
+        },
+        zh: {
+            celebrateTitle: '☕ 記錄完成 — 來炫耀一下',
+            shareTitle: '☕ 炫耀這一杯',
+            tabCard: '🗂️ 卡片', tabStory: '🖼️ 照片背景',
+            making: '產生中…', cantMake: '無法產生圖片',
+            download: '↓ 儲存圖片', share: '↗ 分享', copy: '🔗 複製連結', copied: '✓ 已複製',
+            toLogbook: '前往筆記 →',
+            publish: '🌍 分享到社群',
+            publishHint: '貼到動態牆，讓其他人也能看到並跟著沖。',
+            brag: (n) => `這是我剛沖好的「${n || '咖啡'}」一杯 ☕ #NoteMyCoffee`,
         },
     };
     const T = _T[lang] || _T.ko;

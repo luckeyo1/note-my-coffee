@@ -374,7 +374,7 @@ const CoffeeNotesStorage = {
 // app.html·logbook.html 두 곳이 같은 값을 읽고 써야 하므로 여기 둔다 —
 // 양쪽이 이미 이 모듈을 가져다 쓴다. 키가 갈라지면 유지가 깨진다.
 const LANG_KEY = 'nmcLang';
-const SUPPORTED_LANGS = ['en', 'ko', 'ja'];
+const SUPPORTED_LANGS = ['en', 'ko', 'ja', 'zh'];
 
 // 시크릿 모드·저장소 차단 환경에서는 접근 자체가 throw한다. 언어 때문에
 // 앱이 멎어선 안 되므로 삼키고 기본값으로 간다.
