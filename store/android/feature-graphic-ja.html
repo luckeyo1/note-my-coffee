@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Feature Graphic 1024x500 (ja)</title>
+<!--
+  Google Play 피처 그래픽 — 일본어판 (1024x500, PNG). v3 "실사 + 어두운 프리미엄".
+  렌더: 리포지토리 루트에서 로컬 서버 → /store/android/feature-graphic-ja.html 를
+  1024x500 뷰포트(배율 1)로 스크린샷 → store/android/feature-graphic-ja.png.
+  한글판(feature-graphic.html)과 동일 레이아웃, 텍스트만 일본어.
+-->
+<link rel="stylesheet" href="../../font/pretendard/pretendard.css">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1024px;height:500px;overflow:hidden}
+  body{font-family:'Pretendard Variable',Pretendard,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    background:#0E0A07;display:flex;align-items:center;padding:0 72px;gap:30px;position:relative}
+  .bg{position:absolute;inset:0;z-index:0;background:url(src/photos/real-1.webp) center 34%/cover;
+    filter:blur(44px) brightness(0.52) saturate(1.05);transform:scale(1.2)}
+  .scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(120% 90% at 20% 20%, rgba(158,66,29,0.16), transparent 60%),
+      linear-gradient(90deg, rgba(12,8,5,0.78) 0%, rgba(12,8,5,0.45) 45%, rgba(12,8,5,0.30) 100%)}
+  .grain{position:absolute;inset:0;z-index:2;opacity:0.10;mix-blend-mode:overlay;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .left{position:relative;z-index:3;flex:1 1 auto}
+  .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:#E7A478;margin-bottom:16px}
+  .eyebrow .dot{width:22px;height:22px;border-radius:50%;border:2px solid #E7A478;padding:4px;
+    background:conic-gradient(#E7A478 0 62%,transparent 62%) content-box}
+  .name{font-size:62px;font-weight:800;line-height:1;letter-spacing:-0.03em;color:#F8EFE2;margin-bottom:16px;text-shadow:0 2px 16px rgba(0,0,0,0.5)}
+  .name em{font-style:normal;color:#F0975A}
+  .tag{font-size:20px;line-height:1.55;color:rgba(248,239,226,0.82);max-width:380px;margin-bottom:20px;text-shadow:0 1px 10px rgba(0,0,0,0.5)}
+  .chips{display:flex;gap:8px}
+  .chip{font-size:13px;font-weight:600;color:#F3C7A6;background:rgba(240,151,90,0.12);
+    border:1.5px solid rgba(240,151,90,0.40);border-radius:999px;padding:7px 15px}
+  .right{position:relative;z-index:3;flex:0 0 auto;width:330px;display:flex;justify-content:center}
+  /* 일본어 공유 카드(brew-card.js로 렌더). 실사 webp에는 한국어가 합성돼 있어
+     대신 네이티브 일본어 카드를 쓴다. */
+  .rcard{width:300px;border-radius:22px;overflow:hidden;transform:rotate(3deg);background:#000;
+    box-shadow:0 2px 1px rgba(255,255,255,0.08) inset,0 50px 90px -28px rgba(0,0,0,0.85),0 20px 40px -24px rgba(0,0,0,0.6)}
+  .rcard img{display:block;width:100%}
+</style>
+</head>
+<body>
+  <div class="bg"></div><div class="scrim"></div><div class="grain"></div>
+  <div class="left">
+    <div class="eyebrow"><span class="dot"></span>バリスタがつくるコーヒー記録</div>
+    <div class="name">Note My <em>Coffee</em></div>
+    <p class="tag">4つの数字、30秒。<br>昨日の完璧な一杯を、今日そのまま。</p>
+    <div class="chips"><span class="chip">記録</span><span class="chip">シェア</span><span class="chip">発見</span></div>
+  </div>
+  <div class="right"><div class="rcard"><img src="src/card-ja-story.png" alt=""></div></div>
+</body>
+</html>
