@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../../font/pretendard/pretendard.css">
+<style>
+  :root{--cream:#FCFAF6;--cream-dark:#F3EEE6;--panel:#fff;--ink:#241C15;--ink-soft:#4A3F34;
+    --ink-muted:#8A7E70;--border:#E7DFD3;--border-strong:#D8CCBB;--signal:#9E421D;--gold:#B4532A;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;--body:'Pretendard Variable',Pretendard,system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:360px;background:var(--cream);font-family:var(--body);color:var(--ink);-webkit-font-smoothing:antialiased}
+  .wrap{padding:22px 18px 28px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-muted);text-transform:uppercase;margin-bottom:6px}
+  .mode{font-family:var(--mono);font-size:12px;color:var(--signal);font-weight:600;margin-bottom:18px}
+  /* 콘솔의 粉量 행(맥락 제공) */
+  .metric{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .metric .lab{font-size:17px;font-weight:700}
+  .metric .lab i{font-style:normal;color:var(--ink-muted);font-size:12px;margin-left:7px;font-family:var(--mono)}
+  .metric .val{font-family:var(--mono);font-weight:700;font-size:40px;line-height:1;letter-spacing:-.02em}
+  .metric .val small{font-size:17px;color:var(--ink-muted);margin-left:3px}
+  .track{height:8px;background:var(--cream-dark);margin:16px 0 26px;position:relative}
+  .track::after{content:"";position:absolute;left:0;top:0;height:100%;width:42%;background:var(--signal)}
+  /* SCA 가이드 카드 */
+  .guide{background:var(--panel);border:1px solid var(--border-strong);padding:20px 18px}
+  .guide-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .guide-head .i{width:20px;height:20px;border:1.6px solid var(--signal);border-radius:50%;color:var(--signal);
+    font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:var(--body)}
+  .guide-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--signal);font-weight:600}
+  .std{font-size:14px;color:var(--ink-soft);line-height:1.5;margin:10px 0 18px;padding-bottom:16px;border-bottom:1px dashed var(--border-strong)}
+  .row{display:flex;gap:12px;margin-bottom:16px}
+  .arr{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:800}
+  .up .arr{background:rgba(158,66,29,.12);color:var(--signal)}
+  .down .arr{background:rgba(74,63,52,.10);color:var(--ink-soft)}
+  .row .k{font-weight:700;font-size:14px;margin-bottom:3px}
+  .row .t{font-size:13px;line-height:1.55;color:var(--ink-soft)}
+  .note{margin-top:4px;font-size:12.5px;line-height:1.5;color:var(--ink-muted);background:var(--cream-dark);padding:11px 13px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">エスプレッソ</div>
+    <div class="metric">
+      <span class="lab">粉量 <i>DOSING</i></span>
+      <span class="val">18.0<small>g</small></span>
+    </div>
+    <div class="track"></div>
+
+    <div class="guide">
+      <div class="guide-head"><span class="i">ⓘ</span><span class="guide-title">SCA抽出ガイド</span></div>
+      <p class="std">プロ基準: ダブルバスケットで18–21g</p>
+      <div class="row up">
+        <div class="arr">▲</div>
+        <div><div class="k">増やすと</div><div class="t">ボディが濃く重くなります。挽き目と時間が同じだと未抽出になり酸味が出ることも。</div></div>
+      </div>
+      <div class="row down">
+        <div class="arr">▼</div>
+        <div><div class="k">減らすと</div><div class="t">ボディが軽く流速が速くなり、過抽出(苦味)のリスクが高まります。</div></div>
+      </div>
+      <p class="note">0.5g単位で調整し、抽出比率も一緒に確認しましょう。</p>
+    </div>
+  </div>
+</body>
+</html>
