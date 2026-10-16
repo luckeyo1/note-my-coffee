@@ -1,9 +1,10 @@
 // discover.js — 발견 피드. community.js에서 공개 게시물을 최신순으로 불러와
 // 기존 recipe-card 스타일로 렌더한다. 카드 클릭 → post.html?id=<postId>.
-import { track, bumpVisit } from "./firebase-config.js";
-import { fetchFeed } from "./community.js";
+import { track, bumpVisit, auth, onAuthStateChanged } from "./firebase-config.js";
+import { fetchFeed, getBlockedUids } from "./community.js";
 import { fmtBrewTime, modeLabel } from "./brew-card.js";
 import { isDemo } from "./demo.js";
+import { openPostActions } from "./moderation.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('feed-grid');
@@ -27,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let cursor = null;
     let loading = false;
     let done = false;
+    let started = false;
+    let currentUser = null;
+    let blocked = new Set(); // 내가 차단한 uid — 피드에서 제외한다.
 
     track('app_page_view', { page: 'discover' });
     bumpVisit('discover');
@@ -54,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
                </div>`;
 
         return `
-            <a class="recipe-card feed-card" href="post.html?id=${encodeURIComponent(post.id)}">
+            <a class="recipe-card feed-card" href="post.html?id=${encodeURIComponent(post.id)}" data-owner-uid="${esc(post.ownerId || '')}">
+                <span class="feed-card-menu" role="button" tabindex="0" aria-label="게시물 신고·차단" data-menu data-postid="${esc(post.id)}" data-uid="${esc(post.ownerId || '')}" data-owner="${esc(post.ownerName || '')}">⋯</span>
                 ${hero}
                 <div class="recipe-card-content">
                     <h4>${esc(post.title) || (esc(post.bean) || '이름 없는 레시피')}</h4>
@@ -94,7 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetchFeed({ method: mode, cursor });
             if (reset) grid.innerHTML = '';
             if (reset && res.items.length === 0) { renderEmpty(); return; }
-            res.items.forEach((post) => {
+            // 차단한 작성자의 글은 피드에서 제외한다(규칙은 조인을 못 하므로 클라이언트가 거른다).
+            res.items.filter((post) => !blocked.has(post.ownerId)).forEach((post) => {
                 const wrap = document.createElement('div');
                 wrap.innerHTML = cardHtml(post);
                 grid.appendChild(wrap.firstElementChild);
@@ -147,5 +153,45 @@ document.addEventListener('DOMContentLoaded', () => {
         goProfile(a);
     });
 
-    load(true);
+    // ⋯ 메뉴 → 신고·차단. 차단 성공 시 해당 작성자의 카드를 바로 제거한다.
+    async function onMenu(el) {
+        const result = await openPostActions({
+            postId: el.getAttribute('data-postid'),
+            ownerId: el.getAttribute('data-uid'),
+            ownerName: el.getAttribute('data-owner'),
+            user: currentUser,
+        });
+        if (result === 'blocked') {
+            const uid = el.getAttribute('data-uid');
+            if (uid) {
+                blocked.add(uid);
+                const sel = (window.CSS && CSS.escape) ? CSS.escape(uid) : uid;
+                grid.querySelectorAll(`[data-owner-uid="${sel}"]`).forEach((c) => c.remove());
+            }
+        }
+    }
+    grid.addEventListener('click', (e) => {
+        const m = e.target.closest('.feed-card-menu');
+        if (!m) return;
+        e.preventDefault(); e.stopPropagation();
+        onMenu(m);
+    });
+    grid.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const m = e.target.closest('.feed-card-menu');
+        if (!m) return;
+        e.preventDefault(); e.stopPropagation();
+        onMenu(m);
+    });
+
+    // 피드는 차단 목록을 먼저 확보한 뒤 로드한다(로그인 사용자면 첫 화면부터 반영).
+    if (isDemo()) {
+        load(true);
+    } else {
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user || null;
+            try { blocked = await getBlockedUids(user); } catch (e) { blocked = new Set(); }
+            if (!started) { started = true; load(true); }
+        });
+    }
 });

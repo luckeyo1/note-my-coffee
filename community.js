@@ -50,6 +50,61 @@ export async function saveProfile(uid, fields) {
     return { ok: true };
 }
 
+// ─── 신고·차단(UGC 안전) ──────────────────────────────────────────────
+// Google Play 정책: 사용자 생성 콘텐츠가 있는 앱은 인앱 신고·차단·검수가 필요하다.
+// 규칙(firestore.rules)이 검증한다: reports 생성(reporterId==본인, reason≤500),
+// blocks는 소유자 본인만 읽고 쓴다. 피드에서 차단 작성자 제외는 클라이언트가 한다.
+const REPORTS = 'reports';
+const BLOCKS = 'blocks';
+
+/** 게시물 신고. 로그인 필요. reason은 최대 500자(규칙). */
+export async function reportPost(postId, reason, user) {
+    if (isDemo()) return { ok: true, demo: true };
+    if (!user || !user.uid) throw new Error('로그인이 필요합니다.');
+    if (!postId) throw new Error('잘못된 신고 대상입니다.');
+    await setDoc(doc(collection(db, REPORTS)), {
+        reporterId: user.uid,
+        targetPostId: String(postId),
+        reason: String(reason || '').slice(0, 500),
+        createdAt: serverTimestamp(),
+    });
+    return { ok: true };
+}
+
+/** 사용자 차단. 내 blocks 목록에 남기고, 피드에서는 클라이언트가 거른다. */
+export async function blockUser(blockedUid, user) {
+    if (isDemo()) return { ok: true, demo: true };
+    if (!user || !user.uid) throw new Error('로그인이 필요합니다.');
+    if (!blockedUid) throw new Error('잘못된 차단 대상입니다.');
+    if (blockedUid === user.uid) throw new Error('본인은 차단할 수 없습니다.');
+    await setDoc(doc(db, BLOCKS, user.uid, 'blocked', blockedUid), {
+        createdAt: serverTimestamp(),
+    });
+    return { ok: true };
+}
+
+/** 차단 해제. */
+export async function unblockUser(blockedUid, user) {
+    if (isDemo()) return { ok: true, demo: true };
+    if (!user || !user.uid) throw new Error('로그인이 필요합니다.');
+    await deleteDoc(doc(db, BLOCKS, user.uid, 'blocked', blockedUid));
+    return { ok: true };
+}
+
+/** 내가 차단한 uid 집합. 비로그인·데모면 빈 집합(피드 필터가 이 집합을 쓴다). */
+export async function getBlockedUids(user) {
+    if (isDemo() || !user || !user.uid) return new Set();
+    try {
+        const snap = await getDocs(collection(db, BLOCKS, user.uid, 'blocked'));
+        const set = new Set();
+        snap.forEach((d) => set.add(d.id));
+        return set;
+    } catch (e) {
+        console.warn('[community] 차단 목록 읽기 실패', e);
+        return new Set();
+    }
+}
+
 // 공개 게시물의 커버 사진을 Storage에 올린다. 경로에 uid가 들어가 규칙이 소유자를
 // 검증한다. dataUrl은 이미 캔버스 재인코딩으로 EXIF가 제거된 JPEG/PNG다(main.js).
 async function uploadCover(uid, postId, dataUrl) {

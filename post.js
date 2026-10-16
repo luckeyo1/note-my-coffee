@@ -8,6 +8,7 @@ import { getPost, importPost, unpublishPost, deletePost } from "./community.js";
 import { fmtBrewTime, modeLabel } from "./brew-card.js";
 import { brewRatio } from "./recipe-share-model.js";
 import { isDemo } from "./demo.js";
+import { reportPostUI, blockUserUI } from "./moderation.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const box = document.getElementById('post-container');
@@ -89,7 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="post-owner-actions">
                         <button type="button" class="recipe-share-btn" id="btn-unshare">공유 해제</button>
                         <button type="button" class="recipe-share-btn" id="btn-delete">삭제</button>
-                    </div>` : ''}
+                    </div>` : (post.ownerId ? `
+                    <div class="mod-inline-actions">
+                        <button type="button" class="mod-link-btn" id="btn-report">🚩 신고</button>
+                        <button type="button" class="mod-link-btn" id="btn-block">🚫 이 사용자 차단</button>
+                    </div>` : '')}
             </div>`;
 
         const importBtn = document.getElementById('btn-import');
@@ -98,6 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (unshareBtn) unshareBtn.addEventListener('click', onUnshare);
         const deleteBtn = document.getElementById('btn-delete');
         if (deleteBtn) deleteBtn.addEventListener('click', onDelete);
+        const reportBtn = document.getElementById('btn-report');
+        if (reportBtn) reportBtn.addEventListener('click', () => reportPostUI(post.id, currentUser));
+        const blockBtn = document.getElementById('btn-block');
+        if (blockBtn) blockBtn.addEventListener('click', async () => {
+            const ok = await blockUserUI(post.ownerId, post.ownerName, currentUser);
+            if (ok) unavailable('차단한 사용자의 게시물이에요.');
+        });
 
         // 이미 가져왔는지 표시(중복 방지, §12-9): 로그인 상태에서만 확인.
         markIfImported();
