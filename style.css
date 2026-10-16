@@ -1798,3 +1798,88 @@ a.post-author-link:hover { color: var(--gold); text-decoration: underline; }
     background: var(--panel);
 }
 .profile-edit-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+
+/* ── 신고·차단 UI(moderation.js) — UGC 안전 ─────────────────────────── */
+body.mod-lock { overflow: hidden; }
+.mod-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(20,14,9,0.44);
+    opacity: 0; transition: opacity var(--transition);
+}
+.mod-overlay.is-open { opacity: 1; }
+@media (min-width: 560px) { .mod-overlay { align-items: center; padding: 20px; } }
+
+.mod-dialog, .mod-sheet {
+    width: 100%; max-width: 420px; background: var(--panel);
+    border: 1px solid var(--border-strong);
+    transform: translateY(18px); transition: transform var(--spring);
+    box-shadow: 0 -20px 60px -24px rgba(36,28,21,0.42);
+}
+.mod-overlay.is-open .mod-dialog, .mod-overlay.is-open .mod-sheet { transform: translateY(0); }
+
+.mod-dialog { padding: 22px 20px 18px; }
+.mod-title { font-family: var(--font-body); font-size: 18px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
+.mod-desc { font-size: 13.5px; line-height: 1.55; color: var(--ink-muted); margin: 0 0 14px; }
+.mod-reasons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.mod-reason {
+    font-family: var(--font-body); font-size: 13px; color: var(--ink-muted);
+    background: var(--cream); border: 1px solid var(--border-strong);
+    padding: 9px 13px; cursor: pointer; transition: var(--transition);
+}
+.mod-reason[aria-pressed="true"] { background: var(--gold-pale); border-color: var(--gold-border); color: var(--gold-light); font-weight: 600; }
+.mod-textarea {
+    width: 100%; min-height: 64px; resize: vertical; font-family: var(--font-body);
+    font-size: 14px; color: var(--ink); background: var(--cream);
+    border: 1px solid var(--border-strong); padding: 10px 12px; outline: none; margin-bottom: 14px;
+}
+.mod-textarea:focus { border-color: var(--gold); }
+.mod-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.mod-btn {
+    font-family: var(--font-body); font-size: 14px; font-weight: 600;
+    padding: 11px 18px; cursor: pointer; border: 1px solid var(--border-strong);
+    background: var(--panel); color: var(--ink-muted); transition: var(--transition);
+}
+.mod-btn:hover { background: var(--cream-dark); }
+.mod-btn--danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.mod-btn--danger:hover { background: #8f3122; }
+
+.mod-sheet { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.mod-sheet-item {
+    font-family: var(--font-body); font-size: 15px; color: var(--ink);
+    background: transparent; border: none; padding: 15px 12px; text-align: left; cursor: pointer; transition: var(--transition);
+}
+.mod-sheet-item:hover { background: var(--cream-dark); }
+.mod-sheet-item.is-danger { color: var(--danger); }
+.mod-sheet-cancel { text-align: center; color: var(--ink-ghost); border-top: 1px solid var(--border); margin-top: 4px; font-weight: 600; }
+
+.mod-toast {
+    position: fixed; left: 50%; bottom: 92px; transform: translate(-50%, 16px);
+    z-index: 1100; max-width: 90vw; padding: 12px 18px;
+    background: var(--ink); color: var(--cream); font-size: 13.5px; font-weight: 500; line-height: 1.4;
+    box-shadow: 0 10px 30px -10px rgba(36,28,21,0.5);
+    opacity: 0; pointer-events: none; transition: opacity var(--transition), transform var(--transition);
+}
+.mod-toast.is-show { opacity: 1; transform: translate(-50%, 0); }
+.mod-toast.is-error { background: var(--danger); color: #fff; }
+
+/* 피드 카드의 ⋯ 메뉴(중첩 anchor를 피해 span[role=button]) */
+.recipe-card.feed-card { position: relative; }
+.feed-card-menu {
+    position: absolute; top: 8px; right: 8px; z-index: 3;
+    width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+    background: rgba(252,250,246,0.92); border: 1px solid var(--border);
+    color: var(--ink-muted); font-size: 18px; line-height: 1; cursor: pointer;
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); transition: var(--transition);
+}
+.feed-card-menu:hover { background: var(--panel); color: var(--ink); }
+.feed-card-menu:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+/* 상세·프로필의 신고/차단 인라인 버튼 */
+.mod-inline-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
+.mod-link-btn {
+    font-family: var(--font-body); font-size: 13px; color: var(--ink-ghost);
+    background: none; border: none; padding: 6px 2px; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 2px; transition: var(--transition);
+}
+.mod-link-btn:hover { color: var(--danger); }

@@ -7,6 +7,7 @@ import { signInWithChooser } from "./auth-ui.js";
 import { fetchUserPosts, getProfile, saveProfile } from "./community.js";
 import { fmtBrewTime, modeLabel } from "./brew-card.js";
 import { isDemo } from "./demo.js";
+import { blockUserUI } from "./moderation.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const box = document.getElementById('profile-container');
@@ -79,7 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h2 class="profile-name">${esc(name)}</h2>
                     <p class="profile-count">공개 레시피 ${posts.length}개</p>
                 </div>
-                ${isSelf ? '<button type="button" class="recipe-share-btn" id="btn-edit-profile">프로필 편집</button>' : ''}
+                ${isSelf ? '<button type="button" class="recipe-share-btn" id="btn-edit-profile">프로필 편집</button>'
+                    : (uid ? '<button type="button" class="mod-link-btn" id="btn-block-profile">🚫 차단</button>' : '')}
             </div>
             ${bio ? `<p class="profile-bio">${esc(bio)}</p>` : (isSelf ? '<p class="profile-bio profile-bio--empty">소개를 추가해보세요.</p>' : '')}
             <div class="profile-edit" id="profile-edit" hidden>
@@ -96,6 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ${grid}`;
 
         if (isSelf) wireEdit(uid, name, bio);
+        else if (uid) {
+            const bb = document.getElementById('btn-block-profile');
+            if (bb) bb.addEventListener('click', async () => {
+                const ok = await blockUserUI(uid, name, currentUser);
+                if (ok) message('차단했어요. 이 사용자의 게시물이 숨겨집니다.',
+                    '<a class="recipe-share-btn recipe-share-btn--gold" href="discover.html" style="display:inline-block;margin-top:6px;">둘러보기로 가기</a>');
+            });
+        }
     }
 
     function wireEdit(uid, name, bio) {
