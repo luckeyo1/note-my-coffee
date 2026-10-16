@@ -32,7 +32,7 @@ export function modeLabel(m) {
  * @returns {string[]} 뱃지 문자열 배열 (0~2개)
  */
 export function computeHighlights(recipe, all, lang = 'ko') {
-    const t = (ko, en) => (lang === 'en' ? en : ko);
+    const t = (ko, en, ja) => (lang === 'ja' ? (ja ?? en) : (lang === 'en' ? en : ko));
     const list = Array.isArray(all) ? all.filter(Boolean) : [];
 
     // 전체 목록에서 "이 레시피 자신"을 딱 하나만 뺀 나머지(others)를 만든다.
@@ -56,18 +56,18 @@ export function computeHighlights(recipe, all, lang = 'ko') {
     const out = [];
 
     // 첫 기록 — 가장 강력한 순간이라 이것만 나오면 충분하다.
-    if (total === 1) return [t('첫 기록 ☕', 'First brew ☕')];
+    if (total === 1) return [t('첫 기록 ☕', 'First brew ☕', '初めての記録 ☕')];
 
     // 같은 원두 안에서의 성취 (원두명이 있을 때만)
     if (bean) {
         const earlier = others.filter((r) => (r.beanName || '').trim() === bean);
         if (recipe.success && earlier.length && !earlier.some((r) => r.success)) {
-            out.push(t('이 원두 첫 성공', 'First success on this bean'));
+            out.push(t('이 원두 첫 성공', 'First success on this bean', 'この豆で初成功'));
         }
         if (earlier.length >= 1 && rating >= 4) {
             const maxOther = earlier.reduce(
                 (m, r) => Math.max(m, parseInt(r.overallRating, 10) || 0), 0);
-            if (rating > maxOther) out.push(t('이 원두 최고 기록', 'New best on this bean'));
+            if (rating > maxOther) out.push(t('이 원두 최고 기록', 'New best on this bean', 'この豆での最高記録'));
         }
     }
 
@@ -75,12 +75,12 @@ export function computeHighlights(recipe, all, lang = 'ko') {
     if (out.length < 2 && rating >= 4 && total >= 3) {
         const maxOther = others.reduce(
             (m, r) => Math.max(m, parseInt(r.overallRating, 10) || 0), 0);
-        if (rating > maxOther) out.push(t('★ 역대 최고 평점', '★ Your best cup yet'));
+        if (rating > maxOther) out.push(t('★ 역대 최고 평점', '★ Your best cup yet', '★ 自己ベストの一杯'));
     }
 
     // 마일스톤 — 아무 뱃지도 못 뽑았을 때만, 딱 떨어지는 회차에서.
     if (out.length === 0 && total >= 10 && (total % 10 === 0 || total % 25 === 0)) {
-        out.push(t(`${total}번째 기록 🎉`, `Brew #${total} 🎉`));
+        out.push(t(`${total}번째 기록 🎉`, `Brew #${total} 🎉`, `${total}杯目の記録 🎉`));
     }
 
     return out.slice(0, 2);
@@ -294,13 +294,21 @@ async function drawStoryCard(recipe, highlights, lang = 'ko') {
         catch (e) { /* 그라데이션만으로 충분하다 */ }
     }
 
-    const L = lang === 'en' ? {
-        eyebrow: "TODAY'S BREW", dosing: 'DOSING', temp: 'TEMP', time: 'TIME', yield: 'YIELD',
-        ok: 'Success', fail: 'Missed',
-    } : {
-        eyebrow: '오늘의 커피 기록', dosing: '도징', temp: '물 온도', time: '추출 시간', yield: '추출량',
-        ok: '추출 완료', fail: '아쉬운 한 잔',
+    const _L = {
+        en: {
+            eyebrow: "TODAY'S BREW", dosing: 'DOSING', temp: 'TEMP', time: 'TIME', yield: 'YIELD',
+            ok: 'Success', fail: 'Missed',
+        },
+        ja: {
+            eyebrow: '今日のコーヒー記録', dosing: '粉量', temp: '湯温', time: '抽出時間', yield: '抽出量',
+            ok: '抽出完了', fail: '惜しい一杯',
+        },
+        ko: {
+            eyebrow: '오늘의 커피 기록', dosing: '도징', temp: '물 온도', time: '추출 시간', yield: '추출량',
+            ok: '추출 완료', fail: '아쉬운 한 잔',
+        },
     };
+    const L = _L[lang] || _L.ko;
 
     // ── 하단을 살짝 눌러 패널이 사진 위에 떠 보이게 ──
     const botG = ctx.createLinearGradient(0, H - 620, 0, H);
@@ -460,7 +468,11 @@ async function waitForCardFonts(recipe, highlights) {
     if (!document.fonts) return;
     const text = [recipe.beanName, recipe.origin, recipe.tasteNotes, recipe.weather,
         ...(highlights || []), '성공', '실패', '첫 기록', '역대 최고 평점',
-        '이 원두 최고 기록', '이 원두 첫 성공', '번째 기록'].filter(Boolean).join(' ');
+        '이 원두 최고 기록', '이 원두 첫 성공', '번째 기록',
+        // 일본어 라벨·뱃지 글자(서브셋 폰트가 캔버스에서 두부로 찍히지 않게 미리 로드)
+        '今日のコーヒー記録', '粉量', '湯温', '抽出時間', '抽出量', '抽出完了', '惜しい一杯',
+        '初めての記録', '自己ベストの一杯', 'この豆での最高記録', 'この豆で初成功', '杯目の記録'
+    ].filter(Boolean).join(' ');
     const faces = [
         "bold 72px 'Pretendard Variable'", "bold 26px 'Pretendard Variable'",
         "bold 24px 'Pretendard Variable'", "500 30px 'IBM Plex Mono'",
@@ -517,27 +529,42 @@ export function openBrewShareModal(recipe, opts = {}) {
         celebrate = false, notice = '', onContinue, onEvent, onPublish,
     } = opts;
     const emit = (name, params) => { try { onEvent?.(name, params); } catch (e) { /* 계측이 본 기능을 막지 않는다 */ } };
-    const T = lang === 'en' ? {
-        celebrateTitle: '☕ Brew logged — show it off',
-        shareTitle: '☕ Show off this cup',
-        tabCard: '🗂️ Card', tabStory: '🖼️ Photo',
-        making: 'Generating…', cantMake: "Couldn't create the image",
-        download: '↓ Save image', share: '↗ Share', copy: '🔗 Copy link', copied: '✓ Copied',
-        toLogbook: 'To logbook →',
-        publish: '🌍 Share to community',
-        publishHint: 'Post it to the feed so others can find and brew it.',
-        brag: (n) => `Here's the ${n || 'coffee'} I just brewed ☕ #NoteMyCoffee`,
-    } : {
-        celebrateTitle: '☕ 기록 완료 — 자랑해보세요',
-        shareTitle: '☕ 이 한 잔 자랑하기',
-        tabCard: '🗂️ 카드', tabStory: '🖼️ 사진 배경',
-        making: '생성 중…', cantMake: '이미지를 만들 수 없습니다',
-        download: '↓ 이미지 저장', share: '↗ 공유', copy: '🔗 링크 복사', copied: '✓ 복사됨',
-        toLogbook: '로그북으로 →',
-        publish: '🌍 커뮤니티에 공유',
-        publishHint: '피드에 올리면 다른 사람도 보고 따라 내릴 수 있어요.',
-        brag: (n) => `제가 방금 내린 "${n || '커피'}" 한 잔이에요 ☕ #NoteMyCoffee`,
+    const _T = {
+        en: {
+            celebrateTitle: '☕ Brew logged — show it off',
+            shareTitle: '☕ Show off this cup',
+            tabCard: '🗂️ Card', tabStory: '🖼️ Photo',
+            making: 'Generating…', cantMake: "Couldn't create the image",
+            download: '↓ Save image', share: '↗ Share', copy: '🔗 Copy link', copied: '✓ Copied',
+            toLogbook: 'To logbook →',
+            publish: '🌍 Share to community',
+            publishHint: 'Post it to the feed so others can find and brew it.',
+            brag: (n) => `Here's the ${n || 'coffee'} I just brewed ☕ #NoteMyCoffee`,
+        },
+        ja: {
+            celebrateTitle: '☕ 記録完了 — シェアしよう',
+            shareTitle: '☕ この一杯をシェア',
+            tabCard: '🗂️ カード', tabStory: '🖼️ 写真背景',
+            making: '生成中…', cantMake: '画像を作成できませんでした',
+            download: '↓ 画像を保存', share: '↗ シェア', copy: '🔗 リンクをコピー', copied: '✓ コピー済み',
+            toLogbook: 'ログブックへ →',
+            publish: '🌍 コミュニティに共有',
+            publishHint: 'フィードに投稿すると、ほかの人も見て淹れられます。',
+            brag: (n) => `今淹れた「${n || 'コーヒー'}」の一杯です ☕ #NoteMyCoffee`,
+        },
+        ko: {
+            celebrateTitle: '☕ 기록 완료 — 자랑해보세요',
+            shareTitle: '☕ 이 한 잔 자랑하기',
+            tabCard: '🗂️ 카드', tabStory: '🖼️ 사진 배경',
+            making: '생성 중…', cantMake: '이미지를 만들 수 없습니다',
+            download: '↓ 이미지 저장', share: '↗ 공유', copy: '🔗 링크 복사', copied: '✓ 복사됨',
+            toLogbook: '로그북으로 →',
+            publish: '🌍 커뮤니티에 공유',
+            publishHint: '피드에 올리면 다른 사람도 보고 따라 내릴 수 있어요.',
+            brag: (n) => `제가 방금 내린 "${n || '커피'}" 한 잔이에요 ☕ #NoteMyCoffee`,
+        },
     };
+    const T = _T[lang] || _T.ko;
 
     _removeModal('brew-share-modal');
     const highlights = computeHighlights(recipe, allRecipes, lang);
