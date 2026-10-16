@@ -15,8 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let searchQuery = '';   // 로그북 검색어
     let modeFilter = 'all'; // 'all' | 'espresso' | 'drip'
 
-    // 3개 언어 인라인 문자열 선택기(ja 없으면 en). storage.js가 저장한 언어를 따른다.
-    const tx = (ko, en, ja) => currentLang === 'ko' ? ko : (currentLang === 'ja' ? (ja ?? en) : en);
+    // 다국어 인라인 문자열 선택기(해당 언어 없으면 en). storage.js가 저장한 언어를 따른다.
+    const tx = (ko, en, ja, zh) => ({ ko, en, ja, zh }[currentLang]) ?? en;
 
     const i18n = {
         en: {
@@ -69,6 +69,23 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFailed: "記録を読み込めませんでした。記録は無事です — 接続の問題です。",
             retry: "再試行",
             deleteFailed: "削除できませんでした。接続を確認して再度お試しください。",
+        },
+        zh: {
+            newRecipe: "新配方",
+            logbookTitle: "我的配方筆記",
+            noRecipes: "還沒有任何配方紀錄，現在就來建立一份吧！",
+            deleteConfirm: "確定要刪除這份配方嗎？",
+            beanName: "咖啡豆:", mode: "方式:", dosing: "粉量:", temp: "水溫:",
+            time: "萃取時間:", yield: "萃取量:", tasteNotes: "筆記:",
+            overallRating: "評分:", success: "成功", fail: "失敗",
+            purchaseLink: "購買連結", delete: "刪除", weather: "天氣:",
+            share: "分享", rebrew: "再沖一次",
+            searchPlaceholder: "搜尋咖啡豆、筆記…",
+            filterAll: "全部", filterEspresso: "Espresso", filterDrip: "手沖",
+            noSearchResults: "沒有符合的配方。",
+            loadFailed: "無法載入紀錄。你的資料沒有遺失 — 這是連線問題。",
+            retry: "重試",
+            deleteFailed: "無法刪除，請檢查連線後再試一次。",
         }
     };
 
@@ -78,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLangEn: document.getElementById('l-en'),
         btnLangKo: document.getElementById('l-ko'),
         btnLangJa: document.getElementById('l-ja'),
+        btnLangZh: document.getElementById('l-zh'),
         logbookTitle: document.querySelector('.logbook-title'),
         recipeCardsGrid: document.getElementById('recipe-cards-grid'),
         tools: document.getElementById('logbook-tools'),
@@ -99,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnLangEn.classList.toggle('active', lang === 'en');
         elements.btnLangKo.classList.toggle('active', lang === 'ko');
         if (elements.btnLangJa) elements.btnLangJa.classList.toggle('active', lang === 'ja');
+        if (elements.btnLangZh) elements.btnLangZh.classList.toggle('active', lang === 'zh');
         elements.btnNewRecipe.innerText = i18n[lang].newRecipe;
         elements.logbookTitle.innerText = i18n[lang].logbookTitle;
         renderRecipeCards();
@@ -225,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const safeMode  = recipe.mode ? modeLabel(recipe.mode) : 'UNKNOWN';
             const safeRat   = Math.max(0, Math.min(5, parseInt(recipe.overallRating, 10) || 0));
-            const safeWeather = recipe.weather || tx('정보 없음', 'No info', '情報なし');
+            const safeWeather = recipe.weather || tx('정보 없음', 'No info', '情報なし', '無資訊');
             const timeStr   = fmtBrewTime(recipe);
             const purchase  = safeUrl(recipe.purchaseUrl);
 
@@ -236,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const yld   = Number(recipe.yield) || 0;
             const ratio = dose > 0 && yld > 0 ? '1:' + (yld / dose).toFixed(1) : '—';
             const dateStr = recipe.date
-                ? new Date(recipe.date).toLocaleDateString(tx('ko-KR', 'en-US', 'ja-JP'),
+                ? new Date(recipe.date).toLocaleDateString(tx('ko-KR', 'en-US', 'ja-JP', 'zh-TW'),
                     { month: 'long', day: 'numeric' })
                 : '';
 
@@ -254,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 ${hero}
                 <div class="recipe-card-content">
-                    <h4>${esc(recipe.beanName) || tx('원두명 미상', 'Unknown Bean', '豆の名前不明')}</h4>
+                    <h4>${esc(recipe.beanName) || tx('원두명 미상', 'Unknown Bean', '豆の名前不明', '未知咖啡豆')}</h4>
                     <p class="recipe-card-sub">${dateStr ? esc(dateStr) + ' · ' : ''}${esc(safeMode)}</p>
 
                     <div class="recipe-card-metrics">
@@ -304,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.btnLangEn.addEventListener('click', () => { track('language_changed', { lang: 'en', page: 'logbook' }); setLang('en'); });
     elements.btnLangKo.addEventListener('click', () => { track('language_changed', { lang: 'ko', page: 'logbook' }); setLang('ko'); });
     if (elements.btnLangJa) elements.btnLangJa.addEventListener('click', () => { track('language_changed', { lang: 'ja', page: 'logbook' }); setLang('ja'); });
+    if (elements.btnLangZh) elements.btnLangZh.addEventListener('click', () => { track('language_changed', { lang: 'zh', page: 'logbook' }); setLang('zh'); });
 
     // ── 검색 + 모드 필터 ────────────────────────────────────────────────────
     if (elements.searchInput) {
