@@ -1,0 +1,45 @@
+# 매일 아침 커피 리마인더 푸시 (FCM)
+#
+# 매일 아침(KST 08:00) Firestore pushTokens(옵트인 사용자)로 FCM 알림을 보낸다.
+# 발송 로직은 scripts/send-daily-push.mjs. 언어별 문구 + 무효 토큰 자동 정리.
+#
+# 사전 준비(1회):
+#   1) Firebase 콘솔 → 프로젝트 설정 → 서비스 계정 → "새 비공개 키 생성"으로
+#      서비스계정 JSON 다운로드.
+#   2) 저장소 Settings → Secrets and variables → Actions → New repository secret
+#      이름 FIREBASE_SERVICE_ACCOUNT, 값에 그 JSON 전체를 붙여넣기.
+#   시크릿을 넣기 전까지 이 워크플로는 조용히 건너뛴다(=실패하지 않음).
+#
+# 시간 변경: 아래 cron(UTC)만 바꾸면 된다. KST = UTC+9.
+
+name: daily-push
+
+on:
+  schedule:
+    - cron: '0 23 * * *'   # UTC 23:00 = KST 08:00
+  workflow_dispatch: {}      # 수동 테스트용
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-push
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: firebase-admin 설치
+        run: npm install --no-save firebase-admin@12
+
+      - name: 아침 푸시 발송
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/send-daily-push.mjs

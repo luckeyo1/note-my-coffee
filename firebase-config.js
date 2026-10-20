@@ -201,6 +201,7 @@ function bumpVisit(page) {
 export {
     track,
     bumpVisit,
+    app,
     auth,
     db,
     googleProvider,

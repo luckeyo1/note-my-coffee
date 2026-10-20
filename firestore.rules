@@ -57,6 +57,19 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // 푸시 토큰(매일 아침 리마인더 발송용). 토큰 등록은 비로그인 포함 누구나
+    // (stats_visits와 동일 기조) — 단 문서 ID == 토큰이고 필드·크기를 제한한다.
+    // 실제 발송은 Admin SDK(규칙 우회)가 하고, 열람·삭제는 관리자만.
+    match /pushTokens/{token} {
+      allow create, update: if request.resource.data.token is string
+                            && request.resource.data.token == token
+                            && request.resource.data.token.size() < 400
+                            && (!('uid' in request.resource.data) || request.resource.data.uid == null || request.resource.data.uid is string)
+                            && (!('lang' in request.resource.data) || request.resource.data.lang.size() < 8)
+                            && (!('platform' in request.resource.data) || request.resource.data.platform.size() < 400);
+      allow read, list, delete: if isAdmin();
+    }
+
     match /leads/{leadId} {
       allow create, update: if request.resource.data.email is string
                             && request.resource.data.email.size() > 3
