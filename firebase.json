@@ -26,6 +26,7 @@
       "*.docx",
       "scripts/**",
       "store/**",
+      "wear/**",
       "package.json",
       "package-lock.json",
       "생성된 이미지*.png",

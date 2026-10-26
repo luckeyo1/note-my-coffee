@@ -1,0 +1,77 @@
+# 갤럭시 워치(Wear OS) 앱 빌드 검사
+#
+# wear/ 아래가 바뀌면 디버그 APK를 빌드하고 lint를 돌린다. 만든 APK는
+# 아티팩트로 올려두니, 실기기에 바로 설치해볼 수 있다(wear/README.md).
+#
+# google-services.json은 저장소에 넣지 않는다. 시크릿 WEAR_GOOGLE_SERVICES_JSON에
+# 파일 전문을 등록하면 그걸로 빌드하고(실제 Firebase에 붙는 APK), 없으면 컴파일
+# 검사용 자리표시 파일을 만든다 — 그 APK는 설치는 되지만 Firebase에 접속하지 못한다.
+
+name: wear-build
+
+on:
+  # 모든 브랜치 — 워치 작업 브랜치에서도 PR 전에 빌드를 확인한다(wear/만 바뀔 때).
+  push:
+    paths: ['wear/**', '.github/workflows/wear-build.yml']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wear
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: google-services.json
+        env:
+          GSJ: ${{ secrets.WEAR_GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GSJ" ]; then
+            printf '%s' "$GSJ" > app/google-services.json
+            echo "real=true" >> "$GITHUB_ENV"
+          else
+            echo "::warning::WEAR_GOOGLE_SERVICES_JSON 시크릿이 없어 자리표시 파일로 빌드합니다(컴파일 검사용)."
+            cat > app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "note-my-coffee",
+              "storage_bucket": "note-my-coffee.appspot.com"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                "android_client_info": { "package_name": "app.web.note_my_coffee" }
+              },
+              "oauth_client": [],
+              "api_key": [{ "current_key": "placeholder" }],
+              "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+            }],
+            "configuration_version": "1"
+          }
+          EOF
+          fi
+
+      - name: Build + lint
+        run: ./gradlew --no-daemon :app:assembleDebug :app:lintDebug
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wear-debug
+          path: |
+            wear/app/build/outputs/apk/debug/*.apk
+            wear/app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore

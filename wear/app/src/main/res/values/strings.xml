@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Note My Coffee</string>
+    <string name="espresso">Espresso</string>
+    <string name="drip">Hand drip</string>
+    <string name="tap_start">Tap to start</string>
+    <string name="tap_stop">Tap to stop</string>
+    <string name="bloom">Bloom</string>
+    <string name="target" formatted="true">Target %1$s</string>
+    <string name="reset">Reset</string>
+    <string name="log">Log</string>
+    <string name="log_title">Log this brew</string>
+    <string name="dosing">Dose</string>
+    <string name="temp">Water temp</string>
+    <string name="time">Time</string>
+    <string name="yield_espresso">Yield</string>
+    <string name="yield_drip">Water</string>
+    <string name="bean">Bean</string>
+    <string name="bean_empty">Tap to add</string>
+    <string name="success">Turned out well</string>
+    <string name="save">Save</string>
+    <string name="done">Done</string>
+    <string name="saved_synced">Saved to your logbook</string>
+    <string name="saved_local">Saved on watch. Connect to sync.</string>
+    <string name="not_connected">Not connected</string>
+    <string name="connected">Connected</string>
+    <string name="pending" formatted="true">%1$d waiting to sync</string>
+    <string name="connect">Connect to logbook</string>
+    <string name="pair_howto">Enter on your phone: Logbook › Settings › Connect watch</string>
+    <string name="pair_expires">Expires in 10 min</string>
+    <string name="pair_new">New code</string>
+    <string name="pair_error">Couldn\'t get a code. Check Wi‑Fi.</string>
+    <string name="retry">Retry</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="loading">Loading…</string>
+</resources>

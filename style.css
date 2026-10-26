@@ -1883,3 +1883,26 @@ body.mod-lock { overflow: hidden; }
     text-decoration: underline; text-underline-offset: 2px; transition: var(--transition);
 }
 .mod-link-btn:hover { color: var(--danger); }
+
+/* ── 워치 연결 (watch-link.js) ── */
+.watch-link-body { padding: 16px 20px 20px; }
+.watch-link-howto { font-size: 14px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 4px; }
+.watch-link-row { display: flex; gap: 8px; align-items: stretch; }
+.watch-link-row .recipe-share-btn { flex: 0 0 auto; }
+.watch-code-input {
+    flex: 1; margin-bottom: 0; border-radius: 0;
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: 22px; letter-spacing: 0.35em;
+}
+.watch-link-status { min-height: 1.5em; font-size: 13px; color: var(--success); margin: 8px 0 0; }
+.watch-link-status.is-error { color: var(--danger); }
+.watch-link-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
+.watch-link-item, .watch-link-empty {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink-muted);
+}
+.watch-link-id { font-family: var(--font-mono); color: var(--ink); }
+.watch-link-when { flex: 1; font-family: var(--font-mono); font-size: 12px; }
+.watch-link-unlink { flex: 0 0 auto; padding: 6px 12px; }
+.watch-link-get { margin: 16px 0 0; font-size: 13px; }
+.watch-link-get a { color: var(--signal); }

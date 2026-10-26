@@ -28,8 +28,73 @@ service cloud.firestore {
                   || (request.auth != null && resource.data.userId == request.auth.uid);
       allow create: if request.auth != null
                     && request.resource.data.userId == request.auth.uid;
+      // 연결된 워치(익명 로그인)가 주인 계정으로 기록을 남긴다(docs/wearable.md).
+      // 워치는 쓰기만 한다 — 읽기·수정·삭제는 위/아래 기존 규칙대로 주인만.
+      allow create: if request.auth != null
+                    && request.resource.data.source == 'watch'
+                    && exists(/databases/$(database)/documents/watchLinks/$(request.auth.uid))
+                    && get(/databases/$(database)/documents/watchLinks/$(request.auth.uid)).data.ownerUid
+                       == request.resource.data.userId;
       allow update, delete: if request.auth != null
                             && resource.data.userId == request.auth.uid;
+    }
+
+    // ───────────────────────── 워치 연결 (docs/wearable.md) ─────────────────
+    // 1) 워치(익명 로그인)가 6자리 코드를 문서 ID로 watchPairs를 만든다.
+    // 2) 로그인한 웹 사용자가 그 코드를 입력하면 pair에 ownerUid를 채워 확정하고
+    //    (확정 뒤에야 pair를 읽어 watchUid를 알 수 있다) watchLinks/{watchUid}를 만든다.
+    // 3) 워치는 watchLinks가 있는 동안 주인 uid로 recipes를 create할 수 있다.
+    // 코드는 10분 뒤 만료된다. 만료된 코드 문서는 워치가 새 코드로 덮어쓸 수 있다.
+    function pairFresh(p) {
+      return request.time < p.createdAt + duration.value(10, 'm');
+    }
+    function isRealUser() {
+      return request.auth != null
+          && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    match /watchPairs/{code} {
+      function newPairOk() {
+        return code.matches('^[0-9]{6}$')
+            && request.resource.data.keys().hasOnly(['watchUid', 'createdAt'])
+            && request.resource.data.watchUid == request.auth.uid
+            && request.resource.data.createdAt == request.time;
+      }
+      allow get: if request.auth != null
+                 && (resource.data.watchUid == request.auth.uid
+                     || resource.data.get('ownerUid', null) == request.auth.uid);
+      allow create: if request.auth != null && newPairOk();
+      // 만료된 코드 재사용(워치가 새 pair로 덮어씀)
+      allow update: if request.auth != null && !pairFresh(resource.data) && newPairOk();
+      // 웹 사용자의 연결 확정. 아직 주인이 없고 만료 전인 코드만.
+      allow update: if isRealUser()
+                    && pairFresh(resource.data)
+                    && !('ownerUid' in resource.data)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerUid', 'ownerName'])
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.get('ownerName', '') is string
+                    && request.resource.data.get('ownerName', '').size() <= 60;
+    }
+
+    match /watchLinks/{watchUid} {
+      // 확정된 pair(같은 batch로 확정해도 되게 getAfter)로 코드 소유를 확인한다.
+      function linkOk() {
+        let pair = getAfter(/databases/$(database)/documents/watchPairs/$(request.resource.data.code)).data;
+        return isRealUser()
+            && request.resource.data.keys().hasOnly(['ownerUid', 'code', 'linkedAt'])
+            && request.resource.data.ownerUid == request.auth.uid
+            && request.resource.data.linkedAt == request.time
+            && pair.watchUid == watchUid
+            && pair.ownerUid == request.auth.uid
+            && pairFresh(pair);
+      }
+      allow get: if request.auth != null
+                 && (request.auth.uid == watchUid || resource.data.ownerUid == request.auth.uid);
+      allow list: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+      // update = 같은 워치를 새 코드로 다른(또는 같은) 계정에 다시 연결
+      allow create, update: if linkOk();
+      allow delete: if request.auth != null
+                    && (request.auth.uid == watchUid || resource.data.ownerUid == request.auth.uid);
     }
 
     match /public_stats/{docId} {

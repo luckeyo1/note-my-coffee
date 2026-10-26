@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="espresso">エスプレッソ</string>
+    <string name="drip">ハンドドリップ</string>
+    <string name="tap_start">タップで開始</string>
+    <string name="tap_stop">タップで停止</string>
+    <string name="bloom">蒸らし</string>
+    <string name="target" formatted="true">目標 %1$s</string>
+    <string name="reset">リセット</string>
+    <string name="log">記録</string>
+    <string name="log_title">この抽出を記録</string>
+    <string name="dosing">豆量</string>
+    <string name="temp">湯温</string>
+    <string name="time">抽出時間</string>
+    <string name="yield_espresso">抽出量</string>
+    <string name="yield_drip">注湯量</string>
+    <string name="bean">豆</string>
+    <string name="bean_empty">タップで入力</string>
+    <string name="success">成功</string>
+    <string name="save">保存</string>
+    <string name="done">完了</string>
+    <string name="saved_synced">ログブックに保存しました</string>
+    <string name="saved_local">ウォッチに保存。連携すると同期されます。</string>
+    <string name="not_connected">未連携</string>
+    <string name="connected">連携中</string>
+    <string name="pending" formatted="true">同期待ち %1$d件</string>
+    <string name="connect">ログブックと連携</string>
+    <string name="pair_howto">スマホで入力：ログブック › 設定 › ウォッチ連携</string>
+    <string name="pair_expires">10分で期限切れ</string>
+    <string name="pair_new">新しいコード</string>
+    <string name="pair_error">コードを取得できません。Wi‑Fiを確認してください。</string>
+    <string name="retry">再試行</string>
+    <string name="disconnect">連携解除</string>
+    <string name="loading">読み込み中…</string>
+</resources>

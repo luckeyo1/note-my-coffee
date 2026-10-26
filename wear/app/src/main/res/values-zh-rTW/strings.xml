@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="espresso">義式濃縮</string>
+    <string name="drip">手沖</string>
+    <string name="tap_start">點一下開始</string>
+    <string name="tap_stop">點一下停止</string>
+    <string name="bloom">悶蒸</string>
+    <string name="target" formatted="true">目標 %1$s</string>
+    <string name="reset">重設</string>
+    <string name="log">記錄</string>
+    <string name="log_title">記錄這次萃取</string>
+    <string name="dosing">粉量</string>
+    <string name="temp">水溫</string>
+    <string name="time">萃取時間</string>
+    <string name="yield_espresso">萃取量</string>
+    <string name="yield_drip">注水量</string>
+    <string name="bean">咖啡豆</string>
+    <string name="bean_empty">點一下輸入</string>
+    <string name="success">成功</string>
+    <string name="save">儲存</string>
+    <string name="done">完成</string>
+    <string name="saved_synced">已存入日誌</string>
+    <string name="saved_local">已存在手錶，連結後會同步。</string>
+    <string name="not_connected">未連結</string>
+    <string name="connected">已連結</string>
+    <string name="pending" formatted="true">待同步 %1$d 筆</string>
+    <string name="connect">連結日誌</string>
+    <string name="pair_howto">在手機輸入：日誌 › 設定 › 連結手錶</string>
+    <string name="pair_expires">10 分鐘後失效</string>
+    <string name="pair_new">新代碼</string>
+    <string name="pair_error">無法取得代碼，請確認 Wi‑Fi。</string>
+    <string name="retry">重試</string>
+    <string name="disconnect">解除連結</string>
+    <string name="loading">載入中…</string>
+</resources>

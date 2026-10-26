@@ -4,6 +4,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, collection, query, where,
+  writeBatch, serverTimestamp, Timestamp,
 } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 
@@ -100,6 +101,74 @@ await check('프로필: bio 200자 초과 거부',                 assertFails(s
 await check('내 기록: 소유자 읽기 허용',                    assertSucceeds(getDoc(doc(owner, 'recipes/r1'))));
 await check('내 기록: 타인 읽기 거부(기존 보안 유지)',      assertFails(getDoc(doc(other, 'recipes/r1'))));
 await check('users(이메일): 타인 읽기 거부',               assertFails(getDoc(doc(other, 'users/owner1'))));
+
+// ── 워치 연결 (docs/wearable.md) ──
+// 워치는 익명 로그인, 웹 사용자는 실제 제공자(google)로 로그인한다.
+const ANON = { firebase: { sign_in_provider: 'anonymous' } };
+const GOOGLE = { firebase: { sign_in_provider: 'google.com' } };
+const watch = env.authenticatedContext('watch1', ANON).firestore();
+const watch2 = env.authenticatedContext('watch2', ANON).firestore();
+const webOwner = env.authenticatedContext('owner1', GOOGLE).firestore();
+const webOther = env.authenticatedContext('other1', GOOGLE).firestore();
+const anonUser = env.authenticatedContext('anonweb', ANON).firestore();
+
+await env.withSecurityRulesDisabled(async (ctx) => {
+  // 만료된 코드(20분 전 생성)
+  await setDoc(doc(ctx.firestore(), 'watchPairs/999999'),
+    { watchUid: 'watch2', createdAt: Timestamp.fromMillis(Date.now() - 20 * 60 * 1000) });
+});
+
+const pairNew = (uid) => ({ watchUid: uid, createdAt: serverTimestamp() });
+const linkBatch = (db, code, watchUid, ownerUid, ownerName = '모닝브루') => {
+  const b = writeBatch(db);
+  b.update(doc(db, 'watchPairs/' + code), { ownerUid, ownerName });
+  b.set(doc(db, 'watchLinks/' + watchUid), { ownerUid, code, linkedAt: serverTimestamp() });
+  return b.commit();
+};
+const watchRecipe = (over = {}) => ({
+  userId: 'owner1', source: 'watch', mode: 'espresso', date: new Date().toISOString(),
+  dosing: 18, temp: 93, time: 28, yield: 36, ...over,
+});
+
+await check('워치: 연결 전 기록 저장 거부',                 assertFails(setDoc(doc(watch, 'recipes/w0'), watchRecipe())));
+await check('워치: 6자리 코드 생성 허용',                  assertSucceeds(setDoc(doc(watch, 'watchPairs/123456'), pairNew('watch1'))));
+await check('워치: 남의 watchUid로 코드 생성 거부',        assertFails(setDoc(doc(watch, 'watchPairs/223456'), pairNew('watch9'))));
+await check('워치: 6자리가 아닌 코드 거부',                assertFails(setDoc(doc(watch, 'watchPairs/12ab'), pairNew('watch1'))));
+await check('워치: 주인 필드를 미리 채운 코드 거부',       assertFails(setDoc(doc(watch, 'watchPairs/323456'), { ...pairNew('watch1'), ownerUid: 'owner1' })));
+await check('워치: 자기 코드 읽기 허용',                   assertSucceeds(getDoc(doc(watch, 'watchPairs/123456'))));
+await check('코드: 타인 읽기 거부(코드 훔쳐보기 방지)',    assertFails(getDoc(doc(webOther, 'watchPairs/123456'))));
+await check('연결: 익명 사용자는 연결 거부',               assertFails(linkBatch(anonUser, '123456', 'watch1', 'anonweb')));
+await check('연결: 다른 워치 uid로 링크 위조 거부',        assertFails(linkBatch(webOwner, '123456', 'watch2', 'owner1')));
+await check('연결: 만료 코드 거부',                        assertFails(linkBatch(webOwner, '999999', 'watch2', 'owner1')));
+await check('연결: 로그인 사용자 코드 입력 허용',          assertSucceeds(linkBatch(webOwner, '123456', 'watch1', 'owner1')));
+await check('연결: 이미 쓰인 코드 재사용 거부',            assertFails(linkBatch(webOther, '123456', 'watch1', 'other1')));
+await check('워치: 연결 상태 읽기 허용',                   assertSucceeds(getDoc(doc(watch, 'watchLinks/watch1'))));
+await check('주인: 내 워치 목록 열거 허용',
+  assertSucceeds(getDocs(query(collection(webOwner, 'watchLinks'), where('ownerUid', '==', 'owner1')))));
+await check('타인: 남의 워치 목록 열거 거부',
+  assertFails(getDocs(query(collection(webOther, 'watchLinks'), where('ownerUid', '==', 'owner1')))));
+await check('워치: 주인 계정으로 기록 저장 허용',          assertSucceeds(setDoc(doc(watch, 'recipes/w1'), watchRecipe())));
+await check('워치: source 없이 저장 거부',                 assertFails(setDoc(doc(watch, 'recipes/w2'), watchRecipe({ source: 'web' }))));
+await check('워치: 남의 계정으로 저장 거부',               assertFails(setDoc(doc(watch, 'recipes/w3'), watchRecipe({ userId: 'other1' }))));
+await check('워치: 주인 기록 읽기 거부',                   assertFails(getDoc(doc(watch, 'recipes/w1'))));
+await check('주인: 워치가 남긴 기록 읽기 허용',            assertSucceeds(getDoc(doc(webOwner, 'recipes/w1'))));
+await check('워치: 만료된 코드 문서 덮어쓰기 허용',        assertSucceeds(setDoc(doc(watch2, 'watchPairs/999999'), pairNew('watch2'))));
+await check('워치: 유효한 남의 코드 덮어쓰기 거부',        assertFails(setDoc(doc(watch2, 'watchPairs/123456'), pairNew('watch2'))));
+await check('타인: 연결 해제 거부',                        assertFails(deleteDoc(doc(webOther, 'watchLinks/watch1'))));
+await check('주인: 연결 해제 허용',                        assertSucceeds(deleteDoc(doc(webOwner, 'watchLinks/watch1'))));
+await check('워치: 해제 후 기록 저장 거부',                assertFails(setDoc(doc(watch, 'recipes/w4'), watchRecipe())));
+
+// 웹(watch-link.js)의 실제 순서: 확정 → 읽기 → 링크. 확정 전에는 읽을 수 없다.
+await check('워치: 재연결용 새 코드 생성 허용',            assertSucceeds(setDoc(doc(watch, 'watchPairs/654321'), pairNew('watch1'))));
+await check('웹 순서: 확정 전 코드 읽기 거부',             assertFails(getDoc(doc(webOther, 'watchPairs/654321'))));
+await check('웹 순서: 코드 확정 허용',                     assertSucceeds(updateDoc(doc(webOther, 'watchPairs/654321'), { ownerUid: 'other1', ownerName: 'o' })));
+await check('웹 순서: 확정 후 주인은 읽기 허용',           assertSucceeds(getDoc(doc(webOther, 'watchPairs/654321'))));
+await check('웹 순서: 남의 uid로 확정 거부',               assertFails(setDoc(doc(watch, 'watchPairs/111111'), pairNew('watch1')).then(() =>
+  updateDoc(doc(webOwner, 'watchPairs/111111'), { ownerUid: 'other1' }))));
+await check('웹 순서: 링크 생성 허용(재연결)',
+  assertSucceeds(setDoc(doc(webOther, 'watchLinks/watch1'), { ownerUid: 'other1', code: '654321', linkedAt: serverTimestamp() })));
+await check('재연결 후: 새 주인으로 저장 허용',            assertSucceeds(setDoc(doc(watch, 'recipes/w5'), watchRecipe({ userId: 'other1' }))));
+await check('재연결 후: 옛 주인으로 저장 거부',            assertFails(setDoc(doc(watch, 'recipes/w6'), watchRecipe())));
 
 await env.cleanup();
 console.log('\n' + results.join('\n'));
