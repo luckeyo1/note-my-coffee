@@ -1,6 +1,6 @@
 # 매일 아침 커피 리마인더 푸시 (FCM)
 #
-# 매일 아침(KST 08:00) Firestore pushTokens(옵트인 사용자)로 FCM 알림을 보낸다.
+# 매일 아침(KST 07:30) Firestore pushTokens(옵트인 사용자)로 FCM 알림을 보낸다.
 # 발송 로직은 scripts/send-daily-push.mjs. 언어별 문구 + 무효 토큰 자동 정리.
 #
 # 사전 준비(1회):
@@ -16,7 +16,7 @@ name: daily-push
 
 on:
   schedule:
-    - cron: '0 23 * * *'   # UTC 23:00 = KST 08:00
+    - cron: '30 22 * * *'  # UTC 22:30 = KST 07:30
   workflow_dispatch: {}      # 수동 테스트용
 
 permissions:
