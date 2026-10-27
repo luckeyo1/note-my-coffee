@@ -25,6 +25,7 @@
       "**/*.md",
       "*.docx",
       "scripts/**",
+      "functions/**",
       "store/**",
       "package.json",
       "package-lock.json",
@@ -34,6 +35,10 @@
       "firestore.indexes.json",
       "storage.rules"
     ]
+  },
+
+  "functions": {
+    "source": "functions"
   },
 
   "firestore": {

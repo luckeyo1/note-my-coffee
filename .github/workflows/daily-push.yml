@@ -15,9 +15,10 @@
 name: daily-push
 
 on:
-  schedule:
-    - cron: '30 22 * * *'  # UTC 22:30 = KST 07:30
-  workflow_dispatch: {}      # 수동 테스트용
+  # ⚠️ 자동 예약(cron) 비활성화 — GitHub Actions 예약은 몇 시간씩 밀려(≈10시 발송)
+  #    정시가 안 됐다. 정시 발송은 Cloud Function(functions/index.js,
+  #    Cloud Scheduler 기반 · 정확히 07:30 KST)으로 이관. 이건 수동 폴백용.
+  workflow_dispatch: {}
 
 permissions:
   contents: read

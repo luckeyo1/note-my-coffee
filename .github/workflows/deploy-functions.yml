@@ -1,0 +1,61 @@
+# Cloud Functions 배포 (매일 아침 정시 발송 함수)
+#
+# functions/ 가 바뀌어 main에 올라오면 Firebase Functions를 배포한다.
+# 서비스 계정은 FIREBASE_SERVICE_ACCOUNT 시크릿(= firebase-adminsdk 키)을 쓴다.
+# ⚠️ 그 서비스 계정에 "편집자(Editor)" 역할이 있어야 배포가 된다
+#    (없으면 403). 콘솔: IAM 및 관리자 → IAM → 해당 계정 → 역할 추가 → Editor.
+
+name: deploy-functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/**'
+      - 'firebase.json'
+      - '.github/workflows/deploy-functions.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$SA" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=시크릿 미설정::FIREBASE_SERVICE_ACCOUNT가 없어 함수 배포를 건너뜁니다."
+          fi
+
+  deploy:
+    needs: preflight
+    if: needs.preflight.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: functions 의존성 설치
+        run: npm --prefix functions install
+
+      - name: 서비스 계정 키 파일 작성
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+
+      - name: Functions 배포
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: npx firebase-tools@13 deploy --only functions --project note-my-coffee --non-interactive --force
