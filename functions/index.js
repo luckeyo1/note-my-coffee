@@ -6,6 +6,9 @@
 // 런타임에서 firebase-admin이 기본 서비스 계정으로 초기화되므로 키 파일이 필요 없다
 // (같은 프로젝트의 Firestore 읽기 + FCM 발송 권한을 런타임 SA가 가진다).
 // 토큰 저장은 클라이언트(push.js)가 Firestore pushTokens에 하고, 여기서 읽어 보낸다.
+//
+// 배포 참고: 2세대(Cloud Run) 함수라 배포 SA에 Editor + Cloud Run 관리자 +
+// 서비스 계정 사용자 권한이 필요하다(invoker IAM 설정 때문). (deploy marker: 1)
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { logger } = require("firebase-functions");
 const { initializeApp } = require("firebase-admin/app");
