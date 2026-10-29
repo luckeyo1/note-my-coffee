@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // app/google-services.json이 필요하다(커밋하지 않는다 — wear/README.md).
     alias(libs.plugins.google.services)
+    // 화면 스크린샷(Robolectric으로 JVM에서 렌더) — store/wear/*.png, :app:recordRoborazziDebug
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -52,6 +54,9 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -74,6 +79,12 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.wear.compose.ui.tooling)

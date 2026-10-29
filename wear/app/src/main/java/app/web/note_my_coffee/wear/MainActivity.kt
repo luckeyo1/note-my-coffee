@@ -67,8 +67,13 @@ object Routes {
 }
 
 @Composable
+fun NmcTheme(content: @Composable () -> Unit) {
+    MaterialTheme(colors = NmcColors, content = content)
+}
+
+@Composable
 fun NoteMyCoffeeApp(vm: BrewViewModel = viewModel()) {
-    MaterialTheme(colors = NmcColors) {
+    NmcTheme {
         val nav = rememberSwipeDismissableNavController()
         SwipeDismissableNavHost(navController = nav, startDestination = Routes.HOME) {
             composable(Routes.HOME) {

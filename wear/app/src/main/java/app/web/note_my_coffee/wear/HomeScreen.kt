@@ -25,6 +25,12 @@ import androidx.wear.compose.material.VignettePosition
 fun HomeScreen(vm: BrewViewModel, onBrew: (Mode) -> Unit, onPair: () -> Unit) {
     val link by vm.link.collectAsStateWithLifecycle()
     val pending by vm.pending.collectAsStateWithLifecycle()
+    HomeContent(link, pending, onBrew, onPair)
+}
+
+/** 상태 없는 홈 화면 — 스크린샷 테스트도 이걸 그린다. */
+@Composable
+fun HomeContent(link: Link?, pending: Int, onBrew: (Mode) -> Unit, onPair: () -> Unit) {
     val state = rememberScalingLazyListState()
 
     ListScaffold(state) {

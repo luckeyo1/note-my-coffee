@@ -24,12 +24,17 @@ import androidx.wear.compose.material.Text
 fun PairScreen(vm: BrewViewModel) {
     val link by vm.link.collectAsStateWithLifecycle()
     val pair by vm.pair.collectAsStateWithLifecycle()
-    val state = rememberScalingLazyListState()
 
     // 연결 안 된 상태로 들어오면 바로 코드를 받는다.
     LaunchedEffect(link == null) {
         if (link == null && pair !is PairState.Code) vm.requestCode()
     }
+    PairContent(link, pair, onNewCode = vm::requestCode, onUnlink = vm::unlink)
+}
+
+@Composable
+fun PairContent(link: Link?, pair: PairState, onNewCode: () -> Unit, onUnlink: () -> Unit) {
+    val state = rememberScalingLazyListState()
 
     ListScaffold(state) {
         ScalingLazyColumn(modifier = Modifier.fillMaxWidth(), state = state) {
@@ -42,7 +47,7 @@ fun PairScreen(vm: BrewViewModel) {
                 item {
                     Chip(
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = vm::unlink,
+                        onClick = onUnlink,
                         label = { Text(stringResource(R.string.disconnect)) },
                         colors = ChipDefaults.secondaryChipColors(),
                     )
@@ -70,7 +75,7 @@ fun PairScreen(vm: BrewViewModel) {
                         item {
                             Chip(
                                 modifier = Modifier.fillMaxWidth(),
-                                onClick = vm::requestCode,
+                                onClick = onNewCode,
                                 label = { Text(stringResource(R.string.pair_new)) },
                                 colors = ChipDefaults.secondaryChipColors(),
                             )
@@ -83,7 +88,7 @@ fun PairScreen(vm: BrewViewModel) {
                         item {
                             Chip(
                                 modifier = Modifier.fillMaxWidth(),
-                                onClick = vm::requestCode,
+                                onClick = onNewCode,
                                 label = { Text(stringResource(R.string.retry)) },
                                 colors = ChipDefaults.primaryChipColors(),
                             )

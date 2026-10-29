@@ -62,7 +62,6 @@ private fun fieldLabel(f: Field, mode: Mode): String = stringResource(
 @Composable
 fun LogScreen(vm: BrewViewModel, onEdit: (Field) -> Unit, onSaved: (Boolean) -> Unit) {
     val draft by vm.draft.collectAsStateWithLifecycle()
-    val state = rememberScalingLazyListState()
     val scope = rememberCoroutineScope()
 
     // 원두 이름은 워치 키보드/음성 입력(RemoteInput)으로 받는다.
@@ -72,6 +71,33 @@ fun LogScreen(vm: BrewViewModel, onEdit: (Field) -> Unit, onSaved: (Boolean) -> 
         val text = res.data?.let { RemoteInput.getResultsFromIntent(it) }?.getCharSequence(BEAN_KEY)
         if (text != null) vm.setBean(text.toString())
     }
+
+    LogContent(
+        draft = draft,
+        onEdit = onEdit,
+        onBean = {
+            val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+            RemoteInputIntentHelper.putRemoteInputsExtra(
+                intent,
+                listOf(RemoteInput.Builder(BEAN_KEY).setLabel(beanLabel).build()),
+            )
+            beanInput.launch(intent)
+        },
+        onSuccess = vm::setSuccess,
+        onSave = { scope.launch { onSaved(vm.save()) } },
+    )
+}
+
+@Composable
+fun LogContent(
+    draft: Draft,
+    onEdit: (Field) -> Unit,
+    onBean: () -> Unit,
+    onSuccess: (Boolean) -> Unit,
+    onSave: () -> Unit,
+) {
+    val state = rememberScalingLazyListState()
+    val beanLabel = stringResource(R.string.bean)
 
     ListScaffold(state) {
         ScalingLazyColumn(modifier = Modifier.fillMaxWidth(), state = state) {
@@ -95,14 +121,7 @@ fun LogScreen(vm: BrewViewModel, onEdit: (Field) -> Unit, onSaved: (Boolean) -> 
             item {
                 Chip(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
-                        RemoteInputIntentHelper.putRemoteInputsExtra(
-                            intent,
-                            listOf(RemoteInput.Builder(BEAN_KEY).setLabel(beanLabel).build()),
-                        )
-                        beanInput.launch(intent)
-                    },
+                    onClick = onBean,
                     label = { Text(beanLabel, color = Muted, fontSize = 12.sp) },
                     secondaryLabel = {
                         Text(draft.beanName.ifBlank { stringResource(R.string.bean_empty) }, maxLines = 1)
@@ -114,7 +133,7 @@ fun LogScreen(vm: BrewViewModel, onEdit: (Field) -> Unit, onSaved: (Boolean) -> 
                 ToggleChip(
                     modifier = Modifier.fillMaxWidth(),
                     checked = draft.success,
-                    onCheckedChange = vm::setSuccess,
+                    onCheckedChange = onSuccess,
                     label = { Text(stringResource(R.string.success)) },
                     toggleControl = { Switch(checked = draft.success) },
                 )
@@ -122,7 +141,7 @@ fun LogScreen(vm: BrewViewModel, onEdit: (Field) -> Unit, onSaved: (Boolean) -> 
             item {
                 Chip(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { scope.launch { onSaved(vm.save()) } },
+                    onClick = onSave,
                     label = { Text(stringResource(R.string.save)) },
                     colors = ChipDefaults.primaryChipColors(),
                 )
@@ -138,6 +157,11 @@ fun LogScreen(vm: BrewViewModel, onEdit: (Field) -> Unit, onSaved: (Boolean) -> 
 @Composable
 fun EditScreen(vm: BrewViewModel, field: Field, onDone: () -> Unit) {
     val draft by vm.draft.collectAsStateWithLifecycle()
+    EditContent(draft, field, onNudge = { steps -> vm.nudge(field, steps) }, onDone = onDone)
+}
+
+@Composable
+fun EditContent(draft: Draft, field: Field, onNudge: (Int) -> Unit, onDone: () -> Unit) {
     val focus = remember { FocusRequester() }
     val acc = remember { FloatArray(1) }
     LaunchedEffect(Unit) { focus.requestFocus() }
@@ -152,7 +176,7 @@ fun EditScreen(vm: BrewViewModel, field: Field, onDone: () -> Unit) {
                     val steps = (acc[0] / ROTARY_PX_PER_STEP).toInt()
                     if (steps != 0) {
                         acc[0] -= steps * ROTARY_PX_PER_STEP
-                        vm.nudge(field, steps)
+                        onNudge(steps)
                     }
                     true
                 }
@@ -169,10 +193,10 @@ fun EditScreen(vm: BrewViewModel, field: Field, onDone: () -> Unit) {
                 }
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(onClick = { vm.nudge(field, -1) }, colors = ButtonDefaults.secondaryButtonColors()) {
+                    Button(onClick = { onNudge(-1) }, colors = ButtonDefaults.secondaryButtonColors()) {
                         Text("−", fontSize = 20.sp)
                     }
-                    Button(onClick = { vm.nudge(field, 1) }, colors = ButtonDefaults.secondaryButtonColors()) {
+                    Button(onClick = { onNudge(1) }, colors = ButtonDefaults.secondaryButtonColors()) {
                         Text("+", fontSize = 20.sp)
                     }
                 }

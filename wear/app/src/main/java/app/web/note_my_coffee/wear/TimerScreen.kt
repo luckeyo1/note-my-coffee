@@ -37,9 +37,6 @@ import androidx.wear.compose.material.TimeText
 fun TimerScreen(vm: BrewViewModel, onLog: () -> Unit) {
     val timer by vm.timer.collectAsStateWithLifecycle()
     val draft by vm.draft.collectAsStateWithLifecycle()
-    val mode = draft.mode
-    val secs = timer.seconds
-    val ideal = idealTime(mode)
 
     // 추출 중에는 화면이 꺼지지 않게
     val view = LocalView.current
@@ -47,6 +44,19 @@ fun TimerScreen(vm: BrewViewModel, onLog: () -> Unit) {
         view.keepScreenOn = timer.running
         onDispose { view.keepScreenOn = false }
     }
+    TimerContent(timer, draft.mode, vm::toggleTimer, vm::resetTimer, onLog)
+}
+
+@Composable
+fun TimerContent(
+    timer: TimerState,
+    mode: Mode,
+    onToggle: () -> Unit,
+    onReset: () -> Unit,
+    onLog: () -> Unit,
+) {
+    val secs = timer.seconds
+    val ideal = idealTime(mode)
 
     val readoutColor = when {
         secs == 0.0 -> Cream
@@ -64,7 +74,7 @@ fun TimerScreen(vm: BrewViewModel, onLog: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable(onClick = vm::toggleTimer),
+                .clickable(onClick = onToggle),
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -88,7 +98,7 @@ fun TimerScreen(vm: BrewViewModel, onLog: () -> Unit) {
                     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                         if (timer.elapsedMs > 0) {
                             CompactButton(
-                                onClick = vm::resetTimer,
+                                onClick = onReset,
                                 colors = ButtonDefaults.secondaryButtonColors(),
                             ) { Text("↺") }
                             Spacer(Modifier.width(6.dp))

@@ -26,6 +26,13 @@
 | `phone-5-logbook.png` | 1080 × 1920 | 폰 스크린샷 ⑤ 로그북 | "모든 한 잔이, 기록이 된다." |
 | `tablet-1-record.png` | 1920 × 1080 | 태블릿 스크린샷(선택) | "숫자 네 개로 완성하는 나만의 커피 레시피." |
 
+## Wear OS (갤럭시 워치) 스크린샷 — `store/wear/`
+
+`wear/` 앱의 실제 화면을 CI(`wear-build`)가 Roborazzi로 렌더링해 커밋한다
+(454×454 정사각형, 마스크 없음 — Play Console Wear OS 스크린샷 규격). 직접 만들 때는
+`cd wear && ./gradlew :app:recordRoborazziDebug`. 화면 목록은
+`wear/app/src/test/.../ScreenshotTest.kt`.
+
 앱 아이콘(512×512)과 PWA 아이콘은 `manifest.json`/리포지토리 루트의 `icon-*.png`를 사용합니다.
 
 ## Play Console 이미지 규격
