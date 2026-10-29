@@ -16,7 +16,7 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * 워치 화면 스크린샷 — JVM(Robolectric)에서 실제 Compose 화면을 그린다.
  *
- * 기록: ./gradlew :app:recordRoborazziDebug → store/wear/*.png
+ * 기록: ./gradlew :app:recordRoborazziDebug → store/wear/ 아래 PNG
  * (일반 testDebugUnitTest에서는 그리기만 하고 파일은 쓰지 않는다)
  * Play Console의 Wear OS 스크린샷(정사각형, 마스크 없음)으로 그대로 쓸 수 있다.
  */
