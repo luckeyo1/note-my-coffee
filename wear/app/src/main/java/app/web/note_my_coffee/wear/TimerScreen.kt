@@ -28,7 +28,6 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
-import java.util.Locale
 
 /**
  * 추출 타이머. 화면 아무 데나 탭하면 시작/정지 — 젖은 손으로 작은 버튼을 노리지 않게.
@@ -106,16 +105,3 @@ fun TimerScreen(vm: BrewViewModel, onLog: () -> Unit) {
         }
     }
 }
-
-/** 65_300ms → "01:05.3", 9_800ms → "09.8" (웹 스톱워치 swFormatTime과 같은 표기) */
-fun formatClock(ms: Long): String {
-    val min = ms / 60_000
-    val sec = (ms / 1000) % 60
-    val tenth = (ms % 1000) / 100
-    return if (min > 0) String.format(Locale.US, "%02d:%02d.%d", min, sec, tenth)
-    else String.format(Locale.US, "%02d.%d", sec, tenth)
-}
-
-/** 권장 추출 시간 표기 — idealTime(mode)과 같은 구간 */
-fun targetRange(mode: Mode): String =
-    if (mode == Mode.ESPRESSO) "25–35s" else "2:00–4:00"

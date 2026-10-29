@@ -134,3 +134,16 @@ fun formatValue(f: Field, mode: Mode, v: Double): String =
     } else {
         String.format(Locale.US, "%.1f", v)
     }
+
+/** 65_300ms → "01:05.3", 9_800ms → "09.8" (웹 스톱워치 swFormatTime과 같은 표기) */
+fun formatClock(ms: Long): String {
+    val min = ms / 60_000
+    val sec = (ms / 1000) % 60
+    val tenth = (ms % 1000) / 100
+    return if (min > 0) String.format(Locale.US, "%02d:%02d.%d", min, sec, tenth)
+    else String.format(Locale.US, "%02d.%d", sec, tenth)
+}
+
+/** 권장 추출 시간 표기 — idealTime(mode)과 같은 구간 */
+fun targetRange(mode: Mode): String =
+    if (mode == Mode.ESPRESSO) "25–35s" else "2:00–4:00"
