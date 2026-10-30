@@ -262,6 +262,39 @@
         }
         .nav-btn:hover { filter: brightness(1.05); }
 
+        /* 언어 토글 — nav-links 밖에 둬서 모바일(nav-links 숨김)에서도 보인다. */
+        .lang-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px;
+            margin-right: 12px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            flex-shrink: 0;
+        }
+        .lang-toggle button {
+            border: 0;
+            background: transparent;
+            color: var(--sub);
+            font-family: var(--sans);
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1;
+            padding: 5px 8px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: background 0.16s, color 0.16s;
+        }
+        .lang-toggle button:hover { color: var(--gold); }
+        .lang-toggle button.active { background: var(--gold); color: #FCFAF6; }
+        /* 좁은 화면: 로고 + 언어 토글만 남긴다. 내비 CTA는 히어로·스티키 CTA와
+           겹치므로 숨겨 토글이 들어갈 자리를 만든다. */
+        @media (max-width: 720px) {
+            .lang-toggle { margin-left: auto; }
+            .nav-btn { display: none; }
+        }
+
         /* ── HERO ── */
         /* 히어로 — 좌우 분할: 왼쪽 카피, 오른쪽 제품 카드. 배경 오른쪽 아래로
            밝은 커피 사진이 은은하게 깔린다(img/hero-bright.webp). 사진이 없으면
@@ -1731,12 +1764,19 @@
     <nav class="nav">
         <span class="nav-logo"><img src="logo-dark.svg" alt=""> Note My Coffee</span>
         <div class="nav-links">
-            <a href="#demo">사용 방법</a>
-            <a href="#quiz">취향 검사</a>
-            <a href="#faq">FAQ</a>
+            <a href="#demo" data-i18n-text="nav.howto">사용 방법</a>
+            <a href="#quiz" data-i18n-text="nav.quiz">취향 검사</a>
+            <a href="#faq" data-i18n-text="nav.faq">FAQ</a>
+        </div>
+        <!-- 언어 토글: landing-i18n.js가 #ll-* 버튼을 배선한다. -->
+        <div class="lang-toggle" role="group" aria-label="Language">
+            <button type="button" id="ll-en">EN</button>
+            <button type="button" id="ll-ko">KO</button>
+            <button type="button" id="ll-ja">日</button>
+            <button type="button" id="ll-zh">繁</button>
         </div>
         <!-- 인라인 스크립트가 이 버튼의 클릭을 #btn-get-started로 프록시한다. id 유지 필수. -->
-        <button class="nav-btn" id="btn-nav-cta">첫 커피 기록하기</button>
+        <button class="nav-btn" id="btn-nav-cta" data-i18n-text="cta.signed_out">첫 커피 기록하기</button>
     </nav>
 
     <!-- HERO -->
@@ -1749,34 +1789,34 @@
                      반면 "어제는 맛있었는데 오늘은 아니다"는 이 제품의 사용자가 실제로
                      겪은 순간이라 첫 줄에서 "내 얘기다"가 걸린다.
                      (이 문장은 원래 4번째 섹션 페르소나 카드에 묻혀 있었다.) -->
-                <div class="hero-eyebrow">바리스타가 만든 커피 기록</div>
-                <h1 class="hero-title">
+                <div class="hero-eyebrow" data-i18n-text="hero.eyebrow">바리스타가 만든 커피 기록</div>
+                <h1 class="hero-title" data-i18n="hero.title">
                     어제의 좋은 한 잔,<br>
                     <em>오늘의 기준으로.</em>
                 </h1>
-                <p class="hero-body">
+                <p class="hero-body" data-i18n-text="hero.body">
                     도징·온도·시간·추출량을 남기고, 다음 추출을 준비하세요.
                 </p>
                 <div class="hero-actions">
                     <button class="btn-primary" id="btn-get-started">
                         <!-- landing.js가 로그인 상태에 따라 텍스트를 덮어쓴다(비로그인:
                              "첫 커피 기록하기"). 스크립트 전/실패 시 보이는 기본값도 맞춰 둔다. -->
-                        <span>첫 커피 기록하기</span>
+                        <span data-i18n-text="cta.signed_out">첫 커피 기록하기</span>
                         <span>→</span>
                     </button>
                     <!-- 아직 기록할 준비가 안 된 방문자를 받는 소프트 진입점. 전환 버튼과
                          경쟁하지 않도록 텍스트 링크로 둔다. -->
                     <a class="btn-text" href="#quiz">
-                        <span>취향부터 알아보기</span>
+                        <span data-i18n-text="hero.cta2">취향부터 알아보기</span>
                         <span>→</span>
                     </a>
                 </div>
-                <p class="hero-caption">설치 없이 웹에서 바로 · 첫 기록은 로그인 없이</p>
+                <p class="hero-caption" data-i18n-text="hero.caption">설치 없이 웹에서 바로 · 첫 기록은 로그인 없이</p>
                 <!-- 보조 설치 경로. 웹 즉시 시작이 주 CTA라, Play는 '홈 화면에 두고 싶은'
                      방문자를 위한 선택지로 캡션 아래 둔다. -->
                 <a class="play-badge" href="https://play.google.com/store/apps/details?id=app.web.note_my_coffee" target="_blank" rel="noopener" aria-label="Google Play에서 Note My Coffee 설치">
                     <svg class="play-badge-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"/></svg>
-                    <span class="play-badge-txt"><small>ANDROID 앱 출시</small>Google Play에서 받기</span>
+                    <span class="play-badge-txt"><small data-i18n-text="hero.play_small">ANDROID 앱 출시</small><span data-i18n-text="hero.play_main">Google Play에서 받기</span></span>
                 </a>
                 <!-- 실제 누적 수치가 있을 때만 landing.js가 채우고 노출한다 -->
                 <span class="hero-stat" id="hero-stat" hidden></span>
@@ -1795,7 +1835,7 @@
                                 <span class="pd-logbook">LOG BOOK<span class="pd-logbook-badge">12</span></span>
                             </div>
                             <div class="pd-env">
-                                <span><span class="pd-env-dot"></span><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-pin"/></svg> 서울 · 24°C 맑음</span>
+                                <span><span class="pd-env-dot"></span><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-pin"/></svg> <span data-i18n-text="mockup.env">서울 · 24°C 맑음</span></span>
                                 <span class="pd-env-hint">Ideal extraction conditions</span>
                             </div>
                             <div class="pd-modes">
@@ -1855,7 +1895,7 @@
                 </div>
             </div>
         </div>
-        <a class="hero-scroll" href="#story">스크롤<span></span></a>
+        <a class="hero-scroll" href="#story"><span data-i18n-text="hero.scroll">스크롤</span><span></span></a>
     </section>
 
     <div class="rule"></div>
@@ -1863,8 +1903,8 @@
     <!-- ACT 1: 문제. 예전 ACT2(집에서의 아침)를 여기 흡수해 같은 논증의 반복을 없앴다. -->
     <section class="story-section reveal" id="story">
         <div class="story-inner">
-            <div class="section-tag">01 — 기억은 흐려진다</div>
-            <h2 class="section-title">
+            <div class="section-tag" data-i18n-text="story.tag">01 — 기억은 흐려진다</div>
+            <h2 class="section-title" data-i18n="story.title">
                 다이얼링은 반복이다.<br>
                 하지만 <em>기억</em>은 흐려진다.
             </h2>
@@ -1872,27 +1912,27 @@
                 <!-- 문제를 '개인의 실수'가 아니라 '구조'로 규정한다.
                      기억 못 한 걸 자기 탓으로 두면 읽는 사람은 더 노력하겠다고 결심하고
                      페이지를 떠난다. 원인을 변수 개수 쪽으로 옮겨야 도구가 답이 된다. -->
-                <p>
+                <p data-i18n="story.p1">
                     커피 한 잔에는 최소 네 개의 변수가 있다. 도징·온도·시간·수율.
                     여기에 원두와 분쇄도까지 더하면 조합은 수백 가지가 된다.
                     사람의 기억은 그걸 버티지 못한다 — 사흘이면 흐려지고, 원두가 바뀌면 처음으로 돌아간다.
                     <strong>맛이 들쭉날쭉한 건 실력이 부족해서가 아니라, 기억에 맡겼기 때문이다.</strong>
                 </p>
-                <p>
+                <p data-i18n="story.p2">
                     바리스타로 일하면서 매일 추출을 반복했다.
                     어떤 원두는 17.5g에서 완벽했고, 어떤 건 19g이어야 했다.
                     온도가 1도만 달라져도 맛이 달라졌다.
                 </p>
-                <div class="pull-quote">
+                <div class="pull-quote" data-i18n="story.quote">
                     "그 조합이 완벽했다. 그런데 이틀 뒤에,<br>
                     기억이 안 났다."
                 </div>
-                <p>
+                <p data-i18n="story.p3">
                     원두가 바뀌던 날, 오픈이 20분 늦었다.
                     전날 세팅이 기억나지 않아 손님이 기다리는 동안 처음부터 다시 추출했다.
                     완벽한 세팅을 찾아도 기록하지 않으면 매번 처음이 된다.
                 </p>
-                <p>
+                <p data-i18n="story.p4">
                     카페를 그만둔 지금도 마찬가지다. 핸드드립 한 잔으로 하루를 시작하는데,
                     어제는 맛있었고 오늘은 아니다.
                     도징이 달랐던 걸까, 물 온도였을까, 추출 시간이 문제였을까 — 알 수가 없다.
@@ -1909,31 +1949,31 @@
                 <div class="param">
                     <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-bean"/></svg>
                     <div class="param-val">18.0<span class="param-unit">g</span></div>
-                    <div class="param-key">도징</div>
-                    <div class="param-desc">어떤 원두를, 얼마나 담을지</div>
+                    <div class="param-key" data-i18n-text="param.dose_key">도징</div>
+                    <div class="param-desc" data-i18n-text="param.dose_desc">어떤 원두를, 얼마나 담을지</div>
                 </div>
                 <div class="param">
                     <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-thermo"/></svg>
                     <div class="param-val">92<span class="param-unit">°C</span></div>
-                    <div class="param-key">물 온도</div>
-                    <div class="param-desc">최적의 온도로 추출을 시작</div>
+                    <div class="param-key" data-i18n-text="param.temp_key">물 온도</div>
+                    <div class="param-desc" data-i18n-text="param.temp_desc">최적의 온도로 추출을 시작</div>
                 </div>
                 <div class="param">
                     <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-timer"/></svg>
-                    <div class="param-val">28.5<span class="param-unit">초</span></div>
-                    <div class="param-key">추출 시간</div>
-                    <div class="param-desc">흐르는 시간을 정확하게</div>
+                    <div class="param-val">28.5<span class="param-unit" data-i18n-text="param.time_unit">초</span></div>
+                    <div class="param-key" data-i18n-text="param.time_key">추출 시간</div>
+                    <div class="param-desc" data-i18n-text="param.time_desc">흐르는 시간을 정확하게</div>
                 </div>
                 <div class="param">
                     <svg class="param-ico" aria-hidden="true" focusable="false"><use href="#i-drop"/></svg>
                     <div class="param-val">36.0<span class="param-unit">g</span></div>
-                    <div class="param-key">추출량</div>
-                    <div class="param-desc">원하는 만큼, 안정적으로</div>
+                    <div class="param-key" data-i18n-text="param.yield_key">추출량</div>
+                    <div class="param-desc" data-i18n-text="param.yield_desc">원하는 만큼, 안정적으로</div>
                 </div>
             </div>
 
             <div class="story-text">
-                <p>
+                <p data-i18n="story.p5">
                     <strong>완벽한 커피를 한 번 내렸다면, 다시 내릴 수 있어야 한다.</strong>
                     이 숫자들을 저장해두면 다음 번에 재현할 수 있다.
                     원두가 바뀌어도, 날씨가 달라져도,
@@ -1948,23 +1988,23 @@
     <!-- ACT 2: 해결 -->
     <section class="story-section dark-section reveal">
         <div class="story-inner">
-            <div class="section-tag">02 — 해결</div>
-            <h2 class="section-title"><em>그래서</em> 만들었다.</h2>
+            <div class="section-tag" data-i18n-text="act2.tag">02 — 해결</div>
+            <h2 class="section-title" data-i18n="act2.title"><em>그래서</em> 만들었다.</h2>
             <div class="story-text">
-                <p>추출할 때마다 <strong>30초</strong>면 기록이 완료된다.</p>
+                <p data-i18n="act2.p1">추출할 때마다 <strong>30초</strong>면 기록이 완료된다.</p>
                 <div class="tag-row">
-                    <span class="tag-pill">도징</span>
-                    <span class="tag-pill">온도</span>
-                    <span class="tag-pill">시간</span>
-                    <span class="tag-pill">수율</span>
+                    <span class="tag-pill" data-i18n-text="act2.pill_dose">도징</span>
+                    <span class="tag-pill" data-i18n-text="act2.pill_temp">온도</span>
+                    <span class="tag-pill" data-i18n-text="act2.pill_time">시간</span>
+                    <span class="tag-pill" data-i18n-text="act2.pill_yield">수율</span>
                 </div>
-                <p>네 가지 변수를 슬라이더로 맞추고 저장하면 끝이다.</p>
-                <p>
+                <p data-i18n-text="act2.p2">네 가지 변수를 슬라이더로 맞추고 저장하면 끝이다.</p>
+                <p data-i18n-text="act2.p3">
                     원두 이름, 산지, 테이스팅 노트도 함께 남길 수 있다.
                     원두가 바뀌는 날, 지난 기록을 꺼내면 다이얼링 출발점이 생긴다.
                     매일 아침 커피가 조금씩 나아진다.
                 </p>
-                <p>
+                <p data-i18n-text="act2.p4">
                     첫 기록은 로그인 없이 바로 남길 수 있다.
                     이어서 쌓아가려면 카카오나 구글로 로그인 한 번 — 그때 체험으로 남긴 기록도 계정으로 함께 옮겨가고,
                     기기가 달라져도 그대로 유지된다.
@@ -1980,10 +2020,10 @@
          그대로 재사용해 새 CSS는 .persona-when 한 줄뿐이다.
          dark-section을 쓰지 않는다 — 02가 이미 dark라 붙이면 한 패널로 뭉친다. -->
     <section class="story-section reveal" id="persona">
-        <div class="section-tag">누구에게</div>
+        <div class="section-tag" data-i18n-text="persona.tag">누구에게</div>
         <!-- "이런 분들이 매일 씁니다"는 관찰문이라 읽는 사람이 구경꾼으로 남는다.
              질문으로 바꿔 스스로 손을 들게 만든다. -->
-        <h2 class="section-title" style="max-width:620px;">혹시 이 중<br><em>하나</em>인가요?</h2>
+        <h2 class="section-title" style="max-width:620px;" data-i18n="persona.title">혹시 이 중<br><em>하나</em>인가요?</h2>
 
         <div class="features-grid">
             <div class="feat-card">
@@ -1993,25 +2033,25 @@
                 <!-- 원래 여기 있던 "어제는 맛있었는데 오늘은 아닌 사람"은 이 페이지에서
                      가장 강한 인식 문장이라 히어로로 올렸다. 이 카드는 그 대신 가장
                      구체적인 손실 — 이미 쓴 장비값 — 을 건드린다. -->
-                <div class="persona-when">홈카페를 막 시작했다면</div>
-                <div class="feat-title">장비는 갖췄는데 맛이 안 잡히는 사람</div>
-                <div class="feat-desc">그라인더도 머신도 샀는데 어제와 오늘이 다릅니다. 장비를 더 사도 해결되지 않습니다 — 무엇을 바꿨는지 남기는 것부터입니다.</div>
+                <div class="persona-when" data-i18n-text="persona.when1">홈카페를 막 시작했다면</div>
+                <div class="feat-title" data-i18n-text="persona.title1">장비는 갖췄는데 맛이 안 잡히는 사람</div>
+                <div class="feat-desc" data-i18n-text="persona.desc1">그라인더도 머신도 샀는데 어제와 오늘이 다릅니다. 장비를 더 사도 해결되지 않습니다 — 무엇을 바꿨는지 남기는 것부터입니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">
                     <svg aria-hidden="true" focusable="false"><use href="#i-leaf"/></svg>
                 </div>
-                <div class="persona-when">원두를 자주 바꾼다면</div>
-                <div class="feat-title">새 봉투마다 처음부터 헤매는 사람</div>
-                <div class="feat-desc">원두별로 기록이 쌓이면 다음 봉투의 첫 잔도 감이 아니라 지난 성공 세팅 근처에서 시작합니다.</div>
+                <div class="persona-when" data-i18n-text="persona.when2">원두를 자주 바꾼다면</div>
+                <div class="feat-title" data-i18n-text="persona.title2">새 봉투마다 처음부터 헤매는 사람</div>
+                <div class="feat-desc" data-i18n-text="persona.desc2">원두별로 기록이 쌓이면 다음 봉투의 첫 잔도 감이 아니라 지난 성공 세팅 근처에서 시작합니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">
                     <svg aria-hidden="true" focusable="false"><use href="#i-bolt"/></svg>
                 </div>
-                <div class="persona-when">카페에서 일한다면</div>
-                <div class="feat-title">오픈 전 다이얼링을 기억에 맡기던 사람</div>
-                <div class="feat-desc">어제 맞춰둔 값을 그대로 꺼내 씁니다. 로그인하면 카페 PC에서도 같은 기록이 열립니다.</div>
+                <div class="persona-when" data-i18n-text="persona.when3">카페에서 일한다면</div>
+                <div class="feat-title" data-i18n-text="persona.title3">오픈 전 다이얼링을 기억에 맡기던 사람</div>
+                <div class="feat-desc" data-i18n-text="persona.desc3">어제 맞춰둔 값을 그대로 꺼내 씁니다. 로그인하면 카페 PC에서도 같은 기록이 열립니다.</div>
             </div>
         </div>
     </section>
@@ -2020,39 +2060,39 @@
 
     <!-- DEMO: 실제 화면 15초 데모 -->
     <section class="story-section reveal" id="demo">
-        <div class="section-tag">03 — 실제 화면</div>
-        <h2 class="section-title" style="max-width:600px;">말보다, <em>15초</em> 데모.</h2>
+        <div class="section-tag" data-i18n-text="demo.tag">03 — 실제 화면</div>
+        <h2 class="section-title" style="max-width:600px;" data-i18n="demo.title">말보다, <em>15초</em> 데모.</h2>
 
         <div class="demo-layout">
             <div class="demo-steps">
                 <button type="button" class="demo-step is-active" data-scene="0">
                     <span class="demo-step-track"><span class="demo-step-fill"></span></span>
-                    <span class="demo-step-num">01 · 기록</span>
-                    <div class="demo-step-title">슬라이더 네 번이면 끝</div>
-                    <div class="demo-step-desc">도징·온도·시간·수율을 맞추는 동안 SCA 기준 품질 배지와 추출 비율이 실시간으로 계산됩니다.</div>
+                    <span class="demo-step-num" data-i18n-text="demo.num1">01 · 기록</span>
+                    <div class="demo-step-title" data-i18n-text="demo.t1">슬라이더 네 번이면 끝</div>
+                    <div class="demo-step-desc" data-i18n-text="demo.d1">도징·온도·시간·수율을 맞추는 동안 SCA 기준 품질 배지와 추출 비율이 실시간으로 계산됩니다.</div>
                 </button>
                 <button type="button" class="demo-step" data-scene="1">
                     <span class="demo-step-track"><span class="demo-step-fill"></span></span>
-                    <span class="demo-step-num">02 · 추출</span>
-                    <div class="demo-step-title">내장 스톱워치</div>
-                    <div class="demo-step-desc">추출과 동시에 시간을 재고, APPLY 한 번이면 측정값이 레시피에 그대로 들어갑니다.</div>
+                    <span class="demo-step-num" data-i18n-text="demo.num2">02 · 추출</span>
+                    <div class="demo-step-title" data-i18n-text="demo.t2">내장 스톱워치</div>
+                    <div class="demo-step-desc" data-i18n-text="demo.d2">추출과 동시에 시간을 재고, APPLY 한 번이면 측정값이 레시피에 그대로 들어갑니다.</div>
                 </button>
                 <button type="button" class="demo-step" data-scene="2">
                     <span class="demo-step-track"><span class="demo-step-fill"></span></span>
-                    <span class="demo-step-num">03 · 로그북</span>
-                    <div class="demo-step-title">레시피 카드로 쌓인다</div>
-                    <div class="demo-step-desc">저장한 레시피는 카드로 모입니다. 원두가 바뀌는 날, 지난 성공 세팅이 다이얼링의 출발점이 됩니다.</div>
+                    <span class="demo-step-num" data-i18n-text="demo.num3">03 · 로그북</span>
+                    <div class="demo-step-title" data-i18n-text="demo.t3">레시피 카드로 쌓인다</div>
+                    <div class="demo-step-desc" data-i18n-text="demo.d3">저장한 레시피는 카드로 모입니다. 원두가 바뀌는 날, 지난 성공 세팅이 다이얼링의 출발점이 됩니다.</div>
                 </button>
                 <!-- 공유는 이미 만들어져 있는데 랜딩에 한 마디도 없었다. 결과물이
                      이미지라 데모로 보여주기에 가장 적합한 기능이기도 하다.
                      플레이어는 .pd-scene 개수를 세어 도므로 마크업만 더하면 된다. -->
                 <button type="button" class="demo-step" data-scene="3">
                     <span class="demo-step-track"><span class="demo-step-fill"></span></span>
-                    <span class="demo-step-num">04 · 공유</span>
-                    <div class="demo-step-title">링크 하나면 그대로 재현된다</div>
-                    <div class="demo-step-desc">저장한 레시피가 카드 이미지로 만들어집니다. 사진을 올렸다면 그 사진을 배경으로도 뽑을 수 있고, 링크를 함께 보내면 받는 사람은 숫자를 옮겨 적을 필요 없이 그 레시피를 자기 로그북에 그대로 담습니다.</div>
+                    <span class="demo-step-num" data-i18n-text="demo.num4">04 · 공유</span>
+                    <div class="demo-step-title" data-i18n-text="demo.t4">링크 하나면 그대로 재현된다</div>
+                    <div class="demo-step-desc" data-i18n-text="demo.d4">저장한 레시피가 카드 이미지로 만들어집니다. 사진을 올렸다면 그 사진을 배경으로도 뽑을 수 있고, 링크를 함께 보내면 받는 사람은 숫자를 옮겨 적을 필요 없이 그 레시피를 자기 로그북에 그대로 담습니다.</div>
                 </button>
-                <a class="demo-open" href="app.html">설치 없이 브라우저에서 바로 — 앱 열어보기 →</a>
+                <a class="demo-open" href="app.html" data-i18n-text="demo.open">설치 없이 브라우저에서 바로 — 앱 열어보기 →</a>
             </div>
 
             <div class="demo-phone-wrap">
@@ -2069,7 +2109,7 @@
                                 <span class="pd-logbook">LOG BOOK<span class="pd-logbook-badge">12</span></span>
                             </div>
                             <div class="pd-env">
-                                <span><span class="pd-env-dot"></span><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-pin"/></svg> 서울 · 24°C 맑음</span>
+                                <span><span class="pd-env-dot"></span><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-pin"/></svg> <span data-i18n-text="mockup.env">서울 · 24°C 맑음</span></span>
                                 <span class="pd-env-hint">Ideal extraction conditions</span>
                             </div>
                             <div class="pd-modes">
@@ -2157,11 +2197,11 @@
                                     <span class="pd-sw-btn start" id="pd-sw-start">START</span>
                                     <span class="pd-sw-btn apply" id="pd-sw-apply">APPLY</span>
                                 </div>
-                                <p class="pd-sw-hint" id="pd-sw-hint">추출과 동시에 시간 측정</p>
+                                <p class="pd-sw-hint" id="pd-sw-hint" data-i18n-text="mockup.sw_hint">추출과 동시에 시간 측정</p>
                                 <div class="pd-applied" id="pd-applied">
                                     <div>
                                         <div class="pd-label">EXTRACTION TIME</div>
-                                        <div class="pd-hint">스톱워치 값 자동 입력</div>
+                                        <div class="pd-hint" data-i18n-text="mockup.applied_hint">스톱워치 값 자동 입력</div>
                                     </div>
                                     <div class="pd-value">
                                         <span id="pd-applied-val">—</span><span class="pd-unit">sec</span>
@@ -2191,7 +2231,7 @@
                                 </div>
                                 <div class="pd-card-foot">
                                     <span class="pd-success" id="pd-success"><svg class="pd-ico" aria-hidden="true" focusable="false"><use href="#i-check"/></svg> SUCCESS</span>
-                                    <span class="pd-card-actions">공유 · 삭제</span>
+                                    <span class="pd-card-actions" data-i18n-text="mockup.card_actions">공유 · 삭제</span>
                                 </div>
                             </div>
                             <div class="pd-card-ghost">Colombia Huila</div>
@@ -2205,12 +2245,12 @@
                              이미지가 없다 — 탭 이름으로만 존재를 알린다. -->
                         <div class="pd-scene">
                             <div class="pd-share-head">
-                                <span class="pd-share-head-title">레시피 공유</span>
+                                <span class="pd-share-head-title" data-i18n-text="mockup.share_title">레시피 공유</span>
                                 <span class="pd-share-head-x">✕</span>
                             </div>
                             <div class="pd-share-tabs">
-                                <span class="pd-share-tab is-on">🗂️ 카드</span>
-                                <span class="pd-share-tab">🖼️ 사진 배경</span>
+                                <span class="pd-share-tab is-on" data-i18n-text="mockup.share_tab_card">🗂️ 카드</span>
+                                <span class="pd-share-tab" data-i18n-text="mockup.share_tab_photo">🖼️ 사진 배경</span>
                             </div>
                             <div class="pd-share-card">
                                 <div class="pd-share-strip">
@@ -2238,22 +2278,22 @@
                                 </div>
                             </div>
                             <div class="pd-share-actions">
-                                <span class="pd-share-btn">↓ 이미지 저장</span>
-                                <span class="pd-share-btn is-narrow">↗ 공유</span>
-                                <span class="pd-share-btn is-primary">🔗 링크 복사</span>
+                                <span class="pd-share-btn" data-i18n-text="mockup.share_save">↓ 이미지 저장</span>
+                                <span class="pd-share-btn is-narrow" data-i18n-text="mockup.share_share">↗ 공유</span>
+                                <span class="pd-share-btn is-primary" data-i18n-text="mockup.share_link">🔗 링크 복사</span>
                             </div>
-                            <div class="pd-share-hint">받는 사람이 링크를 열면 ↓</div>
+                            <div class="pd-share-hint" data-i18n-text="mockup.share_recv_hint">받는 사람이 링크를 열면 ↓</div>
                             <div class="pd-recv">
-                                <div class="pd-recv-head">📨 받은 레시피</div>
+                                <div class="pd-recv-head" data-i18n-text="mockup.recv_head">📨 받은 레시피</div>
                                 <div class="pd-recv-bean">Ethiopia Yirgacheffe</div>
                                 <div class="pd-recv-sub">ESPRESSO · Ethiopia · 18.0g / 92°C / 28.5s / 36g</div>
-                                <div class="pd-recv-btn">내 로그북에 저장하기</div>
+                                <div class="pd-recv-btn" data-i18n-text="mockup.recv_btn">내 로그북에 저장하기</div>
                             </div>
                         </div>
 
                     </div>
                 </div>
-                <span class="demo-caption">실제 서비스 화면 · 자동 재생</span>
+                <span class="demo-caption" data-i18n-text="demo.caption">실제 서비스 화면 · 자동 재생</span>
             </div>
         </div>
     </section>
@@ -2265,10 +2305,10 @@
          15초 데모로 제품을 본 직후가 참여 의향이 가장 높아 기능 섹션 앞으로 올렸다. -->
     <section class="story-section dark-section reveal" id="quiz">
         <div class="story-inner">
-            <div class="section-tag">취향 검사</div>
-            <h2 class="section-title">30초 취향 검사,<br>당신의 <em>원두</em>를 찾아드립니다.</h2>
+            <div class="section-tag" data-i18n-text="quiz.tag">취향 검사</div>
+            <h2 class="section-title" data-i18n="quiz.title">30초 취향 검사,<br>당신의 <em>원두</em>를 찾아드립니다.</h2>
             <div class="story-text">
-                <p>
+                <p data-i18n="quiz.intro">
                     질문 네 개, 30초. 답하는 즉시 커피 취향 프로필과 함께
                     지금 바로 구매할 수 있는 원두를 <strong>무료로</strong> 추천해드립니다.
                 </p>
@@ -2279,14 +2319,14 @@
             <!-- 놀이형 자매 버전으로 가는 진입. 취향 검사가 '정밀'이라면 텔레파시는
                  '직관·공유'다. 공유로 퍼지는 바이럴 동선이라 별도 페이지(/telepathy)로 보낸다. -->
             <a class="telepathy-entry reveal" href="telepathy.html"
-               id="link-telepathy" aria-label="원두 텔레파시 해보기">
+               id="link-telepathy" aria-label="원두 텔레파시 해보기" data-i18n-aria="te.aria">
                 <span class="te-mark" aria-hidden="true">☕</span>
                 <span class="te-body">
                     <span class="te-kicker">Bean Telepathy</span>
-                    <span class="te-title">눈 감고, 운명의 원두를 만나볼까요?</span>
-                    <span class="te-sub">지금 마시고 싶은 그 맛을 커피가 먼저 알아맞혀요. 30초 교신, 결과는 친구와 공유.</span>
+                    <span class="te-title" data-i18n-text="te.title">눈 감고, 운명의 원두를 만나볼까요?</span>
+                    <span class="te-sub" data-i18n-text="te.sub">지금 마시고 싶은 그 맛을 커피가 먼저 알아맞혀요. 30초 교신, 결과는 친구와 공유.</span>
                 </span>
-                <span class="te-go">원두 텔레파시 해보기 →</span>
+                <span class="te-go" data-i18n-text="te.go">원두 텔레파시 해보기 →</span>
             </a>
         </div>
     </section>
@@ -2300,10 +2340,10 @@
     <section class="mid-cta reveal">
         <!-- 중간 CTA는 아직 설득 중인 사람을 잡는 자리다. 절정(최종 CTA)과 경쟁하지
              않도록 약속을 크게 말하지 않고, 문턱이 낮다는 사실만 반복한다. -->
-        <p class="mid-cta-text">오늘 내린 한 잔부터 남겨보세요.<br>
+        <p class="mid-cta-text" data-i18n="mid.text">오늘 내린 한 잔부터 남겨보세요.<br>
             <span>첫 기록은 로그인 없이, 30초면 끝납니다.</span></p>
         <button class="btn-primary" id="btn-mid-cta">
-            <span>무료로 시작하기</span>
+            <span data-i18n-text="cta.free_start">무료로 시작하기</span>
             <span>→</span>
         </button>
     </section>
@@ -2312,8 +2352,8 @@
 
     <!-- FEATURES -->
     <section class="story-section reveal">
-        <div class="section-tag">기능</div>
-        <h2 class="section-title" style="max-width:600px;">기록에 필요한 것만.<br>복잡하지 않다.</h2>
+        <div class="section-tag" data-i18n-text="feat.tag">기능</div>
+        <h2 class="section-title" style="max-width:600px;" data-i18n="feat.title">기록에 필요한 것만.<br>복잡하지 않다.</h2>
 
         <div class="features-grid">
             <div class="feat-card">
@@ -2322,8 +2362,8 @@
                         <path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18 16.5 10.8"/><circle cx="12" cy="18" r="1.3"/>
                     </svg>
                 </div>
-                <div class="feat-title">에스프레소 / 핸드드립</div>
-                <div class="feat-desc">감이 아니라 숫자로. SCA 기준 실시간 피드백이 다이얼링을 도와줍니다.</div>
+                <div class="feat-title" data-i18n-text="feat.t1">에스프레소 / 핸드드립</div>
+                <div class="feat-desc" data-i18n-text="feat.d1">감이 아니라 숫자로. SCA 기준 실시간 피드백이 다이얼링을 도와줍니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">
@@ -2331,8 +2371,8 @@
                         <circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.6"/><path d="M9.5 2.5h5"/><path d="M19.2 6.3 20.6 4.9"/>
                     </svg>
                 </div>
-                <div class="feat-title">내장 스톱워치</div>
-                <div class="feat-desc">폰 스톱워치를 따로 켤 필요 없이, 추출과 동시에 시간이 기록됩니다.</div>
+                <div class="feat-title" data-i18n-text="feat.t2">내장 스톱워치</div>
+                <div class="feat-desc" data-i18n-text="feat.d2">폰 스톱워치를 따로 켤 필요 없이, 추출과 동시에 시간이 기록됩니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">
@@ -2340,8 +2380,8 @@
                         <rect x="3.2" y="6" width="17.6" height="14.4" rx="2.6"/><path d="M7.4 3.4h9.2"/><path d="M7.6 11.2h7"/><path d="M7.6 15.4h4.4"/>
                     </svg>
                 </div>
-                <div class="feat-title">레시피 로그북</div>
-                <div class="feat-desc">원두별·날짜별로 쌓이는 히스토리가 다음 다이얼링의 출발점이 됩니다.</div>
+                <div class="feat-title" data-i18n-text="feat.t3">레시피 로그북</div>
+                <div class="feat-desc" data-i18n-text="feat.d3">원두별·날짜별로 쌓이는 히스토리가 다음 다이얼링의 출발점이 됩니다.</div>
             </div>
             <div class="feat-card">
                 <div class="feat-icon">
@@ -2349,8 +2389,8 @@
                         <path d="M7.2 18.4h9.6a4.2 4.2 0 0 0 .45-8.37A6.2 6.2 0 0 0 6.1 11.3a3.55 3.55 0 0 0 1.1 7.1Z"/>
                     </svg>
                 </div>
-                <div class="feat-title">어디서든 접속</div>
-                <div class="feat-desc">설치 없이 모든 기기에서. 로그인하면 카페 PC에서도 그대로 이어집니다.</div>
+                <div class="feat-title" data-i18n-text="feat.t4">어디서든 접속</div>
+                <div class="feat-desc" data-i18n-text="feat.d4">설치 없이 모든 기기에서. 로그인하면 카페 PC에서도 그대로 이어집니다.</div>
             </div>
         </div>
     </section>
@@ -2361,21 +2401,21 @@
          FAQ 바로 앞에 둬서 반론을 다 지운 뒤 최종 CTA로 넘기는 기존 흐름을 유지한다.
          행은 앱에 실제로 있는 기능만 쓴다 — 추이 차트·통계 같은 없는 기능은 한 줄도 넣지 않는다. -->
     <section class="story-section reveal" id="compare">
-        <div class="section-tag">비교</div>
-        <h2 class="section-title" style="max-width:620px;">메모장에 적어도<br>되지 <em>않나요</em>.</h2>
+        <div class="section-tag" data-i18n-text="cmp.tag">비교</div>
+        <h2 class="section-title" style="max-width:620px;" data-i18n="cmp.title">메모장에 적어도<br>되지 <em>않나요</em>.</h2>
         <div class="story-text" style="max-width:640px;">
-            <p>됩니다. 저도 그렇게 시작했고, <span class="nm">Beanconqueror</span>·<span class="nm">Filtru</span> 같은 전문 기록 앱도 다 써봤습니다. 다들 훌륭하지만 공통의 벽이 하나 있었어요 — 매일 아침 빠르게 남기기엔 손이 많이 간다는 것.</p>
+            <p data-i18n="cmp.p1">됩니다. 저도 그렇게 시작했고, <span class="nm">Beanconqueror</span>·<span class="nm">Filtru</span> 같은 전문 기록 앱도 다 써봤습니다. 다들 훌륭하지만 공통의 벽이 하나 있었어요 — 매일 아침 빠르게 남기기엔 손이 많이 간다는 것.</p>
         </div>
 
         <div class="diff-strip">
-            <div class="diff-tile"><div class="diff-num">4<span>개</span></div><div class="diff-k">채우는 숫자</div><div class="diff-sub">도징·온도·시간·수율</div></div>
-            <div class="diff-tile"><div class="diff-num">30<span>초</span></div><div class="diff-k">추출당 기록</div><div class="diff-sub">슬라이더 네 번이면 끝</div></div>
-            <div class="diff-tile"><div class="diff-num">0<span>단계</span></div><div class="diff-k">설치·앱스토어</div><div class="diff-sub">웹에서 바로 · 안드로이드·iOS·PC</div></div>
+            <div class="diff-tile"><div class="diff-num">4<span data-i18n-text="cmp.tile1_u">개</span></div><div class="diff-k" data-i18n-text="cmp.tile1_k">채우는 숫자</div><div class="diff-sub" data-i18n-text="cmp.tile1_sub">도징·온도·시간·수율</div></div>
+            <div class="diff-tile"><div class="diff-num">30<span data-i18n-text="cmp.tile2_u">초</span></div><div class="diff-k" data-i18n-text="cmp.tile2_k">추출당 기록</div><div class="diff-sub" data-i18n-text="cmp.tile2_sub">슬라이더 네 번이면 끝</div></div>
+            <div class="diff-tile"><div class="diff-num">0<span data-i18n-text="cmp.tile3_u">단계</span></div><div class="diff-k" data-i18n-text="cmp.tile3_k">설치·앱스토어</div><div class="diff-sub" data-i18n-text="cmp.tile3_sub">웹에서 바로 · 안드로이드·iOS·PC</div></div>
         </div>
-        <p class="diff-note">전문 앱이 10가지 넘는 항목으로 <b>깊이</b>를 준다면, Note My Coffee는 <b>네 개로 매일</b>을 지킵니다. 설치도 로그인 장벽도 없이, 어느 기기에서나 같은 기록으로.</p>
+        <p class="diff-note" data-i18n="cmp.note">전문 앱이 10가지 넘는 항목으로 <b>깊이</b>를 준다면, Note My Coffee는 <b>네 개로 매일</b>을 지킵니다. 설치도 로그인 장벽도 없이, 어느 기기에서나 같은 기록으로.</p>
 
         <div class="story-text" style="max-width:640px; margin-top:4px;">
-            <p>매일 반복하면 이런 차이가 남습니다.</p>
+            <p data-i18n-text="cmp.p2">매일 반복하면 이런 차이가 남습니다.</p>
         </div>
 
         <div class="compare-scroll">
@@ -2383,40 +2423,40 @@
                 <thead>
                     <tr>
                         <th scope="col"></th>
-                        <th scope="col">메모앱 · 엑셀</th>
+                        <th scope="col" data-i18n-text="cmp.th_memo">메모앱 · 엑셀</th>
                         <th scope="col" class="col-ours">Note My Coffee</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th scope="row">기록 한 건</th>
-                        <td data-label="메모앱 · 엑셀">항목 이름까지 매번 타이핑</td>
-                        <td class="col-ours" data-label="Note My Coffee">슬라이더 네 번 — 추출당 30초</td>
+                        <th scope="row" data-i18n-text="cmp.r1_h">기록 한 건</th>
+                        <td data-label="메모앱 · 엑셀" data-i18n-text="cmp.r1_m" data-i18n-dlabel="cmp.th_memo">항목 이름까지 매번 타이핑</td>
+                        <td class="col-ours" data-label="Note My Coffee" data-i18n-text="cmp.r1_o">슬라이더 네 번 — 추출당 30초</td>
                     </tr>
                     <tr>
-                        <th scope="row">값이 적절한지</th>
-                        <td data-label="메모앱 · 엑셀">알 수 없다</td>
-                        <td class="col-ours" data-label="Note My Coffee">SCA 기준 IDEAL 배지가 실시간으로</td>
+                        <th scope="row" data-i18n-text="cmp.r2_h">값이 적절한지</th>
+                        <td data-label="메모앱 · 엑셀" data-i18n-text="cmp.r2_m" data-i18n-dlabel="cmp.th_memo">알 수 없다</td>
+                        <td class="col-ours" data-label="Note My Coffee" data-i18n-text="cmp.r2_o">SCA 기준 IDEAL 배지가 실시간으로</td>
                     </tr>
                     <tr>
-                        <th scope="row">추출 비율</th>
-                        <td data-label="메모앱 · 엑셀">직접 계산</td>
-                        <td class="col-ours" data-label="Note My Coffee">도징·수율에서 자동 계산</td>
+                        <th scope="row" data-i18n-text="cmp.r3_h">추출 비율</th>
+                        <td data-label="메모앱 · 엑셀" data-i18n-text="cmp.r3_m" data-i18n-dlabel="cmp.th_memo">직접 계산</td>
+                        <td class="col-ours" data-label="Note My Coffee" data-i18n-text="cmp.r3_o">도징·수율에서 자동 계산</td>
                     </tr>
                     <tr>
-                        <th scope="row">추출 시간</th>
-                        <td data-label="메모앱 · 엑셀">폰 스톱워치를 따로 켠다</td>
-                        <td class="col-ours" data-label="Note My Coffee">내장 스톱워치 → APPLY 한 번</td>
+                        <th scope="row" data-i18n-text="cmp.r4_h">추출 시간</th>
+                        <td data-label="메모앱 · 엑셀" data-i18n-text="cmp.r4_m" data-i18n-dlabel="cmp.th_memo">폰 스톱워치를 따로 켠다</td>
+                        <td class="col-ours" data-label="Note My Coffee" data-i18n-text="cmp.r4_o">내장 스톱워치 → APPLY 한 번</td>
                     </tr>
                     <tr>
-                        <th scope="row">원두가 바뀐 날</th>
-                        <td data-label="메모앱 · 엑셀">지난 파일을 뒤진다</td>
-                        <td class="col-ours" data-label="Note My Coffee">원두별 로그북에서 성공 세팅 바로</td>
+                        <th scope="row" data-i18n-text="cmp.r5_h">원두가 바뀐 날</th>
+                        <td data-label="메모앱 · 엑셀" data-i18n-text="cmp.r5_m" data-i18n-dlabel="cmp.th_memo">지난 파일을 뒤진다</td>
+                        <td class="col-ours" data-label="Note My Coffee" data-i18n-text="cmp.r5_o">원두별 로그북에서 성공 세팅 바로</td>
                     </tr>
                     <tr>
-                        <th scope="row">기기가 바뀌면</th>
-                        <td data-label="메모앱 · 엑셀">파일을 옮겨야 한다</td>
-                        <td class="col-ours" data-label="Note My Coffee">같은 계정으로 열면 그대로</td>
+                        <th scope="row" data-i18n-text="cmp.r6_h">기기가 바뀌면</th>
+                        <td data-label="메모앱 · 엑셀" data-i18n-text="cmp.r6_m" data-i18n-dlabel="cmp.th_memo">파일을 옮겨야 한다</td>
+                        <td class="col-ours" data-label="Note My Coffee" data-i18n-text="cmp.r6_o">같은 계정으로 열면 그대로</td>
                     </tr>
                 </tbody>
             </table>
@@ -2429,37 +2469,35 @@
          답변은 실제 동작 기준 — 게스트 1회 제한은 main.js의 guest trial gate, 저장 위치는 storage.js. -->
     <section class="story-section dark-section reveal" id="faq">
         <div class="story-inner">
-            <div class="section-tag">자주 묻는 질문</div>
-            <h2 class="section-title">궁금한 것만<br>짧게 <em>답변</em>합니다.</h2>
+            <div class="section-tag" data-i18n-text="faq.tag">자주 묻는 질문</div>
+            <h2 class="section-title" data-i18n="faq.title">궁금한 것만<br>짧게 <em>답변</em>합니다.</h2>
 
             <div class="faq-list">
                 <details class="faq-item">
-                    <summary>정말 무료인가요?</summary>
-                    <p class="faq-a">
-                        네. 기록, 로그북, 취향 검사 전부 무료이고 결제 단계가 없습니다.<span id="faq-support-note">
+                    <summary data-i18n-text="faq.q1">정말 무료인가요?</summary>
+                    <p class="faq-a"><span data-i18n-text="faq.a1_main">네. 기록, 로그북, 취향 검사 전부 무료이고 결제 단계가 없습니다.</span><span id="faq-support-note" data-i18n-text="faq.a1_support">
                         아래 후원 섹션은 순수한 선택이며, 지금은 토스페이먼츠 테스트 모드라
-                        결제창이 떠도 돈이 빠져나가지 않습니다.</span>
-                    </p>
+                        결제창이 떠도 돈이 빠져나가지 않습니다.</span></p>
                 </details>
                 <details class="faq-item">
-                    <summary>로그인은 꼭 해야 하나요?</summary>
-                    <p class="faq-a">
+                    <summary data-i18n-text="faq.q2">로그인은 꼭 해야 하나요?</summary>
+                    <p class="faq-a" data-i18n-text="faq.a2">
                         첫 레시피 한 개는 로그인 없이 바로 저장됩니다.
                         두 번째부터 카카오나 구글 로그인이 필요한데, 로그인하는 순간
                         체험으로 남긴 기록도 계정으로 자동으로 옮겨갑니다. 다시 입력할 필요는 없습니다.
                     </p>
                 </details>
                 <details class="faq-item">
-                    <summary>기록한 데이터는 어디에 저장되나요?</summary>
-                    <p class="faq-a">
+                    <summary data-i18n-text="faq.q3">기록한 데이터는 어디에 저장되나요?</summary>
+                    <p class="faq-a" data-i18n-text="faq.a3">
                         로그인 전에는 지금 쓰는 브라우저 안에만 저장됩니다.
                         카카오나 구글로 로그인하면 계정에 묶여 저장되고, 휴대폰이든 카페 PC든
                         같은 계정으로 열면 같은 기록이 그대로 보입니다.
                     </p>
                 </details>
                 <details class="faq-item">
-                    <summary>앱을 설치해야 하나요?</summary>
-                    <p class="faq-a">
+                    <summary data-i18n-text="faq.q4">앱을 설치해야 하나요?</summary>
+                    <p class="faq-a" data-i18n-text="faq.a4">
                         아니요. 브라우저에서 주소만 열면 바로 씁니다.
                         원하시면 홈 화면에 추가해 앱처럼 쓸 수 있고, 그렇게 두면 오프라인에서도 열립니다.
                     </p>
@@ -2474,13 +2512,13 @@
     <section class="final-cta reveal">
         <!-- 히어로에서 던진 문제("어제는 맛있었는데 오늘은 아니다")를 여기서 닫는다.
              수미상관으로 묶어야 페이지 전체가 하나의 논증으로 읽힌다. -->
-        <h2 class="final-title">
+        <h2 class="final-title" data-i18n="final.title">
             내일은 처음이<br>
             <em>아니게</em>.
         </h2>
-        <p class="final-sub">오늘 한 잔만 남겨두면 내일은 어제에서 출발합니다. 30초 · 로그인 없이 · 설치도 결제도 없이.</p>
+        <p class="final-sub" data-i18n-text="final.sub">오늘 한 잔만 남겨두면 내일은 어제에서 출발합니다. 30초 · 로그인 없이 · 설치도 결제도 없이.</p>
         <button class="btn-primary" id="btn-final-cta" style="margin: 0 auto;">
-            <span>무료로 시작하기</span>
+            <span data-i18n-text="cta.free_start">무료로 시작하기</span>
             <span>→</span>
         </button>
     </section>
@@ -2491,21 +2529,21 @@
          전환 동선을 비우려고 최종 CTA 뒤로 뒀고, 버튼도 고스트로 강등했다. -->
     <section class="story-section dark-section reveal" id="support">
         <div class="story-inner">
-            <div class="section-tag">후원</div>
-            <h2 class="section-title">개발자에게 <em>커피 한 잔</em>.</h2>
+            <div class="section-tag" data-i18n-text="support.tag">후원</div>
+            <h2 class="section-title" data-i18n="support.title">개발자에게 <em>커피 한 잔</em>.</h2>
             <div class="story-text">
-                <p>
+                <p data-i18n-text="support.p1">
                     Note My Coffee는 지금까지 무료였고, 앞으로도 무료입니다.
                     그래도 마음이 생기셨다면, 커피 한 잔 값으로 응원해주세요.
                 </p>
-                <p>
+                <p data-i18n="support.p2">
                     아래 결제창은 토스페이먼츠 <strong>샌드박스(테스트 모드)</strong> 데모라
                     실제 결제창은 뜨지만 <strong>돈은 한 푼도 빠져나가지 않습니다</strong>.
                 </p>
             </div>
 
             <button class="btn-ghost" id="btn-open-pay" style="margin-top: 36px;">
-                <span>테스트 결제 열어보기</span>
+                <span data-i18n-text="support.open">테스트 결제 열어보기</span>
                 <span>→</span>
             </button>
 
@@ -2516,10 +2554,10 @@
                     <div id="agreement"></div>
                 </div>
                 <button class="btn-ghost" id="btn-pay">
-                    <span id="btn-pay-label">5,000원 테스트 결제하기</span>
+                    <span id="btn-pay-label" data-i18n-text="support.pay_label">5,000원 테스트 결제하기</span>
                     <span>→</span>
                 </button>
-                <p class="pay-note">테스트 모드 · 실제 결제가 발생하지 않습니다</p>
+                <p class="pay-note" data-i18n-text="support.pay_note">테스트 모드 · 실제 결제가 발생하지 않습니다</p>
             </div>
             <p class="pay-error" id="pay-error" hidden></p>
         </div>
@@ -2527,11 +2565,11 @@
 
     <!-- FOOTER -->
     <footer>
-        <span><svg class="pd-ico" aria-hidden="true" focusable="false" style="color:var(--gold)"><use href="#i-cup"/></svg> Note My Coffee · 바리스타가 만든 커피 기록 앱</span>
+        <span><svg class="pd-ico" aria-hidden="true" focusable="false" style="color:var(--gold)"><use href="#i-cup"/></svg> <span data-i18n-text="footer.brand">Note My Coffee · 바리스타가 만든 커피 기록 앱</span></span>
         <span class="footer-links">
-            <a href="cheatsheet.html">다이얼링 치트시트</a>
-            <a href="privacy.html">개인정보처리방침</a>
-            <a href="mailto:qorlgh1994@gmail.com">문의</a>
+            <a href="cheatsheet.html" data-i18n-text="footer.cheatsheet">다이얼링 치트시트</a>
+            <a href="privacy.html" data-i18n-text="footer.privacy">개인정보처리방침</a>
+            <a href="mailto:qorlgh1994@gmail.com" data-i18n-text="footer.contact">문의</a>
         </span>
     </footer>
 
@@ -2539,8 +2577,8 @@
 
 <!-- 모바일 전용 스티키 CTA. .wrap 밖에 둬서 z-index 경쟁을 피한다. -->
 <div class="sticky-cta" id="sticky-cta">
-    <span class="sticky-cta-text">첫 기록은 로그인 없이<br>30초면 끝납니다.</span>
-    <button type="button" class="sticky-cta-btn" id="sticky-cta-btn">무료로 시작하기</button>
+    <span class="sticky-cta-text" data-i18n="sticky.text">첫 기록은 로그인 없이<br>30초면 끝납니다.</span>
+    <button type="button" class="sticky-cta-btn" id="sticky-cta-btn" data-i18n-text="cta.free_start">무료로 시작하기</button>
 </div>
 
 <script>
@@ -2771,6 +2809,10 @@
         const card = document.getElementById('quiz-card');
         if (!card) return;
 
+        // 번역 데이터는 landing-i18n.js가 window.NMC로 제공한다(없으면 아래 한국어 상수로 폴백).
+        const D = () => (window.NMC && window.NMC.quiz ? window.NMC.quiz() : null);
+        let view = 'q';
+
         const QUESTIONS = [
             { q: '평소 가장 당기는 커피는 어떤 쪽인가요?', opts: [
                 ['홍차처럼 가볍고 산뜻한 커피', 'A'],
@@ -2907,7 +2949,10 @@
             '</div>';
 
         function renderQuestion() {
-            const q = QUESTIONS[step];
+            view = 'q';
+            const QD = D();
+            const QS = QD ? QD.questions : QUESTIONS;
+            const q = QS[step];
             card.innerHTML =
                 progress() +
                 '<div class="quiz-step">' +
@@ -2915,7 +2960,7 @@
                 '<div class="quiz-opts">' +
                 q.opts.map((o, i) => '<button type="button" class="quiz-opt" data-i="' + i + '">' + o[0] + '</button>').join('') +
                 '</div>' +
-                (step > 0 ? '<button type="button" class="quiz-back" id="quiz-back">← 이전 질문</button>' : '') +
+                (step > 0 ? '<button type="button" class="quiz-back" id="quiz-back">' + (QD ? QD.back : '← 이전 질문') + '</button>' : '') +
                 '</div>';
 
             card.querySelectorAll('.quiz-opt').forEach((btn) =>
@@ -2926,7 +2971,7 @@
                     }
                     answers[step] = q.opts[+btn.dataset.i][1];
                     step += 1;
-                    if (step < QUESTIONS.length) renderQuestion(); else renderResult();
+                    if (step < QS.length) renderQuestion(); else renderResult();
                 }));
             const back = document.getElementById('quiz-back');
             if (back) back.addEventListener('click', () => { step -= 1; renderQuestion(); });
@@ -2937,7 +2982,7 @@
         // 축 순서는 RESULTS[].flavor 배열 순서와 같다: 산미 · 단맛 · 바디 · 로스팅
         const FLAVOR_AXES = ['산미', '단맛', '바디', '로스팅'];
 
-        function flavorRadar(v) {
+        function flavorRadar(v, axes) {
             const C = 100, R = 58;
             const pt = (i, s) => {
                 const a = -Math.PI / 2 + i * Math.PI / 2;
@@ -2955,12 +3000,12 @@
                 const [x, y] = pt(i, s);
                 return '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="3"/>';
             }).join('');
-            const labels = FLAVOR_AXES.map((t, i) => {
+            const labels = axes.map((t, i) => {
                 const [x, y] = pt(i, 1.34);
                 return '<text x="' + x.toFixed(1) + '" y="' + (y + 3.6).toFixed(1) + '">' + t + '</text>';
             }).join('');
             return '<svg class="flavor-radar" viewBox="0 0 200 200" role="img" aria-label="' +
-                FLAVOR_AXES.map((t, i) => t + ' ' + Math.round(v[i] * 100) + '%').join(', ') + '">' +
+                axes.map((t, i) => t + ' ' + Math.round(v[i] * 100) + '%').join(', ') + '">' +
                 '<g class="fr-grid">' + grid + spokes + '</g>' +
                 '<polygon class="fr-shape" points="' + shape + '"/>' +
                 '<g class="fr-dot">' + dots + '</g>' +
@@ -2968,10 +3013,21 @@
         }
 
         function renderResult() {
+            view = 'r';
+            const QD = D();
+            const RS = QD ? QD.results : RESULTS;
+            const STORES_ = QD ? QD.stores : STORES;
+            const COUPANG_ = QD ? QD.coupang : COUPANG;
+            const COUPANG_DISC_ = QD ? QD.coupangDisc : COUPANG_DISCLOSURE;
+            const AXES_ = QD ? QD.axes : FLAVOR_AXES;
+            const UI = QD ? QD.ui : null;
+            const LEAD = QD ? QD.lead : null;
+            const CTA = QD ? QD.cta : null;
+            const SUFFIX = QD ? QD.searchSuffix : ' 검색 →';
             const counts = {};
             answers.forEach((k) => { counts[k] = (counts[k] || 0) + 1; });
             const key = ['A', 'B', 'C', 'D'].reduce((best, k) => (counts[k] || 0) > (counts[best] || 0) ? k : best, 'A');
-            const r = RESULTS[key];
+            const r = RS[key];
 
             // 확장자는 share-card.js의 탐색 순서(webp 우선)와 맞춘다 — 어긋나면
             // 공유 카드에는 아트가 뜨는데 결과 화면에는 안 뜨는 상태가 된다.
@@ -2986,7 +3042,7 @@
                 '<p class="quiz-result-desc">' + r.desc + '</p>' +
                 '<div class="quiz-tags">' + r.tags.map((t) => '<span class="quiz-tag">' + t + '</span>').join('') + '</div>' +
                 '</div>' +
-                flavorRadar(r.flavor) +
+                flavorRadar(r.flavor, AXES_) +
                 '</div>' +
                 '<div class="bean-grid">' +
                 r.beans.map((b, bi) =>
@@ -2996,46 +3052,45 @@
                     '<div class="bean-desc">' + b.desc + '</div>' +
                     '<div class="bean-links">' +
                     // 스토어 한 곳이 품절이어도 다른 곳이 남는다 — 그래서 두 개다.
-                    STORES.map((s) =>
+                    STORES_.map((s) =>
                         '<a class="bean-link" href="' + s.url(b.query) + '"' +
                         ' data-bean="' + bi + '" data-store="' + s.store + '"' +
-                        ' target="_blank" rel="noopener noreferrer">' + s.store + ' 검색 →</a>').join('') +
+                        ' target="_blank" rel="noopener noreferrer">' + s.store + SUFFIX + '</a>').join('') +
                     '</div>' +
                     '</div>').join('') +
                 '</div>' +
                 // 쿠팡 파트너스(제휴) 추천 — 결과 유형에 맞는 쿠팡 검색으로. 고지 문구 동반.
-                (COUPANG[key] ?
+                (COUPANG_[key] ?
                 '<div class="quiz-coupang">' +
-                '<a class="quiz-coupang-btn" href="' + COUPANG[key].url + '"' +
+                '<a class="quiz-coupang-btn" href="' + COUPANG_[key].url + '"' +
                 ' target="_blank" rel="noopener noreferrer sponsored" data-cpkey="' + key + '">' +
-                '<span>' + COUPANG[key].label + '</span><span aria-hidden="true">→</span></a>' +
-                '<p class="quiz-coupang-disc">' + COUPANG_DISCLOSURE + '</p>' +
+                '<span>' + COUPANG_[key].label + '</span><span aria-hidden="true">→</span></a>' +
+                '<p class="quiz-coupang-disc">' + COUPANG_DISC_ + '</p>' +
                 '</div>' : '') +
                 // 리드마그넷 — 몰입 절정(결과 직후)에서 이메일 옵트인. 추천은 이미
                 // 무료로 줬고, 여기서는 '앞으로도' 받아볼지를 묻는다(관계의 연장).
                 '<div class="quiz-lead" id="quiz-lead">' +
-                '<div class="quiz-lead-head">☕ 취향에 맞는 원두, 계속 받아보시겠어요?</div>' +
-                '<p class="quiz-lead-desc">새로 나온 추천 원두와 다이얼링 팁을 이메일로 보내드립니다. 스팸 없이, 언제든 해지할 수 있어요.</p>' +
+                '<div class="quiz-lead-head">' + (LEAD ? LEAD.head : '☕ 취향에 맞는 원두, 계속 받아보시겠어요?') + '</div>' +
+                '<p class="quiz-lead-desc">' + (LEAD ? LEAD.desc : '새로 나온 추천 원두와 다이얼링 팁을 이메일로 보내드립니다. 스팸 없이, 언제든 해지할 수 있어요.') + '</p>' +
                 '<form class="quiz-lead-form" id="quiz-lead-form" novalidate>' +
-                '<input type="email" class="quiz-lead-input" id="quiz-lead-email" placeholder="이메일 주소" autocomplete="email" inputmode="email" required>' +
-                '<button type="submit" class="quiz-lead-btn" id="quiz-lead-btn">받아보기</button>' +
+                '<input type="email" class="quiz-lead-input" id="quiz-lead-email" placeholder="' + (LEAD ? LEAD.ph : '이메일 주소') + '" autocomplete="email" inputmode="email" required>' +
+                '<button type="submit" class="quiz-lead-btn" id="quiz-lead-btn">' + (LEAD ? LEAD.btn : '받아보기') + '</button>' +
                 '</form>' +
                 '<p class="quiz-lead-msg" id="quiz-lead-msg" role="status" aria-live="polite"></p>' +
                 '</div>' +
                 // 검사를 끝낸 사람이 페이지에서 가장 몰입도가 높다. 제품으로 돌려보낸다.
                 '<div class="quiz-cta">' +
-                '<p class="quiz-cta-text">추천 원두를 받았다면, 첫 추출부터 기록해보세요.<br>' +
-                '이 프로필에 맞는 세팅이 쌓이면 다음 다이얼링이 쉬워집니다.</p>' +
+                '<p class="quiz-cta-text">' + (CTA ? CTA.text : '추천 원두를 받았다면, 첫 추출부터 기록해보세요.<br>이 프로필에 맞는 세팅이 쌓이면 다음 다이얼링이 쉬워집니다.') + '</p>' +
                 '<button type="button" class="btn-primary" id="quiz-cta-btn">' +
-                '<span>무료로 기록 시작하기</span><span>→</span></button>' +
+                '<span>' + (CTA ? CTA.btn : '무료로 기록 시작하기') + '</span><span>→</span></button>' +
                 '</div>' +
                 '<div class="quiz-actions">' +
                 '<button type="button" class="quiz-share" id="quiz-share">' +
                 '<svg aria-hidden="true" focusable="false"><use href="#i-share"/></svg>' +
-                '<span>결과 카드 공유</span></button>' +
-                '<button type="button" class="quiz-restart" id="quiz-restart">다시 검사하기 ↺</button>' +
+                '<span>' + (UI ? UI.share : '결과 카드 공유') + '</span></button>' +
+                '<button type="button" class="quiz-restart" id="quiz-restart">' + (UI ? UI.restart : '다시 검사하기 ↺') + '</button>' +
                 '</div>' +
-                '<p class="quiz-note">각 스토어의 검색 결과로 연결됩니다. 판매처·가격·재고는 그때그때 다를 수 있고, 로스팅 날짜가 가까운 상품을 고르시면 좋습니다.</p>' +
+                '<p class="quiz-note">' + (UI ? UI.note : '각 스토어의 검색 결과로 연결됩니다. 판매처·가격·재고는 그때그때 다를 수 있고, 로스팅 날짜가 가까운 상품을 고르시면 좋습니다.') + '</p>' +
                 '</div>';
 
             // 아트가 아직 없으면 빈 박스를 남기지 않고 요소째로 걷어낸다.
@@ -3076,7 +3131,7 @@
                 const label = btnShare.querySelector('span');
                 const original = label.textContent;
                 btnShare.disabled = true;
-                label.textContent = '카드 만드는 중…';
+                label.textContent = (UI ? UI.shareMaking : '카드 만드는 중…');
                 try {
                     const { shareQuizCard } = await import('./share-card.js');
                     const method = await shareQuizCard({
@@ -3086,7 +3141,7 @@
                     label.textContent = original;
                 } catch (e) {
                     console.error('[Quiz] 공유 카드를 만들지 못했습니다.', e);
-                    label.textContent = '다시 시도해주세요';
+                    label.textContent = (UI ? UI.shareRetry : '다시 시도해주세요');
                     setTimeout(() => { label.textContent = original; }, 2400);
                 } finally {
                     btnShare.disabled = false;
@@ -3111,14 +3166,14 @@
                     const msg = document.getElementById('quiz-lead-msg');
                     const email = (input.value || '').trim();
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                        msg.textContent = '올바른 이메일 주소를 입력해주세요.';
+                        msg.textContent = (LEAD ? LEAD.invalid : '올바른 이메일 주소를 입력해주세요.');
                         msg.className = 'quiz-lead-msg err';
                         input.focus();
                         return;
                     }
                     btn.disabled = true;
                     const original = btn.textContent;
-                    btn.textContent = '보내는 중…';
+                    btn.textContent = (LEAD ? LEAD.sending : '보내는 중…');
                     msg.textContent = '';
                     msg.className = 'quiz-lead-msg';
                     try {
@@ -3126,10 +3181,10 @@
                         await window.nmcSaveLead({ email, source: 'quiz', profile: key, profileTitle: r.title });
                         window.nmcTrack?.('lead_capture', { source: 'quiz', profile: key });
                         document.getElementById('quiz-lead').innerHTML =
-                            '<div class="quiz-lead-done">✓ 등록됐어요. 좋은 원두 소식이 생기면 보내드릴게요.</div>';
+                            '<div class="quiz-lead-done">' + (LEAD ? LEAD.done : '✓ 등록됐어요. 좋은 원두 소식이 생기면 보내드릴게요.') + '</div>';
                     } catch (err) {
                         console.error('[Quiz] 리드 저장 실패', err);
-                        msg.textContent = '잠시 후 다시 시도해주세요.';
+                        msg.textContent = (LEAD ? LEAD.retry : '잠시 후 다시 시도해주세요.');
                         msg.className = 'quiz-lead-msg err';
                         btn.disabled = false;
                         btn.textContent = original;
@@ -3138,7 +3193,10 @@
             }
         }
 
-        renderQuestion();
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderQuestion);
+        else renderQuestion();
+        // 언어가 바뀌면 현재 화면(질문/결과)을 그 언어로 다시 그린다.
+        window.addEventListener('nmc-lang-change', function () { if (view === 'r') renderResult(); else renderQuestion(); });
     })();
 </script>
 
@@ -3175,6 +3233,7 @@
 })();
 </script>
 
+<script src="landing-i18n.js" defer></script>
 <script src="pay.js" defer></script>
 <script type="module" src="landing.js"></script>
 

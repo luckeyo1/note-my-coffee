@@ -74,9 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // 비로그인 라벨이 동작과 일치해야 한다. 예전엔 "지금 무료로 기록 시작하기"였는데
     // 정작 누르면 로그인 시트가 떴고, 버튼 바로 아래엔 "로그인 없이 첫 기록"이라고
     // 적혀 있었다 — 페이지와 버튼이 서로 다른 말을 했다. 사용자 제보로 확인된 혼란이다.
+    // CTA 문구는 로그인 상태 + 현재 언어로 정한다. 번역은 landing-i18n.js(window.NMC)가
+    // 제공하고, 없으면 한국어로 폴백한다.
+    const ctaText = (user) => {
+        const _t = (window.NMC && window.NMC.t) ? window.NMC.t : null;
+        return user
+            ? ((_t && _t('cta.signed_in')) || '콘솔로 이동하기')
+            : ((_t && _t('cta.signed_out')) || '첫 커피 기록하기');
+    };
     onAuthStateChanged(auth, (user) => {
-        updateCtaText(user ? '콘솔로 이동하기' : '첫 커피 기록하기');
+        updateCtaText(ctaText(user));
     });
+    // 언어가 바뀌면 CTA도 현재 로그인 상태에 맞춰 다시 쓴다
+    // (landing-i18n.js가 먼저 span을 signed_out으로 돌려놓으므로 여기서 덮는다).
+    window.addEventListener('nmc-lang-change', () => updateCtaText(ctaText(auth.currentUser)));
 
     // ====== 사회적 증거: 누적 기록 수 ======
     // 관리자 대시보드가 갱신해두는 공개 집계 문서 하나만 읽는다.
@@ -89,7 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!snap.exists()) return;
             const n = snap.data().recipeCount;
             if (typeof n !== 'number' || !Number.isFinite(n) || n < MIN_STAT_TO_SHOW) return;
-            elStat.textContent = `지금까지 기록된 추출 ${n.toLocaleString('ko-KR')}회`;
+            const _loc = { ko: 'ko-KR', en: 'en-US', ja: 'ja-JP', zh: 'zh-TW' }[(window.NMC && window.NMC.lang) || 'ko'] || 'en-US';
+            const _tpl = (window.NMC && window.NMC.t && window.NMC.t('hero.stat_tpl')) || '지금까지 기록된 추출 {n}회';
+            elStat.textContent = _tpl.replace('{n}', n.toLocaleString(_loc));
             elStat.hidden = false;
         } catch (e) {
             console.warn('[Landing] 누적 기록 수를 불러오지 못했습니다.', e);
