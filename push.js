@@ -153,6 +153,9 @@ function init() {
     try {
         wireButtons();
         refreshIfGranted();
+        // 언어가 바뀌면 옵트인 버튼 라벨도 즉시 그 언어로 다시 그린다
+        // (refreshButtons는 loadLang()을 읽고, setLang이 저장 후 이벤트를 쏜다).
+        window.addEventListener("nmc-lang-change", refreshButtons);
         // 로그인 상태가 바뀌면(허용돼 있고 토큰이 있으면) uid를 토큰에 붙인다.
         onAuthStateChanged(auth, () => {
             if (lastToken && typeof Notification !== "undefined" && Notification.permission === "granted") {

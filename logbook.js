@@ -121,6 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnNewRecipe.innerText = i18n[lang].newRecipe;
         elements.logbookTitle.innerText = i18n[lang].logbookTitle;
         renderRecipeCards();
+
+        // 공용 크롬(탭바·설정 시트)과 푸시 버튼이 같은 언어로 따라오도록 알린다.
+        try { window.dispatchEvent(new CustomEvent('nmc-lang-change', { detail: { lang } })); } catch (e) { /* no-op */ }
     };
 
     // 앱 페이지는 지금까지 GA4 히트가 0건이었다. track()이 처음 호출될 때만
