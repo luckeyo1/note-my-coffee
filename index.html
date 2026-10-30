@@ -288,11 +288,8 @@
         }
         .lang-toggle button:hover { color: var(--gold); }
         .lang-toggle button.active { background: var(--gold); color: #FCFAF6; }
-        /* 좁은 화면: 로고 + 언어 토글만 남긴다. 내비 CTA는 히어로·스티키 CTA와
-           겹치므로 숨겨 토글이 들어갈 자리를 만든다. */
         @media (max-width: 720px) {
             .lang-toggle { margin-left: auto; }
-            .nav-btn { display: none; }
         }
 
         /* ── HERO ── */
@@ -1690,6 +1687,14 @@
         @media (pointer: coarse) {
             .btn-primary, .sticky-cta-btn, .nav-btn, .demo-open { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
             footer a { display: inline-block; padding: 12px 4px; }
+        }
+
+        /* 좁은 화면에서는 내비 CTA를 숨겨 로고 + 언어 토글만 남긴다(히어로·스티키
+           CTA가 대체). 위 (pointer: coarse) 규칙이 .nav-btn의 display를 다시 켜므로,
+           반드시 그보다 뒤에 둬서 우선순위에서 이기게 한다 — 터치 폰에서 재현되는
+           내비 넘침을 막는다. */
+        @media (max-width: 720px) {
+            .nav-btn { display: none; }
         }
     </style>
 
