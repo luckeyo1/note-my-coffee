@@ -1473,6 +1473,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateProHints(); updateBrewRatio(); refreshScaPopover(); fetchWeather();
         if (el.onboardingModal.classList.contains('active')) renderObStep();
+
+        // 공용 크롬(탭바·설정 시트)과 푸시 버튼이 같은 언어로 따라오도록 알린다.
+        try { window.dispatchEvent(new CustomEvent('nmc-lang-change', { detail: { lang } })); } catch (e) { /* no-op */ }
     };
 
     // --- Events ---
