@@ -15,8 +15,18 @@
     function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 저장 못 해도 이번 세션은 동작 */ } }
 
     function detect() {
+        // 1) URL이 가장 강한 신호 — /en·/ja·/zh 정적 페이지(와 ?lang=)가 그 언어로 확정되게
+        //    한다. 크롤러·소셜이 보는 정적 콘텐츠와 런타임 언어가 일치한다.
+        var p = (location.pathname || '').toLowerCase();
+        var pm = p.match(/\/(en|ja|zh)(?:\.html)?\/?$/);
+        if (pm) return pm[1];
+        var qp = null;
+        try { qp = new URLSearchParams(location.search).get('lang'); } catch (e) { /* no-op */ }
+        if (LANGS.indexOf(qp) !== -1) return qp;
+        // 2) 저장된 선택
         var s = lsGet('nmcLang');
         if (LANGS.indexOf(s) !== -1) return s;
+        // 3) 브라우저 언어
         var n = (navigator.language || 'en').toLowerCase();
         if (n.indexOf('ko') === 0) return 'ko';
         if (n.indexOf('ja') === 0) return 'ja';
@@ -272,7 +282,34 @@
         'footer.privacy': { ko: '개인정보처리방침', en: 'Privacy policy', ja: 'プライバシーポリシー', zh: '隱私權政策' },
         'footer.contact': { ko: '문의', en: 'Contact', ja: 'お問い合わせ', zh: '聯絡' },
         'sticky.text': { ko: '첫 기록은 로그인 없이<br>30초면 끝납니다.', en: 'First log needs no sign-in —<br>done in 30 seconds.', ja: '最初の記録はログイン不要<br>30秒で完了。', zh: '第一筆記錄免登入<br>30 秒就完成。' },
-        'hero.stat_tpl': { ko: '지금까지 기록된 추출 {n}회', en: '{n} brews logged so far', ja: 'これまで記録された抽出 {n}回', zh: '目前已記錄 {n} 次萃取' }
+        'hero.stat_tpl': { ko: '지금까지 기록된 추출 {n}회', en: '{n} brews logged so far', ja: 'これまで記録された抽出 {n}回', zh: '目前已記錄 {n} 次萃取' },
+
+        // ── <head> 메타: 검색·소셜 미리보기용. apply()가 title·description·og·twitter를 바꾼다. ──
+        'head.title': {
+            ko: 'Note My Coffee — 당신의 커피 레시피를 기록하세요',
+            en: 'Note My Coffee — Log your coffee recipes',
+            ja: 'Note My Coffee — あなたのコーヒーレシピを記録',
+            zh: 'Note My Coffee — 記錄你的咖啡食譜'
+        },
+        'head.desc': {
+            ko: '어제 내린 커피랑 오늘 내린 커피, 맛이 다르지 않으세요? 기억이 아니라 기록의 문제입니다. 도징·온도·시간·수율 네 개의 숫자만 남기세요. 바리스타가 만든 커피 레시피 기록 앱 — 추출당 30초, 설치 없이 브라우저에서 바로.',
+            en: 'Yesterday’s cup tasted great, today’s doesn’t? It’s not memory — it’s logging. Keep four numbers: dose, temp, time, yield. A coffee-logging app built by a barista — 30 seconds per brew, right in your browser, no install.',
+            ja: '昨日のコーヒーと今日のコーヒー、味が違いませんか？記憶ではなく記録の問題です。分量・温度・時間・抽出量の4つの数字だけ残しましょう。バリスタがつくったコーヒー記録アプリ — 1杯30秒、インストール不要、ブラウザですぐ。',
+            zh: '昨天的咖啡好喝、今天卻不一樣？問題不在記憶，而在記錄。只要記下粉量、溫度、時間、萃取量四個數字。咖啡師打造的咖啡記錄 App — 每杯 30 秒，免安裝、瀏覽器直接用。'
+        },
+        'og.title': {
+            ko: 'Note My Coffee — 어제 내린 커피랑 오늘 내린 커피, 맛이 다르지 않으세요?',
+            en: 'Note My Coffee — Yesterday’s cup was great. Today’s isn’t. Why?',
+            ja: 'Note My Coffee — 昨日のコーヒーと今日のコーヒー、味が違いませんか？',
+            zh: 'Note My Coffee — 昨天的咖啡好喝，今天卻不一樣？'
+        },
+        'og.desc': {
+            ko: '도징·온도·시간·수율만 기록하면 다음 다이얼링의 출발점이 남습니다. 추출당 30초, 설치 없이 브라우저에서 바로.',
+            en: 'Log dose, temp, time and yield, and you have a starting point for the next dial-in. 30 seconds per brew, right in your browser, no install.',
+            ja: '分量・温度・時間・抽出量を記録すれば、次のダイヤルインの出発点が残ります。1杯30秒、インストール不要、ブラウザですぐ。',
+            zh: '記下粉量、溫度、時間、萃取量，下次調校就有了起點。每杯 30 秒，免安裝、瀏覽器直接用。'
+        },
+        'og.locale': { ko: 'ko_KR', en: 'en_US', ja: 'ja_JP', zh: 'zh_TW' }
     };
 
     // ── 취향 검사: 언어 독립 데이터(BASE) + 언어별 텍스트(QT) ──
@@ -492,10 +529,28 @@
         quiz: function () { return buildQuiz(lang); }
     };
 
+    function metaSet(sel, val) {
+        if (val == null) return;
+        var e = document.querySelector(sel);
+        if (e) e.setAttribute('content', val);
+    }
+
     function apply(l) {
         lang = l;
         try {
             document.documentElement.setAttribute('lang', l === 'ja' ? 'ja' : (l === 'zh' ? 'zh-Hant' : (l === 'ko' ? 'ko' : 'en')));
+        } catch (e) { /* no-op */ }
+        // <head> 메타 — 검색·소셜 미리보기가 언어를 따르게 한다. 언어별 정적 페이지는
+        // 이 값이 파일에 그대로 구워져(생성기 스냅샷) 크롤러·카톡이 바로 읽는다.
+        try {
+            var ht = (P['head.title'] || {})[l]; if (ht) document.title = ht;
+            metaSet('meta[name="description"]', (P['head.desc'] || {})[l]);
+            metaSet('meta[property="og:title"]', (P['og.title'] || {})[l]);
+            metaSet('meta[property="og:description"]', (P['og.desc'] || {})[l]);
+            metaSet('meta[property="og:locale"]', (P['og.locale'] || {})[l]);
+            metaSet('meta[property="og:image:alt"]', (P['og.title'] || {})[l]);
+            metaSet('meta[name="twitter:title"]', (P['og.title'] || {})[l]);
+            metaSet('meta[name="twitter:description"]', (P['og.desc'] || {})[l]);
         } catch (e) { /* no-op */ }
         document.querySelectorAll('[data-i18n]').forEach(function (el) {
             var v = P[el.getAttribute('data-i18n')]; if (v && v[l] != null) el.innerHTML = v[l];
@@ -522,6 +577,10 @@
         });
     }
 
+    // 각 언어의 정식 URL. 토글은 여기로 '이동'한다 — 주소·공유·검색이 콘텐츠와 일치하고,
+    // 그 언어의 정적 페이지(head/OG가 그 언어로 구워진)가 서빙된다.
+    var URLFOR = { ko: '/', en: '/en', ja: '/ja', zh: '/zh' };
+
     function wire() {
         apply(lang);
         setActive(lang);
@@ -531,10 +590,7 @@
             b.addEventListener('click', function () {
                 if (x === lang) return;
                 lsSet('nmcLang', x);
-                apply(x);
-                setActive(x);
-                // 인라인 퀴즈 등 다른 부분도 같은 언어로 다시 그리게 알린다.
-                try { window.dispatchEvent(new CustomEvent('nmc-lang-change', { detail: { lang: x } })); } catch (e) { /* no-op */ }
+                location.href = URLFOR[x] || '/';
             });
         });
     }
