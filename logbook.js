@@ -382,10 +382,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function buildShareUrl(data) {
         const json = JSON.stringify(data);
         const b64  = btoa(unescape(encodeURIComponent(json)));
-        // /s 로 보낸다(Cloud Function shareOg). 스크래퍼엔 레시피별 OG 카드를 주고,
-        // 사람은 import가 동작하는 /logbook?share= 로 즉시 리다이렉트된다.
-        // (받는 쪽 parseShareParam이 해석하도록 인코딩은 그대로 유지.)
-        const base = window.location.origin + '/s';
+        // 레시피별 OG는 /s(Cloud Function shareOg)로 입히는데, 그 함수는 Blaze 플랜이
+        // 복구돼야 배포된다. 그 전까지는 공유 링크가 깨지지 않도록 기존처럼 현재 페이지
+        // (/logbook)로 보낸다 — 일반 미리보기. Blaze 복구 후 base를 origin+'/s'로 바꾸면
+        // 레시피별 OG가 켜진다(함수·rewrite는 이미 리포에 대기 중).
+        const base = window.location.href.split('?')[0];
         // base64의 +/= 는 쿼리스트링에서 깨지므로(+는 공백으로 복원됨) 반드시 인코딩한다
         return `${base}?share=${encodeURIComponent(b64)}`;
     }
