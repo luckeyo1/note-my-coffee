@@ -10,10 +10,12 @@
 // 배포 참고: 2세대(Cloud Run) 함수라 배포 SA에 Editor + Cloud Run 관리자 +
 // 서비스 계정 사용자 권한이 필요하다(invoker IAM 설정 때문). (deploy marker: 1)
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const { buildShareHtml } = require("./share-og");
 
 initializeApp();
 const db = getFirestore();
@@ -90,5 +92,29 @@ exports.dailyPush = onSchedule(
     }
 
     logger.info(`발송 완료 — 성공 ${sent}, 실패 ${failed}, 무효 정리 ${toDelete.length}`);
+  }
+);
+
+// ── 공유 레시피 OG 미리보기 (firebase.json hosting rewrite: /s → shareOg) ──
+// 레시피 공유 링크(/s?share=<base64>)에 레시피별 OG 카드를 입힌다. 상태 없음:
+// URL의 base64만 디코드하므로 Firestore·인증이 필요 없다(share-og.js 참고).
+// 스크래퍼는 head의 OG를 읽고, 사람은 import가 동작하는 /logbook?share= 로 리다이렉트.
+// invoker: "public" — hosting rewrite가 미인증 호출로 함수를 부르므로 allUsers 필요.
+exports.shareOg = onRequest(
+  {
+    region: "asia-northeast3",
+    invoker: "public",
+    memory: "128MiB",
+    maxInstances: 10,
+    cors: false,
+  },
+  (req, res) => {
+    const q = req.query ? req.query.share : "";
+    const raw = Array.isArray(q) ? q[0] : q;
+    const html = buildShareHtml(typeof raw === "string" ? raw : "");
+    res.set("Content-Type", "text/html; charset=utf-8");
+    // 공유 링크는 레시피가 고정이라 캐시 가능 — CDN 10분, 브라우저 5분.
+    res.set("Cache-Control", "public, max-age=300, s-maxage=600");
+    res.status(200).send(html);
   }
 );

@@ -382,8 +382,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function buildShareUrl(data) {
         const json = JSON.stringify(data);
         const b64  = btoa(unescape(encodeURIComponent(json)));
-        // Use current page URL (works locally with .html and on Firebase with cleanUrls)
-        const base = window.location.href.split('?')[0];
+        // /s 로 보낸다(Cloud Function shareOg). 스크래퍼엔 레시피별 OG 카드를 주고,
+        // 사람은 import가 동작하는 /logbook?share= 로 즉시 리다이렉트된다.
+        // (받는 쪽 parseShareParam이 해석하도록 인코딩은 그대로 유지.)
+        const base = window.location.origin + '/s';
         // base64의 +/= 는 쿼리스트링에서 깨지므로(+는 공백으로 복원됨) 반드시 인코딩한다
         return `${base}?share=${encodeURIComponent(b64)}`;
     }
