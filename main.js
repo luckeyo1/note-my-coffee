@@ -1561,10 +1561,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 저장 중 재클릭을 막는다. 가드가 없으면 느린 연결·오프라인에서 사용자가
     // 여러 번 누르는 만큼 addDoc이 쌓이고, 재연결 시 전부 전송되어 중복 문서가 된다.
     let savingRecipe = false;
-    // 레시피 전달 링크를 만든다. /s(Cloud Function shareOg)로 보내면 스크래퍼엔
-    // 레시피별 OG 카드가 뜨고, 사람은 import가 동작하는 /logbook?share= 로
-    // 리다이렉트된다. 인코딩은 logbook.js의 buildShareData/buildShareUrl과 반드시
-    // 같아야 받는 쪽 parseShareParam이 해석한다(그쪽은 클로저 내부 함수라 재사용 불가).
+    // 로그북(logbook.html)으로 향하는 레시피 전달 링크를 만든다. 인코딩은 logbook.js의
+    // buildShareData/buildShareUrl과 반드시 같아야 받는 쪽 parseShareParam이 해석한다
+    // (그쪽은 클로저 내부 함수라 직접 재사용은 불가).
+    // 레시피별 OG는 /s(Cloud Function shareOg)로 입히는데, 그 함수는 Blaze 플랜이
+    // 복구돼야 배포된다. 그 전까지는 /logbook으로 보내 링크가 깨지지 않게 둔다.
+    // Blaze 복구 후 base를 new URL('/s', …)로 바꾸면 레시피별 OG가 켜진다.
     const buildLogbookShareUrl = (r) => {
         const data = {
             n: r.beanName || '', m: r.mode || 'espresso',
@@ -1574,7 +1576,7 @@ document.addEventListener('DOMContentLoaded', () => {
             r: r.overallRating || 3, s: !!r.success,
         };
         const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-        const base = new URL('/s', window.location.href).href;
+        const base = new URL('logbook.html', window.location.href).href;
         return `${base}?share=${encodeURIComponent(b64)}`;
     };
 
