@@ -14,6 +14,18 @@ import {
     increment
 } from "./firebase-config.js";
 
+// Firestore 읽기(getDocs 등)는 연결이 끊겨도 에러 없이 '멈추는(hang)' 경우가 있다
+// (오프라인·불안정망). 그러면 await가 영원히 안 끝나 호출부가 "Loading…"에 갇힌다
+// (로그북에서 실제 보고된 증상). 타임아웃을 걸어 멈춤을 reject로 바꿔, 호출부의
+// 실패 처리(null → 재시도 UI)가 뜨게 한다. 성공하면 타이머를 즉시 정리한다.
+function withTimeout(promise, ms = 12000) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout')), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 // ── 집계 (docs/admin-roadmap.md Phase 1) ────────────────────────────────
 // 관리자 대시보드가 recipes 컬렉션을 통째로 내려받던 구조를 대체한다. 사진이
 // base64로 문서에 들어 있어 기록이 쌓이면 한 번 여는 데 수백 MB가 나갔다.
@@ -157,7 +169,9 @@ const CoffeeNotesStorage = {
         if (this.currentUser) {
             try {
                 const q = query(collection(db, "recipes"), where("userId", "==", this.currentUser.uid));
-                const querySnapshot = await getDocs(q);
+                // 타임아웃으로 감싼다 — getDocs가 멈추면 "Loading…" 무한 대신 아래 catch로
+                // 떨어져 null을 반환하고, 로그북이 "불러오기 실패 + 재시도"를 보여준다.
+                const querySnapshot = await withTimeout(getDocs(q), 12000);
                 const recipes = [];
                 querySnapshot.forEach((doc) => {
                     recipes.push({ id: doc.id, ...doc.data() });
