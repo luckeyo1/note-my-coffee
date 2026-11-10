@@ -39,20 +39,20 @@
         </div>
     </header>
 
-    <div class="console-box" id="discover-container">
+    <main class="feed-page" id="discover-container">
         <h2 class="logbook-title">둘러보기</h2>
         <p class="discover-sub">다른 사람의 한 잔에서 시작해보세요.</p>
 
-        <div class="logbook-filters" id="discover-filters">
+        <div class="logbook-filters" id="discover-filters" role="group">
             <button type="button" class="lb-chip is-active" data-mode="all">전체</button>
             <button type="button" class="lb-chip" data-mode="espresso">에스프레소</button>
             <button type="button" class="lb-chip" data-mode="drip">핸드드립</button>
         </div>
 
-        <div id="feed-grid"><div class="loading">Loading…</div></div>
+        <div id="feed-grid" class="dc-grid"><div class="loading">Loading…</div></div>
 
-        <button type="button" id="feed-more" class="recipe-share-btn" hidden style="margin-top:16px;">더 보기</button>
-    </div>
+        <button type="button" id="feed-more" class="feed-more-btn" hidden>더 보기</button>
+    </main>
 </div>
 
 <!-- 하단 탭바 (모바일 전용) -->

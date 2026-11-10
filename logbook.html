@@ -70,8 +70,12 @@
         </div>
     </header>
 
-    <div class="console-box" id="logbook-container">
-        <h2 class="logbook-title">나의 레시피 기록</h2>
+    <!-- 기록 피드. 카드 상자 대신 종이 위에 바로 놓는다(요약 → 도구 → 피드). -->
+    <main class="feed-page" id="logbook-container">
+        <h2 class="logbook-title">기록</h2>
+
+        <!-- 최근 7일 요약. 기록이 있을 때만 logbook.js가 채우고 보여준다. -->
+        <section class="lb-summary" id="lb-summary" aria-label="최근 7일 요약" hidden></section>
 
         <!-- 검색 + 모드 필터. 기록이 있을 때만 logbook.js가 보여준다(hidden 해제). -->
         <div class="logbook-tools" id="logbook-tools" hidden>
@@ -83,17 +87,17 @@
                 <input type="search" id="logbook-search" class="lb-search-input"
                        placeholder="원두명, 노트 검색…" autocomplete="off">
             </div>
-            <div class="logbook-filters" id="logbook-filters">
+            <div class="logbook-filters" id="logbook-filters" role="group">
                 <button type="button" class="lb-chip is-active" data-mode="all">전체</button>
                 <button type="button" class="lb-chip" data-mode="espresso">에스프레소</button>
                 <button type="button" class="lb-chip" data-mode="drip">핸드드립</button>
             </div>
         </div>
 
-        <div id="recipe-cards-grid">
+        <div id="recipe-cards-grid" class="lb-feed">
             <!-- Recipe cards will be loaded here by logbook.js -->
         </div>
-    </div>
+    </main>
 </div>
 
 <!-- 모바일용 플로팅 액션 버튼 (FAB) -->

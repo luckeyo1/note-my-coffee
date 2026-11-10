@@ -100,7 +100,7 @@
             <span class="env-dot"></span>
             <span>📍 …</span>
         </div>
-        <div class="env-hint" id="env-hint">Ideal extraction conditions today</div>
+        <div class="env-hint" id="env-hint"></div>
     </div>
 
     <!-- 모드 전환 -->
@@ -202,35 +202,67 @@
                 </div>
             </div>
             
-            <button id="btn-stopwatch" class="stopwatch-trigger">
-                <span id="lbl-stopwatch">⏱ OPEN STOPWATCH</span>
+            <button id="btn-stopwatch" class="stopwatch-trigger" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="stopwatch-panel">
+                <svg class="stopwatch-trigger-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg>
+                <span id="lbl-stopwatch">Timer</span>
             </button>
 
-            <div id="stopwatch-panel" class="stopwatch-panel">
-                <div class="sw-display">
-                    <div class="sw-ring-wrap">
-                        <svg class="sw-ring" viewBox="0 0 120 120">
-                            <circle class="sw-ring-bg" cx="60" cy="60" r="52"></circle>
-                            <circle id="sw-ring-progress" class="sw-ring-progress" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"></circle>
-                        </svg>
-                        <div class="sw-time-overlay">
-                            <div id="sw-time" class="sw-time">00.0</div>
-                            <div id="sw-status" class="sw-status">READY</div>
-                        </div>
+            <!-- 추출 타이머(전체 화면). main.js가 열고 닫는다 — hidden이 상태의 기준이다. -->
+            <div id="stopwatch-panel" class="timer-screen" role="dialog" aria-modal="true" aria-labelledby="sw-title" hidden>
+                <header class="timer-head">
+                    <button type="button" id="sw-btn-close" class="timer-close" aria-label="Close timer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+                    </button>
+                    <div class="timer-head-text">
+                        <span id="sw-title" class="timer-title">Espresso timer</span>
+                        <span id="sw-recipe" class="timer-recipe"></span>
                     </div>
+                </header>
+
+                <div class="timer-body">
+                    <section class="timer-clock" aria-live="off">
+                        <span id="sw-status" class="sw-status">READY</span>
+                        <span id="sw-time" class="sw-time">0.0</span>
+                        <span id="sw-stage-now" class="timer-stage-now"></span>
+                    </section>
+
+                    <!-- 에스프레소: SCA 목표 구간 위의 진행 -->
+                    <section id="sw-window" class="timer-card">
+                        <div class="timer-card-row">
+                            <span id="sw-window-label" class="timer-card-label">Target time</span>
+                            <span id="sw-window-range" class="timer-card-value"></span>
+                        </div>
+                        <div class="timer-track">
+                            <div id="sw-window-band" class="timer-band"></div>
+                            <div id="sw-progress" class="timer-fill"></div>
+                        </div>
+                        <div class="timer-scale"><span>0s</span><span id="sw-scale-max">60s</span></div>
+                    </section>
+
+                    <!-- 핸드드립: 누적 물량 목표 + 붓기 단계 -->
+                    <section id="sw-pour" class="timer-card" hidden>
+                        <div class="timer-card-row">
+                            <span id="sw-water-label" class="timer-card-label">Water target</span>
+                            <span class="timer-card-value"><b id="sw-water-now">0</b> / <span id="sw-water-total">0</span> g</span>
+                        </div>
+                        <div class="timer-track"><div id="sw-water-fill" class="timer-fill"></div></div>
+                    </section>
+                    <ol id="sw-stages" class="timer-stages" hidden></ol>
+
+                    <p id="sw-hint" class="sw-hint">Press START — the time fills in when you stop</p>
                 </div>
-                <div class="sw-controls">
-                    <button id="sw-btn-reset" class="sw-btn sw-btn-reset" disabled>
+
+                <div class="timer-actions">
+                    <button type="button" id="sw-btn-reset" class="sw-btn sw-btn-reset" disabled>
                         <span id="lbl-sw-reset">RESET</span>
                     </button>
-                    <button id="sw-btn-start" class="sw-btn sw-btn-start">
+                    <button type="button" id="sw-btn-start" class="sw-btn sw-btn-start">
                         <span id="lbl-sw-start">START</span>
                     </button>
-                    <button id="sw-btn-apply" class="sw-btn sw-btn-apply" disabled>
-                        <span id="lbl-sw-apply">APPLY</span>
+                    <button type="button" id="sw-btn-apply" class="sw-btn sw-btn-apply" hidden>
+                        <span id="lbl-sw-apply">Log this cup</span>
                     </button>
                 </div>
-                <p id="sw-hint" class="sw-hint">Press START to begin extraction</p>
             </div>
 
             <div class="slider-wrapper" style="margin-top:20px;">
