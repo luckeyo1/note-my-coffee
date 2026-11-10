@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             proHintTimeDrip: "Pro range: {min}–{max}",
             proHintYield: "Brew ratio: 1:{ratio}",
             ratioLabel: "BREW RATIO",
+            modeEspresso: "ESPRESSO", modeDrip: "HAND DRIP",
             ratioIdeal: "✓ SCA recommended",
             ratioWarning: "⚡ Adjust for balance",
             savingNudge: "Unsaved recipes are lost forever",
@@ -199,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             proHintTimeDrip: "프로 범위: {min}–{max}",
             proHintYield: "브루 비율: 1:{ratio}",
             ratioLabel: "브루 레이시오",
+            modeEspresso: "에스프레소", modeDrip: "핸드드립",
             ratioIdeal: "✓ SCA 권장 범위",
             ratioWarning: "⚡ 균형을 위해 조정 필요",
             savingNudge: "지금 기록하지 않으면 이 레시피는 사라집니다",
@@ -302,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             proHintTimeDrip: "プロ範囲: {min}–{max}",
             proHintYield: "抽出比率: 1:{ratio}",
             ratioLabel: "抽出比率",
+            modeEspresso: "エスプレッソ", modeDrip: "ハンドドリップ",
             ratioIdeal: "✓ SCA推奨範囲",
             ratioWarning: "⚡ バランスのため調整を",
             savingNudge: "記録しないとこのレシピは消えてしまいます",
@@ -405,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
             proHintTimeDrip: "專業範圍: {min}–{max}",
             proHintYield: "萃取比例: 1:{ratio}",
             ratioLabel: "萃取比例",
+            modeEspresso: "義式濃縮", modeDrip: "手沖",
             ratioIdeal: "✓ SCA 建議範圍",
             ratioWarning: "⚡ 需調整以求平衡",
             savingNudge: "不記錄的話，這份配方就會消失",
@@ -1158,6 +1162,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!usable) {
                 lastWeatherText = '';
                 if (infoSpan) infoSpan.textContent = i18n[currentLang].weatherError;
+                // 날씨를 모르면 "오늘 조건 최적" 같은 판정도 내릴 수 없다 — 비워 둔다.
+                el.envHint.textContent = '';
             }
         } finally {
             weatherBusy = false;
@@ -1214,8 +1220,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Yield (Ratio)
-        let ratioStr = currentMode === 'espresso' ? "1:2.0" : "1:15–1:18";
-        el.hintYield.textContent = t.proHintYield.replace('{ratio}', ratioStr.split(':')[1] || ratioStr);
+        // 템플릿이 이미 "1:"을 갖고 있으므로 앞의 "1:"만 떼어 넣는다. split(':')[1]로 자르면
+        // 드립 범위 "1:15–1:18"이 "15–1"로 잘려 "1:15–1"이 됐다.
+        const ratioStr = currentMode === 'espresso' ? "1:2.0" : "1:15–1:18";
+        el.hintYield.textContent = t.proHintYield.replace('{ratio}', ratioStr.replace(/^1:/, ''));
 
         el.ratioLabel.textContent = t.ratioLabel;
     };
@@ -1460,6 +1468,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.btnStatusOpen) el.btnStatusOpen.textContent = t.statusOpen;
         if (el.btnImageUpload) el.btnImageUpload.innerText = uploadedImageData ? t.photoSelected : t.selectPhoto;
         if (el.lblLogbook) el.lblLogbook.textContent = t.viewLogbook;
+        const modeTxt = (btn) => btn && btn.querySelector('span:last-child');
+        if (modeTxt(el.btnEspresso)) modeTxt(el.btnEspresso).textContent = t.modeEspresso;
+        if (modeTxt(el.btnDrip)) modeTxt(el.btnDrip).textContent = t.modeDrip;
         if (el.trustPrefix) el.trustPrefix.textContent = t.trustPrefix;
         if (el.trustSuffix) el.trustSuffix.textContent = t.trustSuffix;
         el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;

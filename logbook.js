@@ -148,10 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
     };
 
-    const modeLabel = (m) => (m === 'drip' ? 'HAND DRIP' : String(m || 'espresso').toUpperCase());
+    // 카드의 모드 표기는 화면 언어를 따른다(필터 칩과 같은 문자열). 알 수 없는 값만 원문 그대로.
+    const modeLabel = (m) => {
+        const t = i18n[currentLang] || i18n.en;
+        if (m === 'drip') return t.filterDrip;
+        if (!m || m === 'espresso') return t.filterEspresso;
+        return String(m).toUpperCase();
+    };
 
     const renderRecipeCards = async () => {
-        elements.recipeCardsGrid.innerHTML = '<div class="loading">Loading recipes...</div>';
+        elements.recipeCardsGrid.innerHTML = `<div class="loading">${esc(tx('기록을 불러오는 중…', 'Loading recipes…', '記録を読み込み中…', '正在載入紀錄…'))}</div>`;
         const recipes = await CoffeeNotesStorage.getRecipes();
         elements.recipeCardsGrid.innerHTML = '';
 
