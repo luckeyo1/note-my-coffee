@@ -106,15 +106,17 @@ document.addEventListener('DOMContentLoaded', () => {
             trustSuffix: " recipes logged today",
             selectPhoto: "📷 Choose Photo",
             photoSelected: "✓ Photo Selected",
-            swStart: "START", swStop: "STOP", swRestart: "RESTART", swApply: "APPLY", swReset: "RESET",
+            swStart: "START", swStop: "STOP", swRestart: "RESUME", swApply: "APPLY", swReset: "RESET",
             swStatusReady: "READY", swStatusRunning: "RUNNING", swStatusDone: "DONE",
-            swHintReady: "Press START to begin extraction",
+            swHintReady: "Press START — the time fills in when you stop",
             swHintRunning: "Extracting… press STOP to record",
             swHintUnder: "⚡ {time} — possible under-extraction",
             swHintOver: "⚡ {time} — possible over-extraction",
             swHintIdeal: "✓ {time} — within SCA range",
             swApplied: "✓ {time} — applied to extraction time",
-            swBtnOpen: "⏱ OPEN STOPWATCH", swBtnClose: "⏱ CLOSE STOPWATCH",
+            swBtnOpen: "Timer", swLog: "Log this cup", swClose: "Close timer",
+            swTitleEspresso: "Espresso timer", swTitleDrip: "Hand drip timer", swWindow: "Target time", swWater: "Water target",
+            swLeft: "{t} left", swPastTarget: "Past target time", swStages: ["Bloom", "1st pour", "2nd pour", "Finish"],
             scaTitle: "SCA BREWING GUIDE",
             scaGuide: {
                 espresso: {
@@ -210,15 +212,17 @@ document.addEventListener('DOMContentLoaded', () => {
             trustSuffix: "개의 레시피가 기록되었습니다",
             selectPhoto: "📷 사진 선택하기",
             photoSelected: "✓ 사진 선택됨",
-            swStart: "시작", swStop: "정지", swRestart: "재시작", swApply: "적용", swReset: "리셋",
+            swStart: "시작", swStop: "정지", swRestart: "이어서", swApply: "적용", swReset: "리셋",
             swStatusReady: "준비", swStatusRunning: "추출 중", swStatusDone: "완료",
-            swHintReady: "시작을 누르고 추출을 시작하세요",
+            swHintReady: "시작을 누르세요 — 정지하면 시간이 자동으로 반영됩니다",
             swHintRunning: "추출 중... 정지를 누르면 기록됩니다",
             swHintUnder: "⚡ {time} — 과소추출 가능성",
             swHintOver: "⚡ {time} — 과다추출 가능성",
             swHintIdeal: "✓ {time} — SCA 권장 범위 내",
             swApplied: "✓ {time} — 추출 시간에 반영되었습니다",
-            swBtnOpen: "⏱ 스톱워치 열기", swBtnClose: "⏱ 스톱워치 닫기",
+            swBtnOpen: "타이머", swLog: "이 한 잔 기록하기", swClose: "타이머 닫기",
+            swTitleEspresso: "에스프레소 타이머", swTitleDrip: "핸드드립 타이머", swWindow: "목표 시간", swWater: "누적 물량 목표",
+            swLeft: "{t} 남음", swPastTarget: "목표 시간 경과", swStages: ["뜸 들이기", "1차 붓기", "2차 붓기", "마무리"],
             scaTitle: "SCA 추출 가이드",
             scaGuide: {
                 espresso: {
@@ -314,15 +318,17 @@ document.addEventListener('DOMContentLoaded', () => {
             trustSuffix: "件のレシピが記録されました",
             selectPhoto: "📷 写真を選ぶ",
             photoSelected: "✓ 写真を選択しました",
-            swStart: "スタート", swStop: "ストップ", swRestart: "リスタート", swApply: "適用", swReset: "リセット",
+            swStart: "スタート", swStop: "ストップ", swRestart: "再開", swApply: "適用", swReset: "リセット",
             swStatusReady: "準備完了", swStatusRunning: "抽出中", swStatusDone: "完了",
-            swHintReady: "スタートを押して抽出を始めましょう",
+            swHintReady: "スタートを押してください — ストップすると時間が自動で反映されます",
             swHintRunning: "抽出中... ストップを押すと記録されます",
             swHintUnder: "⚡ {time} — 未抽出の可能性",
             swHintOver: "⚡ {time} — 過抽出の可能性",
             swHintIdeal: "✓ {time} — SCA推奨範囲内",
             swApplied: "✓ {time} — 抽出時間に反映しました",
-            swBtnOpen: "⏱ ストップウォッチを開く", swBtnClose: "⏱ ストップウォッチを閉じる",
+            swBtnOpen: "タイマー", swLog: "この一杯を記録", swClose: "タイマーを閉じる",
+            swTitleEspresso: "エスプレッソタイマー", swTitleDrip: "ハンドドリップタイマー", swWindow: "目標時間", swWater: "累計湯量の目安",
+            swLeft: "残り {t}", swPastTarget: "目標時間を経過", swStages: ["蒸らし", "1投目", "2投目", "仕上げ"],
             scaTitle: "SCA抽出ガイド",
             scaGuide: {
                 espresso: {
@@ -418,15 +424,17 @@ document.addEventListener('DOMContentLoaded', () => {
             trustSuffix: " 份配方已記錄",
             selectPhoto: "📷 選擇照片",
             photoSelected: "✓ 已選擇照片",
-            swStart: "開始", swStop: "停止", swRestart: "重新開始", swApply: "套用", swReset: "重設",
+            swStart: "開始", swStop: "停止", swRestart: "繼續", swApply: "套用", swReset: "重設",
             swStatusReady: "準備就緒", swStatusRunning: "萃取中", swStatusDone: "完成",
-            swHintReady: "按下開始來進行萃取",
+            swHintReady: "按下開始 — 停止後時間會自動帶入",
             swHintRunning: "萃取中... 按下停止即可記錄",
             swHintUnder: "⚡ {time} — 可能萃取不足",
             swHintOver: "⚡ {time} — 可能過度萃取",
             swHintIdeal: "✓ {time} — 在 SCA 建議範圍內",
             swApplied: "✓ {time} — 已套用到萃取時間",
-            swBtnOpen: "⏱ 開啟計時器", swBtnClose: "⏱ 關閉計時器",
+            swBtnOpen: "計時器", swLog: "記錄這一杯", swClose: "關閉計時器",
+            swTitleEspresso: "義式濃縮計時器", swTitleDrip: "手沖計時器", swWindow: "目標時間", swWater: "累計注水目標",
+            swLeft: "剩餘 {t}", swPastTarget: "已超過目標時間", swStages: ["悶蒸", "第一次注水", "第二次注水", "收尾"],
             scaTitle: "SCA 萃取指南",
             scaGuide: {
                 espresso: {
@@ -592,7 +600,22 @@ document.addEventListener('DOMContentLoaded', () => {
         stopwatchPanel: document.getElementById('stopwatch-panel'),
         swTime: document.getElementById('sw-time'),
         swStatus: document.getElementById('sw-status'),
-        swRingProgress: document.getElementById('sw-ring-progress'),
+        swClose: document.getElementById('sw-btn-close'),
+        swTitle: document.getElementById('sw-title'),
+        swRecipe: document.getElementById('sw-recipe'),
+        swStageNow: document.getElementById('sw-stage-now'),
+        swWindow: document.getElementById('sw-window'),
+        swWindowLabel: document.getElementById('sw-window-label'),
+        swWindowRange: document.getElementById('sw-window-range'),
+        swWindowBand: document.getElementById('sw-window-band'),
+        swProgress: document.getElementById('sw-progress'),
+        swScaleMax: document.getElementById('sw-scale-max'),
+        swPour: document.getElementById('sw-pour'),
+        swWaterLabel: document.getElementById('sw-water-label'),
+        swWaterNow: document.getElementById('sw-water-now'),
+        swWaterTotal: document.getElementById('sw-water-total'),
+        swWaterFill: document.getElementById('sw-water-fill'),
+        swStages: document.getElementById('sw-stages'),
         swBtnStart: document.getElementById('sw-btn-start'),
         swBtnReset: document.getElementById('sw-btn-reset'),
         swBtnApply: document.getElementById('sw-btn-apply'),
@@ -722,18 +745,28 @@ document.addEventListener('DOMContentLoaded', () => {
     el.btnStatusNew.addEventListener('click', () => setBeanStatus('new'));
     el.btnStatusOpen.addEventListener('click', () => setBeanStatus('open'));
 
-    // ===== Stopwatch =====
-    const sw = { running: false, elapsed: 0, startTime: null, rafId: null, done: false };
-    const RING_CIRC = 326.7;
+    // ===== Extraction timer (full screen) =====
+    // 시간 행의 "타이머"로 여는 전체 화면(Acaia·Timemore식). 예전 인라인 스톱워치는
+    // 슬라이더 사이에 끼어 있어 추출 중에 보기도 누르기도 어려웠다.
+    // - 에스프레소: SCA 목표 구간 위에 진행 막대를 그린다.
+    // - 핸드드립: 지금 레시피(도징·물량·시간)에서 뽑은 붓기 단계 가이드를 보여준다.
+    // 정지하면 경과 시간이 곧바로 추출 시간에 들어가고, "기록하기"가 저장 시트로 잇는다.
+    const sw = { running: false, elapsed: 0, startTime: null, rafId: null, done: false, stage: -1, plan: null, wakeLock: null, saveAfterClose: false };
     const swGetMax = () => currentMode === 'espresso' ? 60 : 300;
 
     const swFormatTime = (ms) => {
-        const total = ms / 1000;
+        const total = Math.max(0, ms) / 1000;
         const min = Math.floor(total / 60);
         const sec = Math.floor(total % 60);
-        const tenth = Math.floor((ms % 1000) / 100);
-        return min > 0 ? `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${tenth}` : `${String(sec).padStart(2,'0')}.${tenth}`;
+        const tenth = Math.floor((Math.max(0, ms) % 1000) / 100);
+        return min > 0 ? `${min}:${String(sec).padStart(2, '0')}.${tenth}` : `${sec}.${tenth}`;
     };
+    const mmss = (secs) => {
+        const s = Math.max(0, Math.ceil(secs));
+        return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+    // 320.0 → "320", 18.5 → "18.5"
+    const fmtG = (g) => (Math.round(g * 10) / 10).toString();
 
     // 초 단위 값을 모드에 맞는 표기로: 드립 60초 이상은 m:ss, 그 외는 소수 1자리 + 단위
     const fmtBrewClock = (secs) => {
@@ -744,77 +777,212 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${secs.toFixed(1)}${tx('초', 's', '秒', '秒')}`;
     };
 
-    const swUpdateRing = (elapsed) => {
-        const pct = Math.min(elapsed / (swGetMax() * 1000), 1);
-        el.swRingProgress.style.strokeDashoffset = RING_CIRC * (1 - pct);
-        el.swRingProgress.style.stroke = elapsed > (swGetMax() * 1000) ? 'var(--danger)' : (!sw.running && elapsed > 0 ? 'var(--success)' : 'var(--accent)');
+    // 드립 붓기 가이드. 뜸은 도징의 2배, 이후 남은 물을 45% → 75% → 전량 지점까지 붓는다.
+    // 구간은 지금 추출 시간 설정을 뜸(최대 35초) + 나머지 3등분으로 나눈다.
+    // 정답 레시피가 아니라 "지금 몇 g까지 부었어야 하나"를 보여주는 기준선이다.
+    const round5 = (g) => Math.max(5, Math.round(g / 5) * 5);
+    const buildPourPlan = () => {
+        const dose = parseFloat(el.rDosing.value) || 0;
+        const water = parseFloat(el.rYield.value) || 0;
+        const total = Math.max(60, Math.round(parseFloat(el.rTime.value) || 180));
+        const bloomEnd = Math.round(Math.min(35, total * 0.25));
+        const step = (total - bloomEnd) / 3;
+        const bloom = Math.min(round5(dose * 2), water);
+        const rest = water - bloom;
+        const names = i18n[currentLang].swStages;
+        const b1 = Math.round(bloomEnd + step), b2 = Math.round(bloomEnd + step * 2);
+        return { total, water, stages: [
+            { name: names[0], start: 0, end: bloomEnd, target: bloom },
+            { name: names[1], start: bloomEnd, end: b1, target: Math.min(round5(bloom + rest * 0.45), water) },
+            { name: names[2], start: b1, end: b2, target: Math.min(round5(bloom + rest * 0.75), water) },
+            { name: names[3], start: b2, end: total, target: water },
+        ] };
+    };
+
+    const swUpdateProgress = (elapsed) => {
+        const secs = elapsed / 1000;
+        const t = i18n[currentLang];
+        if (currentMode === 'drip' && sw.plan) {
+            const p = sw.plan;
+            let idx = p.stages.findIndex(st => secs < st.end);
+            const past = idx === -1;
+            if (past) idx = p.stages.length;
+            if (idx !== sw.stage) {
+                sw.stage = idx;
+                [...el.swStages.children].forEach((li, i) => {
+                    li.classList.toggle('is-done', i < idx);
+                    li.classList.toggle('is-now', i === idx);
+                });
+                const target = past ? p.water : p.stages[idx].target;
+                el.swWaterNow.textContent = fmtG(target);
+                el.swWaterFill.style.width = `${p.water ? Math.min(target / p.water, 1) * 100 : 0}%`;
+            }
+            el.swStageNow.textContent = elapsed === 0 ? ''
+                : past ? t.swPastTarget
+                : `${p.stages[idx].name} · ${t.swLeft.replace('{t}', mmss(p.stages[idx].end - secs))}`;
+        } else {
+            const max = swGetMax();
+            el.swProgress.style.width = `${Math.min(secs / max, 1) * 100}%`;
+            el.swProgress.classList.toggle('is-over', secs > qualityRanges.espresso.time.idealHigh);
+            el.swStageNow.textContent = '';
+        }
+    };
+
+    // 화면 제목·레시피 요약·모드별 패널을 지금 설정값으로 다시 그린다.
+    const swSetup = () => {
+        const t = i18n[currentLang];
+        const drip = currentMode === 'drip';
+        const dose = parseFloat(el.rDosing.value) || 0;
+        const out = parseFloat(el.rYield.value) || 0;
+        const temp = parseFloat(el.rTemp.value) || 0;
+        el.swTitle.textContent = drip ? t.swTitleDrip : t.swTitleEspresso;
+        el.swRecipe.textContent = `${dose.toFixed(1)}g → ${drip ? fmtG(out) : out.toFixed(1)}g · 1:${dose ? (out / dose).toFixed(1) : '—'} · ${Math.round(temp)}°C`;
+        el.swWindowLabel.textContent = t.swWindow;
+        el.swWaterLabel.textContent = t.swWater;
+        el.swClose.setAttribute('aria-label', t.swClose);
+        el.swWindow.hidden = drip;
+        el.swPour.hidden = !drip;
+        el.swStages.hidden = !drip;
+        sw.stage = -1;
+        if (drip) {
+            sw.plan = buildPourPlan();
+            el.swWaterTotal.textContent = fmtG(sw.plan.water);
+            el.swStages.replaceChildren(...sw.plan.stages.map((st) => {
+                const li = document.createElement('li');
+                const cell = (cls, txt) => { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; return sp; };
+                const dot = cell('ts-dot', ''); dot.setAttribute('aria-hidden', 'true');
+                li.append(dot, cell('ts-name', st.name), cell('ts-time', `${mmss(st.start)}–${mmss(st.end)}`), cell('ts-g', `${fmtG(st.target)}g`));
+                return li;
+            }));
+        } else {
+            sw.plan = null;
+            const qr = qualityRanges.espresso.time;
+            const max = swGetMax();
+            el.swWindowRange.textContent = `${qr.idealLow}–${qr.idealHigh}s`;
+            el.swWindowBand.style.left = `${qr.idealLow / max * 100}%`;
+            el.swWindowBand.style.width = `${(qr.idealHigh - qr.idealLow) / max * 100}%`;
+            el.swScaleMax.textContent = `${max}s`;
+        }
+        swUpdateProgress(sw.elapsed);
+    };
+
+    // 추출 중 화면이 꺼지면 타이머를 놓친다. 지원하는 브라우저에서만 켜 둔다.
+    const swLockScreen = async () => {
+        try { if ('wakeLock' in navigator) sw.wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { /* 미지원·거부 시 무시 */ }
+    };
+    const swUnlockScreen = () => {
+        try { if (sw.wakeLock) sw.wakeLock.release(); } catch (e) { /* no-op */ }
+        sw.wakeLock = null;
+    };
+
+    // 타이머를 닫아 둔 채 돌리고 있으면 트리거 버튼에 경과 시간을 띄운다.
+    const swSyncTrigger = () => {
+        const t = i18n[currentLang];
+        el.lblStopwatch.textContent = sw.running ? `${t.swBtnOpen} · ${swFormatTime(sw.elapsed)}` : t.swBtnOpen;
+        el.btnStopwatch.classList.toggle('active', sw.running);
+    };
+
+    const swSyncButtons = () => {
+        const t = i18n[currentLang];
+        el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
+        el.swBtnStart.classList.toggle('stop-mode', sw.running);
+        el.swBtnStart.classList.toggle('is-secondary', sw.done && !sw.running);
+        el.swBtnReset.disabled = !sw.running && !sw.done;
+        el.lblSwReset.textContent = t.swReset;
+        el.swBtnApply.hidden = !sw.done || sw.running;
+        el.lblSwApply.textContent = t.swLog;
+        el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
+        swSyncTrigger();
     };
 
     const swTick = () => {
         if (!sw.running) return;
         sw.elapsed = Date.now() - sw.startTime;
         el.swTime.textContent = swFormatTime(sw.elapsed);
-        swUpdateRing(sw.elapsed);
+        swUpdateProgress(sw.elapsed);
+        if (el.stopwatchPanel.hidden) swSyncTrigger();
         sw.rafId = requestAnimationFrame(swTick);
     };
 
     const swStart = () => {
         sw.running = true; sw.done = false; sw.startTime = Date.now() - sw.elapsed;
         el.swTime.classList.add('running'); el.swTime.classList.remove('done');
-        el.swStatus.textContent = i18n[currentLang].swStatusRunning;
-        el.lblSwStart.textContent = i18n[currentLang].swStop;
-        el.swBtnStart.classList.add('stop-mode');
-        el.swBtnReset.disabled = false; el.swBtnApply.disabled = true;
         el.swHint.textContent = i18n[currentLang].swHintRunning;
+        swSyncButtons();
+        swLockScreen();
+        track('timer_started', { mode: currentMode });
         sw.rafId = requestAnimationFrame(swTick);
+    };
+
+    // 경과 시간을 추출 시간 슬라이더에 넣는다(슬라이더 max를 넘으면 브라우저가 클램프).
+    const swApplyTime = () => {
+        if (sw.elapsed === 0) return;
+        const snapped = Math.floor((sw.elapsed / 1000) * 10) / 10;
+        el.rTime.value = snapped.toFixed(1);
+        const applied = parseFloat(el.rTime.value);
+        updateVal('time', applied);
+        syncRuler('time', applied);
+        track('stopwatch_applied', { mode: currentMode });
     };
 
     const swStop = () => {
         sw.running = false; sw.done = true; cancelAnimationFrame(sw.rafId);
+        sw.elapsed = Date.now() - sw.startTime;
+        el.swTime.textContent = swFormatTime(sw.elapsed);
         el.swTime.classList.remove('running'); el.swTime.classList.add('done');
-        el.swStatus.textContent = i18n[currentLang].swStatusDone;
-        el.lblSwStart.textContent = i18n[currentLang].swRestart;
-        el.swBtnStart.classList.remove('stop-mode');
-        el.swBtnApply.disabled = false;
-        swUpdateRing(sw.elapsed);
-        const secs = sw.elapsed / 1000;
+        swUpdateProgress(sw.elapsed);
+        swUnlockScreen();
+        swApplyTime();
+        // 화면 표기(0.1초 내림)와 같은 값으로 판정·안내한다 — 반올림하면 "2.2" 옆에 "2.3초"가 뜬다.
+        const secs = Math.floor(sw.elapsed / 100) / 10;
         const qr = qualityRanges[currentMode].time;
-        const proL = qr.idealLow;
-        const proH = qr.idealHigh;
         let k = 'swHintIdeal';
-        if (secs < proL) k = 'swHintUnder'; else if (secs > proH) k = 'swHintOver';
+        if (secs < qr.idealLow) k = 'swHintUnder'; else if (secs > qr.idealHigh) k = 'swHintOver';
         el.swHint.textContent = i18n[currentLang][k].replace('{time}', fmtBrewClock(secs));
+        swSyncButtons();
     };
 
     const swReset = () => {
         cancelAnimationFrame(sw.rafId); sw.running = false; sw.done = false; sw.elapsed = 0; sw.startTime = null;
-        el.swTime.textContent = '00.0'; el.swTime.classList.remove('running','done');
-        el.swStatus.textContent = i18n[currentLang].swStatusReady;
-        el.lblSwStart.textContent = i18n[currentLang].swStart;
-        el.swBtnStart.classList.remove('stop-mode');
-        el.swBtnReset.disabled = true; el.swBtnApply.disabled = true;
-        el.swRingProgress.style.strokeDashoffset = RING_CIRC;
+        swUnlockScreen();
+        el.swTime.textContent = swFormatTime(0); el.swTime.classList.remove('running', 'done');
         el.swHint.textContent = i18n[currentLang].swHintReady;
+        swSetup();
+        swSyncButtons();
     };
 
-    const swApply = () => {
-        track('stopwatch_applied', { mode: currentMode });
-        if (sw.elapsed === 0) return;
-        const snapped = Math.floor((sw.elapsed / 1000) * 10) / 10;
-        el.rTime.value = snapped.toFixed(1);
-        // 슬라이더 max를 넘는 기록은 브라우저가 클램프하므로, 실제 반영된 값으로 표시·안내한다
-        const applied = parseFloat(el.rTime.value);
-        updateVal('time', applied);
-        syncRuler('time', applied);
-        // 버튼 자체가 아닌 내부 라벨(span)만 바꿔야 이후 라벨 복원이 동작한다
-        el.lblSwApply.textContent = '✓';
-        el.swHint.textContent = i18n[currentLang].swApplied.replace('{time}', fmtBrewClock(applied));
-        setTimeout(() => {
-            el.lblSwApply.textContent = i18n[currentLang].swApply;
-            el.stopwatchPanel.classList.remove('open');
-            el.btnStopwatch.classList.remove('active');
-            el.lblStopwatch.textContent = i18n[currentLang].swBtnOpen;
-        }, 1500);
+    // 열고 닫기. 레시피 모달처럼 히스토리에 항목을 넣어 안드로이드 뒤로가기가
+    // 페이지가 아니라 타이머를 닫게 한다(닫기 경로는 popstate 한 곳 — 아래 모달 절 참고).
+    let swLastFocus = null;
+    const openTimer = () => {
+        if (!sw.running && !sw.done) swReset(); else { swSetup(); swSyncButtons(); }
+        swLastFocus = document.activeElement;
+        el.stopwatchPanel.hidden = false;
+        document.body.classList.add('timer-open');
+        el.btnStopwatch.setAttribute('aria-expanded', 'true');
+        pushModalHistory();
+        track('timer_opened', { mode: currentMode });
+        el.swClose.focus();
+    };
+    const closeTimerDirect = () => {
+        el.stopwatchPanel.hidden = true;
+        document.body.classList.remove('timer-open');
+        el.btnStopwatch.setAttribute('aria-expanded', 'false');
+        swSyncTrigger();
+        if (sw.saveAfterClose) {
+            // "기록하기" → 타이머를 닫은 뒤 저장 시트를 연다. 닫기가 popstate로
+            // 비동기 처리되므로, 닫힌 다음에 열어야 히스토리 항목이 어긋나지 않는다.
+            sw.saveAfterClose = false;
+            el.btnSave.click();
+        } else if (swLastFocus && swLastFocus.focus) {
+            swLastFocus.focus();
+        }
+    };
+    const closeTimer = () => closeTopModalViaHistory(closeTimerDirect);
+    const swLog = () => {
+        track('timer_log', { mode: currentMode });
+        sw.saveAfterClose = true;
+        closeTimer();
     };
 
     // --- Audio ---
@@ -969,7 +1137,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ['dosing', 'temp', 'time', 'yield'].forEach(id => syncRuler(id, el[`r${id.charAt(0).toUpperCase() + id.slice(1)}`].value, false));
 
         updateBrewRatio(); updateProHints(); refreshScaPopover();
-        if (el.stopwatchPanel.classList.contains('open')) swReset();
+        // 모드가 바뀌면 지난 측정은 다른 모드의 것이다 — 새로 시작한다.
+        swReset();
     };
 
     // --- Fine Tune Helpers ---
@@ -1296,6 +1465,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
         closeScaPopovers();
+        if (!el.stopwatchPanel.hidden) { closeTimer(); return; }
         if (el.onboardingModal.classList.contains('active')) closeOnboarding();
         // 레시피 모달도 ESC로 닫는다 — 온보딩이 이미 그렇고 모달의 보편적 기대다.
         //
@@ -1374,6 +1544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 닫히면, 레시피 모달을 닫으려던 뒤로가기가 온보딩을 닫아버렸다).
     // 지금 실제로 열려 있는 것을 닫는 편이 어긋나지 않는다.
     const closeAnyOpenModal = () => {
+        if (!el.stopwatchPanel.hidden) { closeTimerDirect(); return; }
         if (el.recipeModal.classList.contains('active')) { closeRecipeModalDirect(); return; }
         if (el.onboardingModal.classList.contains('active')) { closeOnboardingDirect(); }
     };
@@ -1473,11 +1644,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modeTxt(el.btnDrip)) modeTxt(el.btnDrip).textContent = t.modeDrip;
         if (el.trustPrefix) el.trustPrefix.textContent = t.trustPrefix;
         if (el.trustSuffix) el.trustSuffix.textContent = t.trustSuffix;
-        el.lblStopwatch.textContent = el.stopwatchPanel.classList.contains('open') ? t.swBtnClose : t.swBtnOpen;
-        el.lblSwStart.textContent = sw.running ? t.swStop : (sw.done ? t.swRestart : t.swStart);
-        el.lblSwReset.textContent = t.swReset;
-        el.lblSwApply.textContent = t.swApply;
-        el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
+        if (!sw.running) swSetup(); // 단계 이름·제목을 새 언어로 (진행 중엔 계획을 건드리지 않는다)
+        if (!sw.running && !sw.done) el.swHint.textContent = t.swHintReady;
+        swSyncButtons();
 
         renderTagCloud(el.originTagCloud, t.originTags, el.modalOrigin);
         renderTagCloud(el.tasteTagCloud, t.tasteTags, el.modalTasteNotes);
@@ -1520,15 +1689,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    el.btnStopwatch.addEventListener('click', () => {
-        const isOpen = el.stopwatchPanel.classList.toggle('open');
-        el.btnStopwatch.classList.toggle('active', isOpen);
-        el.lblStopwatch.textContent = isOpen ? i18n[currentLang].swBtnClose : i18n[currentLang].swBtnOpen;
-        if (isOpen && !sw.running && !sw.done) swReset();
-    });
+    el.btnStopwatch.addEventListener('click', openTimer);
+    el.swClose.addEventListener('click', closeTimer);
     el.swBtnStart.addEventListener('click', () => { if (sw.running) swStop(); else swStart(); });
     el.swBtnReset.addEventListener('click', swReset);
-    el.swBtnApply.addEventListener('click', swApply);
+    el.swBtnApply.addEventListener('click', swLog);
 
     el.btnSave.addEventListener('click', () => {
         el.recipeModal.classList.add('active');

@@ -2,7 +2,7 @@
 // 기존 recipe-card 스타일로 렌더한다. 카드 클릭 → post.html?id=<postId>.
 import { track, bumpVisit, auth, onAuthStateChanged } from "./firebase-config.js";
 import { fetchFeed, getBlockedUids } from "./community.js";
-import { fmtBrewTime, modeLabel } from "./brew-card.js";
+import { fmtBrewTime } from "./brew-card.js";
 import { isDemo } from "./demo.js";
 import { openPostActions } from "./moderation.js";
 import { loadLang } from "./storage.js";
@@ -16,28 +16,28 @@ const I18N = {
           mate: '커피메이트', untitled: '이름 없는 레시피', menuAria: '게시물 신고·차단',
           emptyHtml: '아직 공개된 레시피가 없어요.<br>첫 레시피를 공유해보세요.', shareFromLog: '내 기록에서 공유하기',
           loadErr: '피드를 불러오지 못했어요. 잠시 후 다시 시도해주세요.', retry: '다시 시도',
-          demo: '🧪 데모 모드예요 — 예시 데이터입니다(실제 게시·저장 안 됨). ', demoOff: '데모 끄기' },
+          demo: '🧪 데모 모드예요 — 예시 데이터입니다(실제 게시·저장 안 됨). ', demoOff: '데모 끄기', loading: '불러오는 중…' },
     en: { title: 'Discover', sub: 'Start from someone else’s cup.',
           chipAll: 'All', chipEsp: 'Espresso', chipDrip: 'Hand drip', more: 'Load more',
           dose: 'DOSE', temp: 'TEMP', time: 'TIME', yieldOut: 'YIELD', yieldIn: 'WATER',
           mate: 'Coffee mate', untitled: 'Untitled recipe', menuAria: 'Report or block post',
           emptyHtml: 'No public recipes yet.<br>Share the first one.', shareFromLog: 'Share from my log',
           loadErr: 'Couldn’t load the feed. Please try again in a moment.', retry: 'Try again',
-          demo: '🧪 Demo mode — sample data (nothing is really posted or saved). ', demoOff: 'Turn off demo' },
+          demo: '🧪 Demo mode — sample data (nothing is really posted or saved). ', demoOff: 'Turn off demo', loading: 'Loading…' },
     ja: { title: '発見', sub: 'ほかの人の一杯から始めてみましょう。',
           chipAll: 'すべて', chipEsp: 'エスプレッソ', chipDrip: 'ハンドドリップ', more: 'もっと見る',
           dose: '粉量', temp: '湯温', time: '時間', yieldOut: '抽出', yieldIn: '湯量',
           mate: 'コーヒーメイト', untitled: '無題のレシピ', menuAria: '投稿を通報・ブロック',
           emptyHtml: 'まだ公開レシピがありません。<br>最初の一杯をシェアしましょう。', shareFromLog: '自分の記録からシェア',
           loadErr: 'フィードを読み込めませんでした。しばらくして再度お試しください。', retry: '再試行',
-          demo: '🧪 デモモードです — サンプルデータです（実際には投稿・保存されません）。 ', demoOff: 'デモを終了' },
+          demo: '🧪 デモモードです — サンプルデータです（実際には投稿・保存されません）。 ', demoOff: 'デモを終了', loading: '読み込み中…' },
     zh: { title: '探索', sub: '從別人的一杯開始吧。',
           chipAll: '全部', chipEsp: '義式濃縮', chipDrip: '手沖', more: '載入更多',
           dose: '粉量', temp: '水溫', time: '時間', yieldOut: '萃取', yieldIn: '注水',
           mate: '咖啡夥伴', untitled: '未命名食譜', menuAria: '檢舉或封鎖貼文',
           emptyHtml: '目前還沒有公開食譜。<br>分享第一杯吧。', shareFromLog: '從我的紀錄分享',
           loadErr: '無法載入動態，請稍後再試。', retry: '重試',
-          demo: '🧪 示範模式 — 範例資料（不會真的發布或儲存）。 ', demoOff: '關閉示範' },
+          demo: '🧪 示範模式 — 範例資料（不會真的發布或儲存）。 ', demoOff: '關閉示範', loading: '載入中…' },
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -64,8 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g,
         (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-    const num = (v, unit) => `<span class="rc-metric"><b>${esc(v)}</b>${unit ? `<i>${esc(unit)}</i>` : ''}</span>`;
 
     // 제목·부제·필터칩·더보기 버튼을 현재 언어로. (카드는 renderCards가 담당.)
     function applyStatic() {
@@ -96,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
         b.innerHTML = L.demo + '<a href="?demo=0">' + L.demoOff + '</a>';
     }
 
+    // 2열 그리드 타일(Pinterest·Instagram 탐색 문법). 사진이 주인공이고, 사진이 없으면
+    // 그 자리에 비율·도징·시간을 타이포그래피로 채운다. 아래는 제목 → 원두 → 수치 한 줄 → 작성자.
     function cardHtml(post) {
         const L = t();
         const p = post.params || {};
@@ -103,32 +103,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const yld = Number(p.yield) || 0;
         const ratio = dose > 0 && yld > 0 ? '1:' + (yld / dose).toFixed(1) : '—';
         const timeStr = fmtBrewTime({ mode: post.method, time: p.timeSec });
-        const modeStr = modeLabel(post.method);
-        const yieldLabel = post.method === 'drip' ? L.yieldIn : L.yieldOut;
+        const modeStr = post.method === 'drip' ? L.chipDrip : L.chipEsp;
+        const temp = Number(p.waterTemp) || 0;
+        const title = post.title || post.bean || L.untitled;
 
         const hero = post.hasPhoto && post.photoUrl
-            ? `<div class="recipe-card-photo"><img src="${esc(post.photoUrl)}" alt="${esc(post.title || 'Coffee')}" class="recipe-card-image" loading="lazy"></div>`
-            : `<div class="recipe-card-photo recipe-card-photo--data" aria-hidden="true">
-                   ${num(dose ? dose.toFixed(1) : '—', dose ? 'g' : '')}
-                   ${num(ratio, '')}
-                   ${num(timeStr, '')}
+            ? `<img src="${esc(post.photoUrl)}" alt="${esc(title)}" class="dc-tile-img" loading="lazy">`
+            : `<div class="dc-tile-data" aria-hidden="true">
+                   <span class="dc-tile-ratio">${esc(ratio)}</span>
+                   <span class="dc-tile-sub">${esc(dose ? dose.toFixed(1) + 'g' : '—')} · ${esc(timeStr)}</span>
                </div>`;
 
         return `
-            <a class="recipe-card feed-card" href="post.html?id=${encodeURIComponent(post.id)}" data-owner-uid="${esc(post.ownerId || '')}">
+            <a class="feed-card dc-tile" href="post.html?id=${encodeURIComponent(post.id)}" data-owner-uid="${esc(post.ownerId || '')}">
                 <span class="feed-card-menu" role="button" tabindex="0" aria-label="${esc(L.menuAria)}" data-menu data-postid="${esc(post.id)}" data-uid="${esc(post.ownerId || '')}" data-owner="${esc(post.ownerName || '')}">⋯</span>
-                ${hero}
-                <div class="recipe-card-content">
-                    <h4>${esc(post.title) || (esc(post.bean) || esc(L.untitled))}</h4>
-                    <p class="recipe-card-sub">${esc(post.bean ? post.bean + ' · ' : '')}${esc(modeStr)}</p>
-                    <div class="recipe-card-metrics">
-                        <div><span class="label">${esc(L.dose)}</span>${num(dose.toFixed(1), 'g')}</div>
-                        <div><span class="label">${esc(L.temp)}</span>${num(Number(p.waterTemp) || 0, '°C')}</div>
-                        <div><span class="label">${esc(L.time)}</span>${num(timeStr, '')}</div>
-                        <div><span class="label">${esc(yieldLabel)}</span>${num(yld.toFixed(1), 'g')}</div>
-                    </div>
-                    <span class="feed-card-author" role="link" tabindex="0" data-uid="${esc(post.ownerId || '')}">☕ ${esc(post.ownerName || L.mate)}</span>
-                </div>
+                <div class="dc-tile-photo">${hero}</div>
+                <h3 class="dc-tile-title">${esc(title)}</h3>
+                ${post.title && post.bean ? `<p class="dc-tile-bean">${esc(post.bean)}</p>` : ''}
+                <p class="dc-tile-meta">${esc(modeStr)} · ${esc(ratio)}${temp ? ` · ${esc(temp)}°C` : ''}</p>
+                <span class="feed-card-author" role="link" tabindex="0" data-uid="${esc(post.ownerId || '')}">${esc(post.ownerName || L.mate)}</span>
             </a>`;
     }
 
@@ -162,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function load(reset) {
         if (loading) return;
         loading = true;
-        if (reset) { cursor = null; done = false; items = []; grid.innerHTML = '<div class="loading">Loading…</div>'; }
+        if (reset) { cursor = null; done = false; items = []; grid.innerHTML = `<div class="loading">${esc(t().loading)}</div>`; }
         moreBtn.hidden = true;
         try {
             const res = await fetchFeed({ method: mode, cursor });

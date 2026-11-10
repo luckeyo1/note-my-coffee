@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const i18n = {
         en: {
             newRecipe: "NEW RECIPE",
-            logbookTitle: "MY RECIPE LOGBOOK",
+            logbookTitle: "Log",
             noRecipes: "No recipes logged yet. Go create one!",
             deleteConfirm: "Are you sure you want to delete this recipe?",
             beanName: "Bean:", mode: "Mode:", dosing: "Dosing:", temp: "Temp:",
@@ -35,10 +35,25 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFailed: "Couldn't load your recipes. Your records are safe — this is a connection problem.",
             retry: "Try again",
             deleteFailed: "Couldn't delete this recipe. Check your connection and try again.",
+            sumRecent: "Last 7 days",
+            sumSuccess: "Success rate",
+            sumStreak: "Streak",
+            unitCups: " cups",
+            unitDays: " days",
+            today: "Today",
+            yesterday: "Yesterday",
+            statDose: "Dose",
+            statYield: "Yield",
+            statRatio: "Ratio",
+            statTime: "Time",
+            statTemp: "Temp",
+            more: "More actions",
+            rebrewCta: "Brew this again →",
+            ratingAria: "Rating {n} of 5",
         },
         ko: {
             newRecipe: "새 레시피",
-            logbookTitle: "나의 레시피 기록",
+            logbookTitle: "기록",
             noRecipes: "아직 기록된 레시피가 없습니다. 지금 바로 레시피를 만들어보세요!",
             deleteConfirm: "정말로 이 레시피를 삭제하시겠습니까?",
             beanName: "원두명:", mode: "모드:", dosing: "도징량:", temp: "물 온도:",
@@ -52,10 +67,25 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFailed: "기록을 불러오지 못했습니다. 기록은 그대로 있고, 연결 문제입니다.",
             retry: "다시 시도",
             deleteFailed: "삭제하지 못했습니다. 연결을 확인하고 다시 시도해주세요.",
+            sumRecent: "최근 7일",
+            sumSuccess: "성공률",
+            sumStreak: "연속 기록",
+            unitCups: "잔",
+            unitDays: "일",
+            today: "오늘",
+            yesterday: "어제",
+            statDose: "도징",
+            statYield: "추출량",
+            statRatio: "비율",
+            statTime: "시간",
+            statTemp: "온도",
+            more: "더보기",
+            rebrewCta: "이 레시피로 다시 추출 →",
+            ratingAria: "별점 5점 중 {n}점",
         },
         ja: {
             newRecipe: "新しいレシピ",
-            logbookTitle: "マイレシピ記録",
+            logbookTitle: "記録",
             noRecipes: "まだレシピが記録されていません。今すぐ作ってみましょう！",
             deleteConfirm: "このレシピを削除してもよろしいですか？",
             beanName: "豆:", mode: "モード:", dosing: "粉量:", temp: "湯温:",
@@ -69,10 +99,25 @@ document.addEventListener('DOMContentLoaded', () => {
             loadFailed: "記録を読み込めませんでした。記録は無事です — 接続の問題です。",
             retry: "再試行",
             deleteFailed: "削除できませんでした。接続を確認して再度お試しください。",
+            sumRecent: "直近7日",
+            sumSuccess: "成功率",
+            sumStreak: "連続記録",
+            unitCups: "杯",
+            unitDays: "日",
+            today: "今日",
+            yesterday: "昨日",
+            statDose: "粉量",
+            statYield: "抽出量",
+            statRatio: "比率",
+            statTime: "時間",
+            statTemp: "湯温",
+            more: "その他の操作",
+            rebrewCta: "このレシピでもう一度 →",
+            ratingAria: "5点中{n}点",
         },
         zh: {
             newRecipe: "新配方",
-            logbookTitle: "我的配方筆記",
+            logbookTitle: "紀錄",
             noRecipes: "還沒有任何配方紀錄，現在就來建立一份吧！",
             deleteConfirm: "確定要刪除這份配方嗎？",
             beanName: "咖啡豆:", mode: "方式:", dosing: "粉量:", temp: "水溫:",
@@ -81,11 +126,26 @@ document.addEventListener('DOMContentLoaded', () => {
             purchaseLink: "購買連結", delete: "刪除", weather: "天氣:",
             share: "分享", rebrew: "再沖一次",
             searchPlaceholder: "搜尋咖啡豆、筆記…",
-            filterAll: "全部", filterEspresso: "Espresso", filterDrip: "手沖",
+            filterAll: "全部", filterEspresso: "義式濃縮", filterDrip: "手沖",
             noSearchResults: "沒有符合的配方。",
             loadFailed: "無法載入紀錄。你的資料沒有遺失 — 這是連線問題。",
             retry: "重試",
             deleteFailed: "無法刪除，請檢查連線後再試一次。",
+            sumRecent: "最近 7 天",
+            sumSuccess: "成功率",
+            sumStreak: "連續紀錄",
+            unitCups: " 杯",
+            unitDays: " 天",
+            today: "今天",
+            yesterday: "昨天",
+            statDose: "粉量",
+            statYield: "萃取量",
+            statRatio: "比例",
+            statTime: "時間",
+            statTemp: "水溫",
+            more: "更多操作",
+            rebrewCta: "用這份配方再沖一次 →",
+            ratingAria: "5 分中的 {n} 分",
         }
     };
 
@@ -101,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tools: document.getElementById('logbook-tools'),
         searchInput: document.getElementById('logbook-search'),
         filters: document.getElementById('logbook-filters'),
+        summary: document.getElementById('lb-summary'),
     };
 
     // ── Auth ──────────────────────────────────────────────────────────────
@@ -181,6 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!recipesCache.length) {
             // 기록이 하나도 없으면 검색/필터 도구를 숨긴다.
             if (elements.tools) elements.tools.hidden = true;
+            if (elements.summary) elements.summary.hidden = true;
             // 빈 로그북. 앱은 크림색 라이트 테마라 랜딩의 다크 사진이 맞지 않아
             // 앱 팔레트의 골드 라인아트(인라인 SVG)로 둔다 — 요청 0건이고 어느
             // 화면 폭에서도 선명하다.
@@ -204,7 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 기록이 있으면 검색/필터 도구를 켜고, 현재 검색어·필터를 적용해 그린다.
+        // 기록이 있으면 요약·검색/필터 도구를 켜고, 현재 검색어·필터를 적용해 그린다.
+        renderSummary(recipesCache);
         syncTools();
         applyFilter();
     };
@@ -238,7 +301,88 @@ document.addEventListener('DOMContentLoaded', () => {
         renderList(list);
     };
 
+    // ── 주간 요약(Strava식) ──────────────────────────────────────────────
+    // 필터·검색과 무관하게 전체 기록 기준이다. 날짜는 기기 로컬 자정 기준으로 센다.
+    const dayKey = (d) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    const renderSummary = (all) => {
+        const box = elements.summary;
+        if (!box) return;
+        const L = i18n[currentLang];
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const counts = new Map();
+        const ok = new Map();
+        all.forEach((r) => {
+            if (!r || !r.date) return;
+            const d = new Date(r.date);
+            if (isNaN(d)) return;
+            const k = dayKey(d);
+            counts.set(k, (counts.get(k) || 0) + 1);
+            if (r.success) ok.set(k, (ok.get(k) || 0) + 1);
+        });
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today); d.setDate(today.getDate() - i);
+            days.push({ d, n: counts.get(dayKey(d)) || 0, ok: ok.get(dayKey(d)) || 0, isToday: i === 0 });
+        }
+        const week = days.reduce((a, x) => a + x.n, 0);
+        const weekOk = days.reduce((a, x) => a + x.ok, 0);
+        // 연속 기록: 오늘(없으면 어제)부터 거꾸로 하루도 빠지지 않은 날 수
+        let streak = 0;
+        const cur = new Date(today);
+        if (!counts.get(dayKey(cur))) cur.setDate(cur.getDate() - 1);
+        while (counts.get(dayKey(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
+
+        const peak = Math.max(1, ...days.map(x => x.n));
+        const locale = tx('ko-KR', 'en-US', 'ja-JP', 'zh-TW');
+        const bars = days.map((x) => {
+            const h = x.n ? Math.round(6 + (x.n / peak) * 22) : 4;
+            const label = x.isToday ? L.today : x.d.toLocaleDateString(locale, { weekday: 'narrow' });
+            return `<li class="lb-bar${x.isToday ? ' is-today' : ''}${x.n ? ' has' : ''}" title="${esc(x.d.toLocaleDateString(locale))}: ${x.n}">
+                        <span class="lb-bar-fill" style="height:${h}px"></span><span class="lb-bar-day">${esc(label)}</span></li>`;
+        }).join('');
+        const stat = (label, value, unit, cls = '') =>
+            `<div class="lb-stat ${cls}"><span class="lb-stat-label">${esc(label)}</span><span class="lb-stat-value">${esc(value)}<small>${esc(unit)}</small></span></div>`;
+        box.innerHTML = `
+            <div class="lb-stats-row">
+                ${stat(L.sumRecent, String(week), L.unitCups)}
+                ${stat(L.sumSuccess, week ? String(Math.round(weekOk / week * 100)) : '—', week ? '%' : '', 'is-good')}
+                ${stat(L.sumStreak, String(streak), L.unitDays)}
+            </div>
+            <ol class="lb-bars" aria-hidden="true">${bars}</ol>`;
+        box.hidden = false;
+    };
+
+    // 카드 상단 날짜: 오늘/어제는 상대 표기 + 시각, 그 외엔 날짜 + 시각
+    const fmtWhen = (iso) => {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (isNaN(d)) return '';
+        const L = i18n[currentLang];
+        const locale = tx('ko-KR', 'en-US', 'ja-JP', 'zh-TW');
+        const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
+        const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+        const diff = Math.round((t0 - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+        if (diff === 0) return `${L.today} ${time}`;
+        if (diff === 1) return `${L.yesterday} ${time}`;
+        return `${d.toLocaleDateString(locale, { month: 'long', day: 'numeric' })} ${time}`;
+    };
+    const fmtNum = (v) => String(Math.round((Number(v) || 0) * 10) / 10);
+
+    // ⋯ 메뉴: 공유·구매처·삭제를 카드 밖으로 접는다. 한 번에 하나만 열린다.
+    const closeMenus = (except) => {
+        elements.recipeCardsGrid.querySelectorAll('.lb-menu:not([hidden])').forEach((m) => {
+            if (m === except) return;
+            m.hidden = true;
+            const b = m.parentElement && m.parentElement.querySelector('.lb-more');
+            if (b) b.setAttribute('aria-expanded', 'false');
+        });
+    };
+    document.addEventListener('click', (e) => { if (!e.target.closest('.lb-menu-wrap')) closeMenus(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenus(); });
+
     // 주어진 목록으로 카드를 그린다. 목록이 비면(검색 결과 없음) 안내를 띄운다.
+    // 카드는 Strava 활동 피드 문법이다: 메타 한 줄 → (사진이 있을 때만 사진) → 원두명 →
+    // 수치 한 줄 → 별점·노트. 사진이 없으면 자리를 비워 두지 않고 카드를 짧게 끝낸다.
     const renderList = (list) => {
         elements.recipeCardsGrid.innerHTML = '';
         if (!list.length) {
@@ -246,68 +390,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 `<div class="no-recipes-message"><p class="no-recipes-text">${esc(i18n[currentLang].noSearchResults)}</p></div>`;
             return;
         }
+        const L = i18n[currentLang];
         list.forEach(recipe => {
             if (!recipe) return;
-            const card = document.createElement('div');
-            card.className = 'recipe-card';
+            const card = document.createElement('article');
+            card.className = 'lb-entry';
 
             const safeMode  = recipe.mode ? modeLabel(recipe.mode) : 'UNKNOWN';
             const safeRat   = Math.max(0, Math.min(5, parseInt(recipe.overallRating, 10) || 0));
-            const safeWeather = recipe.weather || tx('정보 없음', 'No info', '情報なし', '無資訊');
             const timeStr   = fmtBrewTime(recipe);
             const purchase  = safeUrl(recipe.purchaseUrl);
-
-            // 기록을 스프레드시트 행이 아니라 '기억'처럼 보이게 한다(Airbnb 숙소 카드 문법).
-            // 사용자가 찍은 사진이 주인공이고, 그 아래에 제목 → 부제 → 수치 순으로 조판한다.
-            // 사진이 없으면 빈 회색 박스를 두지 않고 **핵심 수치를 타이포그래피로** 그 자리에 채운다.
             const dose  = Number(recipe.dosing) || 0;
             const yld   = Number(recipe.yield) || 0;
             const ratio = dose > 0 && yld > 0 ? '1:' + (yld / dose).toFixed(1) : '—';
-            const dateStr = recipe.date
-                ? new Date(recipe.date).toLocaleDateString(tx('ko-KR', 'en-US', 'ja-JP', 'zh-TW'),
-                    { month: 'long', day: 'numeric' })
-                : '';
+            const id = esc(recipe.id);
+            const menuId = `lb-menu-${String(recipe.id).replace(/[^A-Za-z0-9_-]/g, '')}`;
 
-            const metric = (v, unit) =>
-                `<span class="rc-metric"><b>${v}</b>${unit ? `<i>${unit}</i>` : ''}</span>`;
-
-            const hero = recipe.imageUrl
-                ? `<div class="recipe-card-photo"><img src="${esc(recipe.imageUrl)}" alt="${esc(recipe.beanName || 'Coffee')}" class="recipe-card-image" loading="lazy"></div>`
-                : `<div class="recipe-card-photo recipe-card-photo--data" aria-hidden="true">
-                       ${metric(dose ? dose.toFixed(1) : '—', dose ? 'g' : '')}
-                       ${metric(ratio, '')}
-                       ${metric(timeStr, '')}
-                   </div>`;
+            const stat = (label, value, unit, cls = '') =>
+                `<div class="${cls}"><dt>${esc(label)}</dt><dd>${esc(value)}${unit ? `<small>${esc(unit)}</small>` : ''}</dd></div>`;
 
             card.innerHTML = `
-                ${hero}
-                <div class="recipe-card-content">
-                    <h4>${esc(recipe.beanName) || tx('원두명 미상', 'Unknown Bean', '豆の名前不明', '未知咖啡豆')}</h4>
-                    <p class="recipe-card-sub">${dateStr ? esc(dateStr) + ' · ' : ''}${esc(safeMode)}</p>
-
-                    <div class="recipe-card-metrics">
-                        <div><span class="label">${i18n[currentLang].dosing}</span>${metric(dose.toFixed(1), 'g')}</div>
-                        <div><span class="label">${i18n[currentLang].temp}</span>${metric(Number(recipe.temp) || 0, '°C')}</div>
-                        <div><span class="label">${i18n[currentLang].time}</span>${metric(timeStr, '')}</div>
-                        <div><span class="label">${i18n[currentLang].yield}</span>${metric(yld.toFixed(1), 'g')}</div>
-                    </div>
-
-                    ${recipe.tasteNotes ? `<p class="recipe-card-notes">${esc(recipe.tasteNotes)}</p>` : ''}
-                    <p class="recipe-card-rating">${_stars(safeRat)}</p>
-                    ${purchase ? `<p class="recipe-card-link"><a href="${esc(purchase)}" target="_blank" rel="noopener">${i18n[currentLang].purchaseLink}</a></p>` : ''}
-                    <p class="recipe-card-weather"><span class="label">${i18n[currentLang].weather}</span> ${esc(safeWeather)}</p>
-                    ${recipe.sharedFrom ? '<p class="shared-badge">📨 공유받은 레시피</p>' : ''}
-                </div>
-                <div class="recipe-card-footer">
-                    <span class="status-indicator ${recipe.success ? 'status-success' : 'status-fail'}">
-                        ${recipe.success ? i18n[currentLang].success : i18n[currentLang].fail}
-                    </span>
-                    <div class="recipe-card-actions">
-                        <button class="share-btn" data-id="${esc(recipe.id)}">${i18n[currentLang].share}</button>
-                        <button class="delete-btn" data-id="${esc(recipe.id)}">${i18n[currentLang].delete}</button>
+                <div class="lb-entry-meta">
+                    <span class="lb-entry-when">${esc([fmtWhen(recipe.date), safeMode, recipe.origin].filter(Boolean).join(' · '))}</span>
+                    <div class="lb-menu-wrap">
+                        <button type="button" class="lb-more" data-id="${id}" aria-label="${esc(L.more)}" aria-haspopup="menu" aria-expanded="false" aria-controls="${menuId}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                        </button>
+                        <div class="lb-menu" id="${menuId}" role="menu" hidden>
+                            <button type="button" role="menuitem" class="share-btn" data-id="${id}">${esc(L.share)}</button>
+                            ${purchase ? `<a role="menuitem" href="${esc(purchase)}" target="_blank" rel="noopener">${esc(L.purchaseLink)}</a>` : ''}
+                            <button type="button" role="menuitem" class="delete-btn" data-id="${id}">${esc(L.delete)}</button>
+                        </div>
                     </div>
                 </div>
-                <button class="recipe-rebrew-btn" data-id="${esc(recipe.id)}">↻ ${i18n[currentLang].rebrew}</button>
+                ${recipe.imageUrl ? `<div class="recipe-card-photo lb-entry-photo"><img src="${esc(recipe.imageUrl)}" alt="${esc(recipe.beanName || 'Coffee')}" class="recipe-card-image" loading="lazy"></div>` : ''}
+                <div class="lb-entry-head">
+                    <h3>${esc(recipe.beanName) || tx('원두명 미상', 'Unknown Bean', '豆の名前不明', '未知咖啡豆')}</h3>
+                    <span class="status-indicator ${recipe.success ? 'status-success' : 'status-fail'}">${recipe.success ? esc(L.success) : esc(L.fail)}</span>
+                </div>
+                <dl class="lb-entry-stats">
+                    ${stat(L.statDose, dose.toFixed(1), 'g')}
+                    ${stat(L.statYield, fmtNum(yld), 'g')}
+                    ${stat(L.statRatio, ratio, '', 'is-ratio')}
+                    ${stat(L.statTime, timeStr, '')}
+                    ${stat(L.statTemp, fmtNum(recipe.temp), '°')}
+                </dl>
+                <p class="lb-entry-notes"><span class="lb-stars" role="img" aria-label="${esc(L.ratingAria.replace('{n}', safeRat))}">${_stars(safeRat)}</span>${recipe.tasteNotes ? ` <span>${esc(recipe.tasteNotes)}</span>` : ''}</p>
+                ${recipe.weather ? `<p class="lb-entry-weather">${esc(recipe.weather)}</p>` : ''}
+                ${recipe.sharedFrom ? '<p class="shared-badge">📨 공유받은 레시피</p>' : ''}
+                <button type="button" class="recipe-rebrew-btn lb-rebrew" data-id="${id}">${esc(L.rebrewCta)}</button>
             `;
             elements.recipeCardsGrid.appendChild(card);
         });
@@ -360,6 +491,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!btn) return;
         const id = btn.dataset.id;
         if (!id) return;
+
+        if (btn.classList.contains('lb-more')) {
+            const menu = btn.parentElement.querySelector('.lb-menu');
+            if (!menu) return;
+            const open = menu.hidden;
+            closeMenus(menu);
+            menu.hidden = !open;
+            btn.setAttribute('aria-expanded', String(open));
+            if (open) { const first = menu.querySelector('[role="menuitem"]'); if (first) first.focus(); }
+            return;
+        }
+        closeMenus();
 
         if (btn.classList.contains('delete-btn')) {
             deleteRecipe(id);
