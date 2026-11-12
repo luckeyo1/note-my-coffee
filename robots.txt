@@ -12,3 +12,6 @@ Disallow: /pay-fail
 Disallow: /pay-fail.html
 
 Sitemap: https://note-my-coffee.web.app/sitemap.xml
+
+# 다음 웹마스터도구 소유권 확인(사이트: https://note-my-coffee.web.app). 공개 토큰.
+#DaumWebMasterTool:4b5814c7d146602afed08699cfce60c9aff31c996bfc4a9c934ed6488c30cfec:VC4npJliHmrJLtJDnWYFDA==
