@@ -419,7 +419,7 @@
         transition: filter 0.18s ease, transform 0.2s;
     }
     .coupang-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
-    .coupang-disc { margin: 9px 0 0; font-size: 11px; line-height: 1.5; color: var(--ghost); text-align: left; }
+    .coupang-disc { margin: 16px 0; font-size: 13px; line-height: 1.6; color: var(--ink); text-align: left; }
 
     /* 기구 추천 카드 */
     .gear {
@@ -641,7 +641,7 @@
     /* ── 쿠팡 파트너스(제휴) ───────────────────────────────────────────────
        ⚠️ 반드시 파트너스에서 생성한 link.coupang.com/a/… 링크만 수수료가 잡힌다.
        임의 검색 URL(coupang.com/np/search…)은 상품으로 연결은 되지만 정산이 안 된다. */
-    const COUPANG_DISCLOSURE = '쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.';
+    const COUPANG_DISCLOSURE = '이 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.';
     const coupangSearch = (q) => 'https://www.coupang.com/np/search?q=' + encodeURIComponent(q);
 
     // 원두: 취향 검사(index.html)와 동일한 실 파트너스 링크를 재사용한다.
@@ -652,19 +652,18 @@
         D: { url: 'https://link.coupang.com/a/hHbw5sLiqO', label: '쿠팡에서 다크로스트 원두 보기' },
     };
 
-    /* 기구: 프로필에 맞는 추천 기구 + 쿠팡 파트너스 수익화.
-       👉 code를 채우기 전까지는 q(검색어)로 폴백한다 — 상품은 보이지만 수수료는
-          안 잡힌다. 파트너스에서 각 기구 검색/상품의 link.coupang.com/a/<코드>를
-          생성해 code에 '<코드>'만 넣으면 바로 수익화된다(원두 코드와 같은 방식). */
+    /* 기구: 파트너스에서 생성한 검색 링크. 2026-11-12에 네 링크의
+       첫 리디렉션에서 검색어와 계정 추적 ID(AF9996796)를 확인했다.
+       교체할 때도 실제 파트너스에서 생성한 코드를 사용한다. */
     const GEAR = {
         A: { name: '하리오 V60 드리퍼 세트', desc: '화사한 산미를 가장 잘 살리는 핸드드립 입문 세트(드리퍼+서버+필터).',
-             code: '', q: '하리오 V60 드립세트', label: '쿠팡에서 V60 핸드드립 세트 보기' },
+             code: 'hQgl7SuzPU', q: '하리오 V60 드립세트', label: '쿠팡에서 V60 핸드드립 세트 보기' },
         B: { name: '드립 세트 + 전자저울', desc: '어떤 원두든 균형 있게 — 데일리 드립과 계량을 한 번에.',
-             code: '', q: '커피 드립세트 전자저울', label: '쿠팡에서 드립 세트·전자저울 보기' },
+             code: 'h0lxMiZlM4', q: '커피 드립세트 전자저울', label: '쿠팡에서 드립 세트·전자저울 보기' },
         C: { name: '우유 거품기(밀크 프로더)', desc: '고소한 원두를 라떼로. 집에서 부드러운 우유거품을 내는 가장 쉬운 길.',
-             code: '', q: '우유거품기 밀크프로더', label: '쿠팡에서 밀크 프로더 보기' },
+             code: 'h0lyk8qeom', q: '우유거품기 밀크프로더', label: '쿠팡에서 밀크 프로더 보기' },
         D: { name: '모카포트(비알레띠)', desc: '묵직한 바디를 진하게 — 불에 올려 내리는 가정용 에스프레소.',
-             code: '', q: '비알레띠 모카포트', label: '쿠팡에서 모카포트 보기' },
+             code: 'h0lyKClyns', q: '비알레띠 모카포트', label: '쿠팡에서 모카포트 보기' },
     };
     const gearUrl = (g) => g.code ? 'https://link.coupang.com/a/' + g.code : coupangSearch(g.q);
 
@@ -822,6 +821,7 @@
             // 운명의 원두를 '현상된 사진'처럼 보여준다. 서비스의 프로필 일러스트(어두운
             // 정물)가 이 페이지 배경과 같은 톤이라 그대로 녹아든다. 로드 실패 시 아래
             // onerror가 이모지 배지로 대체한다(빈 액자를 남기지 않는다).
+            '<p class="coupang-disc">' + esc(COUPANG_DISCLOSURE) + '</p>' +
             '<img class="result-art" id="result-art" src="' + artSrc(key) + '" alt="' + esc(r.title) + ' — 운명의 원두 이미지">' +
             '<div class="result-persona" id="result-persona" aria-hidden="true" hidden>' + r.emoji + '</div>' +
             '<div class="result-kicker">교신 완료 · 운명의 원두</div>' +
@@ -858,7 +858,6 @@
             '<a class="coupang-btn" id="coupang-gear" href="' + gearUrl(GEAR[key]) + '" target="_blank" rel="noopener noreferrer sponsored">' +
             '<span>' + esc(GEAR[key].label) + '</span><span aria-hidden="true">→</span></a>' +
             '</div>' +
-            '<p class="coupang-disc">' + esc(COUPANG_DISCLOSURE) + '</p>' +
 
             // ── 카페 추천 (지도 검색, 수익화 없음) ──
             '<div class="section-label" style="margin-top:30px;">오늘은 이런 카페 어때요</div>' +
