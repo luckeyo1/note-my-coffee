@@ -1,3 +1,23 @@
+# Current release: Coupang Partners connection (2026-11-12)
+
+Purpose: connect the existing coffee recommendations to the owner's Coupang
+Partners account without adding interruptive ads to the brewing workflow.
+
+Scope and steps:
+1. Publish the four previously generated equipment affiliate links. Preserve the
+   four working bean links and the existing profile-specific recommendations.
+2. Show a clear commission disclosure before recommendations in both quizzes,
+   including the landing page's translated content. Distinguish quiz bean clicks
+   from telepathy bean/equipment clicks in the existing analytics event.
+3. Refresh the service-worker cache so returning web/PWA users receive the links.
+4. Check syntax, the repository's bean-link check, a hosted preview, and production.
+5. Register the public website and Play Store listing in Partners and verify the
+   saved state separately. Registration and actual sales are not established by a
+   source-code change or a successful redirect alone.
+
+The existing production design and PWA are retained. The older plan below is
+historical and does not describe this release's current design or PWA status.
+
 # Coffee Notes App - Google Login & PWA Implementation Blueprint
 
 ## Overview
