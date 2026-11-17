@@ -867,11 +867,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 추출 중 화면이 꺼지면 타이머를 놓친다. 지원하는 브라우저에서만 켜 둔다.
+    // 화면이 가려지면(앱·탭 전환) 브라우저가 잠금을 자동으로 놓으므로, 돌아올 때
+    // 다시 잡는다(아래 visibilitychange). 이미 잡혀 있으면 중복 요청하지 않는다.
     const swLockScreen = async () => {
-        try { if ('wakeLock' in navigator) sw.wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { /* 미지원·거부 시 무시 */ }
+        try {
+            if (!('wakeLock' in navigator)) return;
+            if (sw.wakeLock && !sw.wakeLock.released) return;
+            const lock = await navigator.wakeLock.request('screen');
+            // 요청이 끝나기 전에 정지됐거나(빠른 시작→정지) 다른 요청이 먼저 잡았으면
+            // 바로 놓는다 — 그대로 두면 멈춘 타이머가 화면을 계속 켜 둔다.
+            if (!sw.running || (sw.wakeLock && !sw.wakeLock.released)) { lock.release().catch(() => {}); return; }
+            sw.wakeLock = lock;
+        } catch (e) { /* 미지원·거부 시 무시 */ }
     };
     const swUnlockScreen = () => {
-        try { if (sw.wakeLock) sw.wakeLock.release(); } catch (e) { /* no-op */ }
+        try { if (sw.wakeLock) sw.wakeLock.release().catch(() => {}); } catch (e) { /* no-op */ }
         sw.wakeLock = null;
     };
 
@@ -1693,6 +1703,11 @@ document.addEventListener('DOMContentLoaded', () => {
     el.swClose.addEventListener('click', closeTimer);
     el.swBtnStart.addEventListener('click', () => { if (sw.running) swStop(); else swStart(); });
     el.swBtnReset.addEventListener('click', swReset);
+    // 앱·탭 전환으로 잠금이 풀린 뒤 돌아왔을 때, 타이머가 돌고 있으면 다시 잡는다.
+    // (시간은 Date.now() 기준이라 그대로 맞고, 화면만 다시 켜 둔다.)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && sw.running) swLockScreen();
+    });
     el.swBtnApply.addEventListener('click', swLog);
 
     el.btnSave.addEventListener('click', () => {
@@ -1948,10 +1963,25 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingRebrew = r; // 저장 모달 열 때 원두 정보를 채운다
     };
 
+    // 로그인 세션 복원은 비동기다. 첫 인증 상태가 정해지기 전에 읽으면 currentUser가
+    // 아직 null이라 getRecipes()가 게스트(localStorage)만 뒤져 로그인 사용자의 기록을
+    // 못 찾는다(로그북이 onAuthStateChanged 안에서 렌더하는 것과 같은 이유). 그래서 첫
+    // 인증 상태를 한 번 기다린다. Firebase가 끝내 응답하지 않으면 ms 뒤 현재 값으로 진행.
+    const waitForAuth = (ms = 8000) => new Promise((resolve) => {
+        let settled = false;
+        const done = (u) => { if (!settled) { settled = true; resolve(u); } };
+        let unsub = null;
+        unsub = onAuthStateChanged(auth, (u) => { if (unsub) unsub(); done(u); });
+        setTimeout(() => done(auth.currentUser || null), ms);
+    });
+
     const rebrewId = new URLSearchParams(location.search).get('rebrew');
     if (rebrewId) {
         (async () => {
             try {
+                const user = await waitForAuth();
+                // 메인 리스너도 같은 값을 넣지만, 콜백 실행 순서에 기대지 않고 여기서 확정한다(멱등).
+                CoffeeNotesStorage.setCurrentUser(user);
                 const list = (await CoffeeNotesStorage.getRecipes()) || [];
                 const r = list.find(x => x && String(x.id) === String(rebrewId));
                 if (r) {
