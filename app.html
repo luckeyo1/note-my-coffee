@@ -250,6 +250,24 @@
                     <ol id="sw-stages" class="timer-stages" hidden></ol>
 
                     <p id="sw-hint" class="sw-hint">Press START — the time fills in when you stop</p>
+
+                    <!-- 정지 후: 잔 무게를 재서 추출량을 바로 맞춘다. 저장 시트엔 추출량 칸이 없어서
+                         여기서 고치지 않으면 미리 맞춰 둔 값이 그대로 저장된다. 메인 추출량 슬라이더와 같은 값. -->
+                    <section id="sw-yield" class="timer-card timer-yield" hidden>
+                        <div class="timer-card-row">
+                            <span id="sw-yield-label" class="timer-card-label">Yield</span>
+                            <span id="sw-yield-ratio" class="timer-card-value"></span>
+                        </div>
+                        <div class="timer-yield-ctrl">
+                            <button type="button" id="sw-yield-dec" class="timer-yield-btn" aria-label="Decrease yield">−</button>
+                            <label class="timer-yield-field">
+                                <input type="number" id="sw-yield-input" inputmode="decimal" step="0.1" aria-labelledby="sw-yield-label">
+                                <span class="timer-yield-unit" aria-hidden="true">g</span>
+                            </label>
+                            <button type="button" id="sw-yield-inc" class="timer-yield-btn" aria-label="Increase yield">+</button>
+                        </div>
+                        <p id="sw-yield-hint" class="timer-yield-hint">Weigh the cup and set the actual yield</p>
+                    </section>
                 </div>
 
                 <div class="timer-actions">
