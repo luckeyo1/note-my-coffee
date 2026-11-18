@@ -251,23 +251,11 @@
 
                     <p id="sw-hint" class="sw-hint">Press START — the time fills in when you stop</p>
 
-                    <!-- 정지 후: 잔 무게를 재서 추출량을 바로 맞춘다. 저장 시트엔 추출량 칸이 없어서
-                         여기서 고치지 않으면 미리 맞춰 둔 값이 그대로 저장된다. 메인 추출량 슬라이더와 같은 값. -->
-                    <section id="sw-yield" class="timer-card timer-yield" hidden>
-                        <div class="timer-card-row">
-                            <span id="sw-yield-label" class="timer-card-label">Yield</span>
-                            <span id="sw-yield-ratio" class="timer-card-value"></span>
-                        </div>
-                        <div class="timer-yield-ctrl">
-                            <button type="button" id="sw-yield-dec" class="timer-yield-btn" aria-label="Decrease yield">−</button>
-                            <label class="timer-yield-field">
-                                <input type="number" id="sw-yield-input" inputmode="decimal" step="0.1" aria-labelledby="sw-yield-label">
-                                <span class="timer-yield-unit" aria-hidden="true">g</span>
-                            </label>
-                            <button type="button" id="sw-yield-inc" class="timer-yield-btn" aria-label="Increase yield">+</button>
-                        </div>
-                        <p id="sw-yield-hint" class="timer-yield-hint">Weigh the cup and set the actual yield</p>
-                    </section>
+                    <!-- 정지 후: 메인 화면의 추출량 조절부(값·배지·비율·슬라이더·±)를 이 자리로
+                         옮겨 와 그대로 쓴다. 복제가 아니라 같은 요소라 생김새·0.1g 단위·동작이 메인과
+                         완전히 같다(main.js placeYieldControl). 저장 시트엔 추출량 칸이 없어서, 여기서
+                         고치지 않으면 미리 맞춰 둔 값이 그대로 저장된다. -->
+                    <div id="sw-yield-slot" class="timer-yield-slot" hidden></div>
                 </div>
 
                 <div class="timer-actions">
