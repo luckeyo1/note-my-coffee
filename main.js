@@ -117,8 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
             swBtnOpen: "Timer", swLog: "Log this cup", swClose: "Close timer",
             swTitleEspresso: "Espresso timer", swTitleDrip: "Hand drip timer", swWindow: "Target time", swWater: "Water target",
             swLeft: "{t} left", swPastTarget: "Past target time", swStages: ["Bloom", "1st pour", "2nd pour", "Finish"],
-            swYield: "Yield", swYieldHint: "Weigh the cup and set the actual yield", swYieldHintDrip: "Set the water you actually poured",
-            swYieldDec: "Decrease yield", swYieldInc: "Increase yield",
             scaTitle: "SCA BREWING GUIDE",
             scaGuide: {
                 espresso: {
@@ -225,8 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
             swBtnOpen: "타이머", swLog: "이 한 잔 기록하기", swClose: "타이머 닫기",
             swTitleEspresso: "에스프레소 타이머", swTitleDrip: "핸드드립 타이머", swWindow: "목표 시간", swWater: "누적 물량 목표",
             swLeft: "{t} 남음", swPastTarget: "목표 시간 경과", swStages: ["뜸 들이기", "1차 붓기", "2차 붓기", "마무리"],
-            swYield: "추출량", swYieldHint: "잔 무게를 재서 실제 추출량으로 맞춰주세요", swYieldHintDrip: "실제로 부은 물의 양으로 맞춰주세요",
-            swYieldDec: "추출량 줄이기", swYieldInc: "추출량 늘리기",
             scaTitle: "SCA 추출 가이드",
             scaGuide: {
                 espresso: {
@@ -333,8 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
             swBtnOpen: "タイマー", swLog: "この一杯を記録", swClose: "タイマーを閉じる",
             swTitleEspresso: "エスプレッソタイマー", swTitleDrip: "ハンドドリップタイマー", swWindow: "目標時間", swWater: "累計湯量の目安",
             swLeft: "残り {t}", swPastTarget: "目標時間を経過", swStages: ["蒸らし", "1投目", "2投目", "仕上げ"],
-            swYield: "抽出量", swYieldHint: "カップを量って実際の抽出量に合わせましょう", swYieldHintDrip: "実際に注いだお湯の量に合わせましょう",
-            swYieldDec: "抽出量を減らす", swYieldInc: "抽出量を増やす",
             scaTitle: "SCA抽出ガイド",
             scaGuide: {
                 espresso: {
@@ -441,8 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
             swBtnOpen: "計時器", swLog: "記錄這一杯", swClose: "關閉計時器",
             swTitleEspresso: "義式濃縮計時器", swTitleDrip: "手沖計時器", swWindow: "目標時間", swWater: "累計注水目標",
             swLeft: "剩餘 {t}", swPastTarget: "已超過目標時間", swStages: ["悶蒸", "第一次注水", "第二次注水", "收尾"],
-            swYield: "萃取量", swYieldHint: "秤一下杯重，調成實際萃取量", swYieldHintDrip: "調成實際注入的水量",
-            swYieldDec: "減少萃取量", swYieldInc: "增加萃取量",
             scaTitle: "SCA 萃取指南",
             scaGuide: {
                 espresso: {
@@ -628,13 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         swBtnReset: document.getElementById('sw-btn-reset'),
         swBtnApply: document.getElementById('sw-btn-apply'),
         swHint: document.getElementById('sw-hint'),
-        swYield: document.getElementById('sw-yield'),
-        swYieldLabel: document.getElementById('sw-yield-label'),
-        swYieldRatio: document.getElementById('sw-yield-ratio'),
-        swYieldInput: document.getElementById('sw-yield-input'),
-        swYieldDec: document.getElementById('sw-yield-dec'),
-        swYieldInc: document.getElementById('sw-yield-inc'),
-        swYieldHint: document.getElementById('sw-yield-hint'),
+        swYieldSlot: document.getElementById('sw-yield-slot'),
         lblSwStart: document.getElementById('lbl-sw-start'),
         lblSwReset: document.getElementById('lbl-sw-reset'),
         lblSwApply: document.getElementById('lbl-sw-apply'),
@@ -766,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // - 에스프레소: SCA 목표 구간 위에 진행 막대를 그린다.
     // - 핸드드립: 지금 레시피(도징·물량·시간)에서 뽑은 붓기 단계 가이드를 보여준다.
     // 정지하면 경과 시간이 곧바로 추출 시간에 들어가고, "기록하기"가 저장 시트로 잇는다.
-    const sw = { running: false, elapsed: 0, startTime: null, rafId: null, done: false, stage: -1, plan: null, wakeLock: null, saveAfterClose: false, yieldEdited: false };
+    const sw = { running: false, elapsed: 0, startTime: null, rafId: null, done: false, stage: -1, plan: null, wakeLock: null, saveAfterClose: false, yieldAtStop: null };
     const swGetMax = () => currentMode === 'espresso' ? 60 : 300;
 
     const swFormatTime = (ms) => {
@@ -907,46 +893,37 @@ document.addEventListener('DOMContentLoaded', () => {
         el.btnStopwatch.classList.toggle('active', sw.running);
     };
 
-    // ── 정지 후 추출량 맞추기 ──
+    // ── 정지 후 추출량: 메인 화면의 조절부를 그대로 옮겨 쓴다 ──
     // 저장 시트엔 추출량 칸이 없어서, 멈춘 뒤 "기록하기"로 가면 미리 맞춰 둔 값이 그대로
-    // 저장됐다. 정지 화면에서 잰 무게를 바로 넣게 한다. 값은 메인 추출량 슬라이더에
-    // fineTune과 같은 경로로 반영한다 — 눈금자·비율·SCA 배지·드립 붓기 계획이 함께 맞춰지고,
-    // 모드를 바꿀 때 setMode가 슬라이더 값을 modeValues에 저장하므로 모드별 기억도 따라온다.
-    // ±는 0.1g(fineTune)보다 크게: 에스프레소 0.5g, 드립(=총 물량) 5g. 정확한 값은 숫자 칸에 직접.
-    const swYieldStep = () => (currentMode === 'drip' ? 5 : 0.5);
-    const swYieldRatioText = (y) => {
-        const d = parseFloat(el.rDosing.value) || 0;
-        return d && Number.isFinite(y) ? `1:${(y / d).toFixed(1)}` : '';
+    // 저장됐다. 정지 화면에 메인 화면의 추출량 조절부(값·배지·비율·슬라이더·±)를 복제가
+    // 아니라 그 요소 자체로 옮겨 와, 생김새·0.1g 단위·드래그·배지가 메인과 완전히 같다.
+    // 슬라이더(updateVal)·±(fineTune) 핸들러는 요소에 붙어 있어 옮겨도 그대로 돌고,
+    // 스타일도 전역 선택자라 그대로다. 나중에 메인 조절부를 바꾸면 여기도 자동으로 따라온다.
+    // 정지 화면을 벗어나면(이어서·리셋·닫기·모드 전환) 제자리로 되돌린다. 메인 쪽엔 같은
+    // 높이의 자리 표시를 남겨, 닫을 때 페이지 스크롤이 튀지 않게 한다.
+    let yieldPlaceholder = null;
+    const placeYieldControl = (inTimer) => {
+        const group = el.rYield && el.rYield.closest('.control-group');
+        if (!group || !el.swYieldSlot) return;
+        if (inTimer) {
+            if (group.parentNode === el.swYieldSlot) return;
+            yieldPlaceholder = document.createElement('div');
+            yieldPlaceholder.setAttribute('aria-hidden', 'true');
+            yieldPlaceholder.style.height = `${group.offsetHeight}px`;
+            group.replaceWith(yieldPlaceholder);
+            el.swYieldSlot.appendChild(group);
+        } else if (yieldPlaceholder) {
+            yieldPlaceholder.replaceWith(group);
+            yieldPlaceholder = null;
+        }
     };
+    // 타이머가 열려 있고 정지(DONE) 상태일 때만 타이머로 옮긴다. 패널이 닫혀 있으면 항상
+    // 메인에 둔다 — 그렇지 않으면 정지 후 타이머를 닫고 언어를 바꿀 때(setLang →
+    // swSyncButtons) 조절부가 숨은 패널로 빨려 들어가 메인 화면에서 사라진다.
     const swSyncYield = () => {
-        if (!el.swYield) return;
-        const show = sw.done && !sw.running;
-        el.swYield.hidden = !show;
-        if (!show) return;
-        const t = i18n[currentLang];
-        const y = parseFloat(el.rYield.value) || 0;
-        el.swYieldLabel.textContent = t.swYield;
-        el.swYieldHint.textContent = currentMode === 'drip' ? t.swYieldHintDrip : t.swYieldHint;
-        el.swYieldDec.setAttribute('aria-label', t.swYieldDec);
-        el.swYieldInc.setAttribute('aria-label', t.swYieldInc);
-        el.swYieldInput.min = el.rYield.min;
-        el.swYieldInput.max = el.rYield.max;
-        el.swYieldInput.value = y.toFixed(1);
-        el.swYieldRatio.textContent = swYieldRatioText(y);
-        el.swYieldDec.disabled = y <= parseFloat(el.rYield.min);
-        el.swYieldInc.disabled = y >= parseFloat(el.rYield.max);
-    };
-    const swSetYield = (v) => {
-        // 빈 칸·숫자가 아닌 입력은 버리고 지금 값으로 되돌린다.
-        if (!Number.isFinite(v)) { swSyncYield(); return; }
-        const min = parseFloat(el.rYield.min), max = parseFloat(el.rYield.max);
-        const next = Math.round(Math.min(max, Math.max(min, v)) * 10) / 10;
-        el.rYield.value = next.toFixed(1);
-        updateVal('yield', el.rYield.value);
-        syncRuler('yield', el.rYield.value);
-        sw.yieldEdited = true;
-        swSetup();      // 머리말의 g·비율, 드립 붓기 계획(총 물량)을 새 값으로
-        swSyncYield();
+        const inTimer = !el.stopwatchPanel.hidden && sw.done && !sw.running;
+        placeYieldControl(inTimer);
+        if (el.swYieldSlot) el.swYieldSlot.hidden = !inTimer;
     };
 
     const swSyncButtons = () => {
@@ -960,7 +937,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.lblSwApply.textContent = t.swLog;
         el.swStatus.textContent = sw.running ? t.swStatusRunning : (sw.done ? t.swStatusDone : t.swStatusReady);
         swSyncTrigger();
-        swSyncYield(); // 정지 상태에서만 추출량 카드를 보인다(언어 전환도 이 경로로 따라온다)
+        swSyncYield(); // 정지 상태에서만 추출량 조절부를 타이머로 옮긴다(언어 전환도 이 경로로 따라온다)
     };
 
     const swTick = () => {
@@ -1001,6 +978,7 @@ document.addEventListener('DOMContentLoaded', () => {
         swUpdateProgress(sw.elapsed);
         swUnlockScreen();
         swApplyTime();
+        sw.yieldAtStop = el.rYield.value; // 정지 후 추출량을 손봤는지(timer_log) 판단용
         // 화면 표기(0.1초 내림)와 같은 값으로 판정·안내한다 — 반올림하면 "2.2" 옆에 "2.3초"가 뜬다.
         const secs = Math.floor(sw.elapsed / 100) / 10;
         const qr = qualityRanges[currentMode].time;
@@ -1012,7 +990,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const swReset = () => {
         cancelAnimationFrame(sw.rafId); sw.running = false; sw.done = false; sw.elapsed = 0; sw.startTime = null;
-        sw.yieldEdited = false;
+        sw.yieldAtStop = null;
         swUnlockScreen();
         el.swTime.textContent = swFormatTime(0); el.swTime.classList.remove('running', 'done');
         el.swHint.textContent = i18n[currentLang].swHintReady;
@@ -1027,6 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!sw.running && !sw.done) swReset(); else { swSetup(); swSyncButtons(); }
         swLastFocus = document.activeElement;
         el.stopwatchPanel.hidden = false;
+        swSyncYield(); // 정지 상태로 다시 열면 추출량 조절부를 옮겨 온다(위 swSyncButtons 땐 패널이 아직 닫혀 있었다)
         document.body.classList.add('timer-open');
         el.btnStopwatch.setAttribute('aria-expanded', 'true');
         pushModalHistory();
@@ -1035,6 +1014,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const closeTimerDirect = () => {
         el.stopwatchPanel.hidden = true;
+        swSyncYield(); // 추출량 조절부를 메인 화면 제자리로 되돌린다
         document.body.classList.remove('timer-open');
         el.btnStopwatch.setAttribute('aria-expanded', 'false');
         swSyncTrigger();
@@ -1049,9 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const closeTimer = () => closeTopModalViaHistory(closeTimerDirect);
     const swLog = () => {
-        // 숫자 칸에 치던 값이 아직 반영 전이면(포커스가 남은 채 눌린 경우) 먼저 반영한다.
-        if (document.activeElement === el.swYieldInput) swSetYield(parseFloat(el.swYieldInput.value));
-        track('timer_log', { mode: currentMode, yield_edited: sw.yieldEdited });
+        track('timer_log', { mode: currentMode, yield_edited: sw.yieldAtStop !== null && el.rYield.value !== sw.yieldAtStop });
         sw.saveAfterClose = true;
         closeTimer();
     };
@@ -1155,6 +1133,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (id === 'temp' && el.visTemp) el.visTemp.style.width = `${(dv - 80) / (100 - 80) * 100}%`;
 
         updateBrewRatio();
+        // 정지 화면으로 옮겨 온 추출량 조절부로 바꾸면 타이머 머리말(g·비율)과 드립 붓기 계획도 맞춘다.
+        if (id === 'yield' && sw.done && !sw.running && !el.stopwatchPanel.hidden) swSetup();
     };
 
     const qualityRanges = {
@@ -1770,14 +1750,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.visibilityState === 'visible' && sw.running) swLockScreen();
     });
     el.swBtnApply.addEventListener('click', swLog);
-    // 정지 후 추출량: ±는 현재값에서 한 칸씩, 숫자 칸은 확정(포커스 아웃·엔터) 때 반영한다.
-    // 치는 도중(input)엔 슬라이더를 건드리지 않고 비율만 미리 보여준다 — "3"을 친 순간
-    // 최솟값으로 튀어 입력이 덮어써지는 일을 막는다.
-    el.swYieldDec.addEventListener('click', () => swSetYield((parseFloat(el.rYield.value) || 0) - swYieldStep()));
-    el.swYieldInc.addEventListener('click', () => swSetYield((parseFloat(el.rYield.value) || 0) + swYieldStep()));
-    el.swYieldInput.addEventListener('change', () => swSetYield(parseFloat(el.swYieldInput.value)));
-    el.swYieldInput.addEventListener('input', () => { el.swYieldRatio.textContent = swYieldRatioText(parseFloat(el.swYieldInput.value)); });
-    el.swYieldInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.swYieldInput.blur(); } });
 
     el.btnSave.addEventListener('click', () => {
         el.recipeModal.classList.add('active');
