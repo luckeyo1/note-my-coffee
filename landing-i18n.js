@@ -362,7 +362,7 @@
                 D: ['묵직한 다크 로스팅으로 이름난 로스터리의 다크 블렌드', '나폴리식 진한 에스프레소로 이름난 로스터리의 원두', '진하고 묵직한 바디의 블렌드로 사랑받는 브랜드']
             },
             coupangLabel: { A: '쿠팡에서 산미 좋은 원두 보기', B: '쿠팡에서 데일리 블렌드 보기', C: '쿠팡에서 고소한 원두 보기', D: '쿠팡에서 다크로스트 원두 보기' },
-            coupangDisc: '쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.',
+            coupangDisc: '이 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.',
             storeKurly: '컬리', storeNaver: '네이버', searchSuffix: ' 검색 →',
             back: '← 이전 질문',
             leadHead: '☕ 취향에 맞는 원두, 계속 받아보시겠어요?',
@@ -398,7 +398,7 @@
                 D: ['A dark blend from a roaster known for heavy dark roasts', 'Beans from a roaster famed for Neapolitan-style strong espresso', 'A brand loved for its rich, heavy-bodied blends']
             },
             coupangLabel: { A: 'See bright, acidic beans on Coupang', B: 'See daily blends on Coupang', C: 'See nutty beans on Coupang', D: 'See dark-roast beans on Coupang' },
-            coupangDisc: 'As a Coupang Partners affiliate, I may earn a commission from qualifying purchases.',
+            coupangDisc: 'This page contains Coupang Partners affiliate links. We earn a commission from qualifying purchases.',
             storeKurly: 'Kurly', storeNaver: 'Naver', searchSuffix: ' search →',
             back: '← Previous',
             leadHead: '☕ Want bean picks for your taste, on the regular?',
@@ -434,7 +434,7 @@
                 D: ['重厚なダークローストで知られるロースターのダークブレンド', 'ナポリ式の濃いエスプレッソで知られるロースターの豆', '濃く重厚なボディのブレンドで愛されるブランド']
             },
             coupangLabel: { A: 'Coupangで酸味系の豆を見る', B: 'Coupangでデイリーブレンドを見る', C: 'Coupangで香ばしい豆を見る', D: 'Coupangでダークロースト豆を見る' },
-            coupangDisc: 'Coupangパートナーズ活動の一環として、これに応じた一定額の手数料を受け取る場合があります。',
+            coupangDisc: 'このページにはCoupangパートナーズのアフィリエイトリンクが含まれます。対象の購入により一定額の手数料を受け取ります。',
             storeKurly: 'Kurly', storeNaver: 'Naver', searchSuffix: ' 検索 →',
             back: '← 前の質問',
             leadHead: '☕ 好みに合う豆を、これからも受け取りますか？',
@@ -470,7 +470,7 @@
                 D: ['以厚重深焙聞名烘豆商的深焙配方', '以拿坡里式濃縮聞名烘豆商的豆子', '以濃厚醇body配方受喜愛的品牌']
             },
             coupangLabel: { A: '在 Coupang 看明亮果酸豆', B: '在 Coupang 看日常配方', C: '在 Coupang 看香醇豆', D: '在 Coupang 看深焙豆' },
-            coupangDisc: '作為 Coupang Partners 夥伴，我可能從符合條件的購買中賺取一定佣金。',
+            coupangDisc: '本頁含有 Coupang Partners 聯盟連結。我們會從符合條件的購買中獲得一定佣金。',
             storeKurly: 'Kurly', storeNaver: 'Naver', searchSuffix: ' 搜尋 →',
             back: '← 上一題',
             leadHead: '☕ 想持續收到適合你口味的豆子推薦嗎？',

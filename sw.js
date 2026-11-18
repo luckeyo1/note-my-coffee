@@ -2,12 +2,13 @@
 // Strategy: network-first (always try the network, fall back to cache offline).
 // Cache name is versioned; old versions are deleted on activate.
 
-const VERSION = 'v24';
+const VERSION = 'v27-coupang';
 const CACHE_NAME = `note-my-coffee-${VERSION}`;
 
 const PRECACHE_ASSETS = [
   './',
   'index.html',
+  'telepathy.html',
   'app.html',
   'logbook.html',
   'discover.html',
@@ -54,7 +55,9 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(async (cache) => {
-        await cache.addAll(PRECACHE_ASSETS);
+        // Revalidate during upgrades instead of seeding the new cache with an
+        // older HTTP-cached page containing outdated affiliate links.
+        await cache.addAll(PRECACHE_ASSETS.map((url) => new Request(url, { cache: 'reload' })));
         await Promise.all(
           OPTIONAL_ASSETS.map((url) => cache.add(url).catch(() => {}))
         );
@@ -153,7 +156,7 @@ async function networkFirst(req, url) {
     // For navigations, fetch the URL string (not the Request object): a
     // navigate-mode Request ignores redirect:'follow', producing an
     // opaqueredirect response the SW cannot use behind Firebase/CDN redirects.
-    let res = isNav ? await fetch(req.url) : await fetch(req);
+    let res = isNav ? await fetch(req.url, { cache: 'no-cache' }) : await fetch(req);
     if (isNav) res = undoRedirect(res); // never return a redirected nav response
 
     if (res && res.status === 200 && isCacheable(url)) {
@@ -166,6 +169,7 @@ async function networkFirst(req, url) {
 
     if (isNav) {
       const p = url.pathname;
+      if (p.includes('telepathy')) return undoRedirect(await cache.match('telepathy.html'));
       if (p.includes('logbook')) return undoRedirect(await cache.match('logbook.html'));
       if (p.includes('app')) return undoRedirect(await cache.match('app.html'));
       return undoRedirect(await cache.match('index.html'));

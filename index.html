@@ -1440,7 +1440,7 @@
             transition: filter 0.18s ease;
         }
         .quiz-coupang-btn:hover { filter: brightness(1.06); }
-        .quiz-coupang-disc { margin: 8px 0 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
+        .quiz-coupang-disc { margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: var(--ink); }
 
         .quiz-restart {
             display: inline-block;
@@ -2885,7 +2885,7 @@
             C: { url: 'https://link.coupang.com/a/hHbwcjZSV2', label: '쿠팡에서 고소한 원두 보기' },
             D: { url: 'https://link.coupang.com/a/hHbw5sLiqO', label: '쿠팡에서 다크로스트 원두 보기' },
         };
-        const COUPANG_DISCLOSURE = '쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다.';
+        const COUPANG_DISCLOSURE = '이 페이지는 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.';
 
         const RESULTS = {
             A: {
@@ -3055,6 +3055,7 @@
             const artSrc = 'img/profile-' + key.toLowerCase() + '.webp';
             card.innerHTML =
                 '<div class="quiz-step">' +
+                (COUPANG_[key] ? '<p class="quiz-coupang-disc">' + COUPANG_DISC_ + '</p>' : '') +
                 '<img class="quiz-result-art" src="' + artSrc + '" alt="">' +
                 '<div class="quiz-result-head">' +
                 '<div>' +
@@ -3086,7 +3087,6 @@
                 '<a class="quiz-coupang-btn" href="' + COUPANG_[key].url + '"' +
                 ' target="_blank" rel="noopener noreferrer sponsored" data-cpkey="' + key + '">' +
                 '<span>' + COUPANG_[key].label + '</span><span aria-hidden="true">→</span></a>' +
-                '<p class="quiz-coupang-disc">' + COUPANG_DISC_ + '</p>' +
                 '</div>' : '') +
                 // 리드마그넷 — 몰입 절정(결과 직후)에서 이메일 옵트인. 추천은 이미
                 // 무료로 줬고, 여기서는 '앞으로도' 받아볼지를 묻는다(관계의 연장).
@@ -3137,7 +3137,7 @@
             // 쿠팡 제휴 버튼 클릭 — 제휴 수익화 지표(원두 검색 클릭과 구분해 센다).
             const cpBtn = card.querySelector('.quiz-coupang-btn');
             if (cpBtn) cpBtn.addEventListener('click', () => {
-                window.nmcTrack?.('coupang_click', { profile: key });
+                window.nmcTrack?.('coupang_click', { profile: key, kind: 'bean', source: 'quiz' });
             });
 
             document.getElementById('quiz-cta-btn').addEventListener('click', () => {
