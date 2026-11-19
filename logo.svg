@@ -1,16 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="90 30 332 438">
-  <!-- 크림 마크 — **어두운 배경용**. 밝은 배경에는 logo-dark.svg를 쓴다. -->
-  <!-- Note My Coffee — mark C: cream bookmark, dark cup + note lines, gold smile -->
-  <path d="M150 46 H362 Q406 46 406 90 L406 452 L256 379 L106 452 L106 90 Q106 46 150 46 Z"
-        fill="#FCFAF6" stroke="#FCFAF6" stroke-width="16" stroke-linejoin="round"/>
-  <g fill="#241C15">
-    <rect x="142" y="86" width="168" height="15" rx="7.5"/>
-    <path d="M152 101 L152 128 A74 70 0 0 0 300 128 L300 101 Z"/>
-  </g>
-  <circle cx="316" cy="130" r="26" fill="none" stroke="#241C15" stroke-width="14"/>
-  <g stroke="#241C15" stroke-width="14" stroke-linecap="round">
-    <line x1="178" y1="233" x2="283" y2="233"/>
-    <line x1="178" y1="261" x2="258" y2="261"/>
-  </g>
-  <path d="M169 286 Q256 336 343 286" fill="none" stroke="#B4532A" stroke-width="18" stroke-linecap="round"/>
+<!-- 크림 마크 — **어두운 배경용**. 밝은 배경에는 logo-dark.svg를 쓴다. -->
+<!-- Note My Coffee 로고 C(원두 펜촉). scripts/render-brand-assets.mjs가 만든다 — 직접 고치지 말 것. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="134 92 244 336">
+  <defs>
+    <mask id="nmc-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <circle cx="256" cy="212" r="18" fill="#000"/>
+      <path d="M256 230 C246 290 266 346 256 426" fill="none" stroke="#000" stroke-width="14"/>
+    </mask>
+  </defs>
+  <path d="M256 100 C332 100 370 168 370 232 C370 300 322 352 256 420 C190 352 142 300 142 232 C142 168 180 100 256 100 Z" fill="#FCFAF6" mask="url(#nmc-cut)"/>
 </svg>

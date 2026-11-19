@@ -34,7 +34,8 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, {
     body,
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    // 상태바 배지는 알파 채널만 쓰인다. 컬러 타일을 주면 흰 사각형이 되므로 흰 실루엣을 따로 둔다.
+    badge: '/badge-96.png',
     tag: d.tag || 'nmc-daily',
     data: { url },
   });
