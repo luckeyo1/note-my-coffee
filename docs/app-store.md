@@ -115,7 +115,7 @@ Play가 업로드한 AAB를 **재서명**하므로, 스토어에서 받은 앱�
 
 | 항목 | 파일 / 값 | 요건 |
 |---|---|---|
-| 앱 아이콘 | `icon-512.png` | 512×512 PNG |
+| 앱 아이콘 | `store/android/play-icon-512.png` | 512×512 32비트 PNG, 모서리 없는 정사각형(Play가 둥글게 깎는다) |
 | 피처 그래픽 | `store/android/feature-graphic.png` | 1024×500 **필수** |
 | 휴대전화 스크린샷 | `store/android/phone-1-record.png`, `phone-2-logbook.png` | **최소 2장**, PNG/JPEG |
 | 태블릿 스크린샷 | `store/android/tablet-1-record.png` | 선택 |
