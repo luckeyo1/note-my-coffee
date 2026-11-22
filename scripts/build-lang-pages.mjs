@@ -62,7 +62,7 @@ function ldjson(l, url) {
         operatingSystem: 'Any',
         browserRequirements: BROWSER_REQ[l],
         inLanguage: INLANG[l],
-        image: BASE + '/og-image.png',
+        image: BASE + '/og-image.png?v=2',
         description: clean(tr('head.desc', l)),
         featureList: FEATURES[l],
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' },
