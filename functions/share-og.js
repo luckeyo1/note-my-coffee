@@ -19,7 +19,9 @@
 "use strict";
 
 const SITE = "https://note-my-coffee.web.app";
-const OG_IMAGE = SITE + "/og-image.png"; // 1200×630 브랜드 이미지(랜딩 OG와 동일).
+// 1200×630 브랜드 이미지(랜딩 OG와 동일). 그림을 바꾸면 ?v= 숫자를 올린다 —
+// 카카오톡은 썸네일을 이미지 주소 기준으로 캐시해서, 주소가 같으면 옛 그림이 계속 뜬다.
+const OG_IMAGE = SITE + "/og-image.png?v=2";
 
 // HTML 속성/텍스트 컨텍스트 escape. 원두명·원산지·맛노트가 URL에서 오므로 필수.
 function esc(s) {
