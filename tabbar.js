@@ -24,6 +24,8 @@
         set_lang:     { ko: '언어', en: 'Language', ja: '言語', zh: '語言' },
         set_help:     { ko: '서비스 가이드', en: 'Service guide', ja: 'サービスガイド', zh: '服務指南' },
         set_profile:  { ko: '내 프로필', en: 'My profile', ja: 'マイプロフィール', zh: '我的檔案' },
+        // 관리자 계정에만 보인다(admin-entry.js가 hidden을 푼다).
+        set_admin:    { ko: '관리자 페이지', en: 'Admin dashboard', ja: '管理者ページ', zh: '管理後台' },
         set_login:    { ko: '로그인', en: 'Sign in', ja: 'ログイン', zh: '登入' },
         set_logout:   { ko: '로그아웃', en: 'Sign out', ja: 'ログアウト', zh: '登出' },
         set_delete:   { ko: '계정 · 데이터 삭제', en: 'Delete account & data', ja: 'アカウント・データ削除', zh: '刪除帳號・資料' },
@@ -62,6 +64,8 @@
             if (langRow) langRow.textContent = T('set_lang', lang);
             put(sheet, '[data-proxy="btn-help"]', T('set_help', lang));
             put(sheet, 'a[href="profile.html"]', T('set_profile', lang));
+            // 링크 전체가 아니라 라벨만 바꾼다 — 옆의 ADMIN 배지를 지우지 않게.
+            put(sheet, '[data-admin-link] .settings-admin-label', T('set_admin', lang));
             put(sheet, '[data-proxy="btn-login"]', T('set_login', lang));
             put(sheet, '[data-proxy="btn-logout"]', T('set_logout', lang));
             put(sheet, 'a[href="delete-account.html"]', T('set_delete', lang));
