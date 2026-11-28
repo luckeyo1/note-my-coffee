@@ -1,20 +1,11 @@
 // admin.js — 운영 지표 대시보드
 //
-// 접근 제어에 대해: 아래 ADMIN_EMAILS는 화면을 가리는 용도일 뿐 보안 장치가 아니다.
-// 실제 차단은 Firestore 보안 규칙에서 해야 한다. 규칙이 관리자에게 recipes 전체
+// 접근 제어에 대해: 관리자 판정(admin-access.js)은 화면을 가리는 용도일 뿐 보안 장치가
+// 아니다. 실제 차단은 Firestore 보안 규칙에서 해야 한다. 규칙이 관리자에게 recipes 전체
 // 읽기를 허용하지 않으면 이 페이지의 조회는 permission-denied로 실패한다.
 // (필요한 규칙은 ADMIN.md 참고)
-const ADMIN_EMAILS = [
-    'qorlgh1994@gmail.com',
-];
-
-// 구글 로그인만 인정한다. 이메일/비밀번호 계정은 같은 주소를 스스로 지어낼 수 있고,
-// 그 경우 emailVerified가 false로 남는다.
-const isAdminUser = (user) =>
-    !!user
-    && user.emailVerified
-    && user.providerData.some((p) => p.providerId === 'google.com')
-    && ADMIN_EMAILS.includes((user.email || '').toLowerCase());
+// 앱의 설정 시트에 뜨는 '관리자 페이지' 링크(admin-entry.js)도 같은 판정을 쓴다.
+import { isAdminUser } from './admin-access.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const el = (id) => document.getElementById(id);
@@ -35,6 +26,22 @@ let secondaryReady = false;
 let dataMode = 'scan';
 let agg = null;   // { daily: Map<dayKey, obj>, users: [], beanNames: Map<id,name>, recent: [] }
 let fbRef = null; // 로드된 firebase-config 모듈. '집계 재생성' 버튼이 쓴다.
+
+// 섹션 탭 — 앱(폰) 안에서 열면 카드가 한 줄로 쌓여 끝없이 길어지므로 주제별로 나눈다.
+// 기간 필터는 기간이 의미 있는 탭에서만 보인다(커뮤니티·운영은 누적/현재 상태).
+const SECTIONS = ['overview', 'users', 'community', 'beans', 'ops'];
+const FILTER_SECTIONS = new Set(['overview', 'users', 'beans']);
+let currentSection = 'overview';
+
+// 긴 목록(사용자·리드·최근 기록)은 앞부분만 보이고 '전체 보기'로 펼친다.
+const LIST_PREVIEW = 10;
+const expanded = { users: false, leads: false, recent: false };
+
+// 커뮤니티 관리(신고·게시물)와 아침 알림 구독. 대시보드를 먼저 띄운 뒤 배경에서 받는다.
+// status: 'idle' | 'loading' | 'ready' | 'error'
+let community = { status: 'idle', error: null, reports: [], posts: new Map(), recent: [], cursor: null, done: true, counts: null };
+let showHandledReports = false;
+let push = { status: 'idle', error: null, tokens: [] };
 
 /* ────────────────────────── helpers ────────────────────────── */
 
@@ -1606,7 +1613,8 @@ function renderUsers(wrap, rows) {
     t.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    rows.forEach((row) => {
+    const shown = expanded.users ? rows : rows.slice(0, LIST_PREVIEW);
+    shown.forEach((row) => {
         const tr = document.createElement('tr');
         tr.className = 'user-row';
         tr.tabIndex = 0;
@@ -1642,6 +1650,7 @@ function renderUsers(wrap, rows) {
     t.appendChild(tbody);
     scroll.appendChild(t);
     wrap.appendChild(scroll);
+    appendMoreToggle(wrap, 'users', rows.length, '명', () => renderUsers(wrap, rows));
 }
 
 // 스캔/데모엔 이미 전체 레시피가 있으니 거기서 거른다(추가 조회 없음).
@@ -1827,12 +1836,13 @@ function renderLeads(wrap, rows) {
             { key: 'src', label: '출처' },
             { key: 'when', label: '수집일' },
         ],
-        rows.map((r) => ({
+        (expanded.leads ? rows : rows.slice(0, LIST_PREVIEW)).map((r) => ({
             email: r.email || '—',
             src: (SOURCE_KO[r.source] || r.source || '—') + (r.profileTitle ? ` · ${r.profileTitle}` : ''),
             when: fmtDate(r.createdAt),
         }))
     ));
+    appendMoreToggle(wrap, 'leads', rows.length, '명', () => renderLeads(wrap, rows));
 }
 
 function exportLeadsCsv(rows) {
@@ -1949,6 +1959,613 @@ function makeDemoVisits() {
         });
     }
     return m;
+}
+
+/* ─────────────────── 커뮤니티 관리 (posts · reports) ───────────────────
+ *
+ * Google Play UGC 정책: 신고를 받았으면 검토하고 조치할 수단이 있어야 한다.
+ * - 숨기기: posts.status='hidden' + hiddenByAdmin=true. 피드·공개 링크·프로필에서 내려가고,
+ *   작성자는 스스로 되돌릴 수 없다(firestore.rules의 posts 작성자 update 규칙).
+ * - 숨김 해제: status='active' + hiddenByAdmin=false. 관리자가 숨긴 것만 되돌린다 —
+ *   작성자가 스스로 숨긴 게시물을 관리자가 다시 열면 안 된다.
+ * - 신고 기각: 게시물은 두고 신고만 status='dismissed'로 닫는다.
+ * 쓰기 권한은 규칙의 isAdmin()(posts update · reports update)이 막는다.
+ */
+
+const REPORT_FETCH = 200;   // 최근 신고 최대 건수 — 처리 대기 큐에는 이 정도면 충분하다
+const POSTS_PAGE = 20;      // 최근 게시물 한 번에 읽는 수
+
+// serverTimestamp로 쓴 Timestamp, ISO 문자열, Date를 모두 Date로.
+const toDate = (v) => {
+    if (!v) return null;
+    if (typeof v.toDate === 'function') return v.toDate();
+    const d = new Date(v);
+    return isNaN(d) ? null : d;
+};
+const agoFrom = (v) => {
+    const d = toDate(v);
+    if (!d) return '—';
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (mins < 2) return '방금';
+    if (mins < 60) return `${mins}분 전`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    return `${fmt(Math.floor(hours / 24))}일 전`;
+};
+
+const reportState = (r) => (r.status === 'resolved' || r.status === 'dismissed' ? r.status : 'pending');
+const METHOD_KO = { espresso: '에스프레소', drip: '핸드드립' };
+
+async function loadCommunity(fb) {
+    const out = { status: 'ready', error: null, reports: [], posts: new Map(), recent: [], cursor: null, done: true, counts: null };
+
+    // 신고 — 최신순. createdAt 단일 필드 정렬이라 복합 색인이 필요 없다.
+    const rs = await fb.getDocs(fb.query(fb.collection(fb.db, 'reports'), fb.orderBy('createdAt', 'desc'), fb.limit(REPORT_FETCH)));
+    rs.forEach((d) => out.reports.push({ id: d.id, ...d.data() }));
+
+    // 최근 게시물(공개·링크·비공개·숨김 전부 — 관리자 list 권한).
+    const ps = await fb.getDocs(fb.query(fb.collection(fb.db, 'posts'), fb.orderBy('createdAt', 'desc'), fb.limit(POSTS_PAGE)));
+    ps.forEach((d) => {
+        out.posts.set(d.id, { id: d.id, ...d.data() });
+        out.recent.push(d.id);
+    });
+    out.cursor = ps.docs.length ? ps.docs[ps.docs.length - 1] : null;
+    out.done = ps.docs.length < POSTS_PAGE;
+
+    // 신고됐지만 최근 목록에 없는 게시물은 단건으로 읽는다(관리자는 숨김·비공개도 get 가능).
+    const missing = [...new Set(out.reports.map((r) => r.targetPostId).filter((id) => id && !out.posts.has(id)))];
+    await Promise.all(missing.map(async (id) => {
+        try {
+            const snap = await fb.getDoc(fb.doc(fb.db, 'posts', id));
+            out.posts.set(id, snap.exists() ? { id, ...snap.data() } : { id, deleted: true });
+        } catch (e) {
+            out.posts.set(id, { id, unreadable: true });
+        }
+    }));
+
+    // 게시물 수 — 문서를 내려받지 않고 서버에서 센다. 실패해도 목록은 그대로 보여준다.
+    try {
+        const col = fb.collection(fb.db, 'posts');
+        const [total, pub, hidden] = await Promise.all([
+            fb.getCountFromServer(col),
+            fb.getCountFromServer(fb.query(col, fb.where('visibility', '==', 'public'), fb.where('status', '==', 'active'))),
+            fb.getCountFromServer(fb.query(col, fb.where('status', '==', 'hidden'))),
+        ]);
+        out.counts = { total: total.data().count, public: pub.data().count, hidden: hidden.data().count };
+    } catch (e) {
+        console.warn('[Community] 게시물 수를 세지 못했습니다.', e);
+    }
+    return out;
+}
+
+async function loadMorePosts() {
+    if (isDemo || !fbRef || community.done || !community.cursor) return;
+    const fb = fbRef;
+    const ps = await fb.getDocs(fb.query(
+        fb.collection(fb.db, 'posts'), fb.orderBy('createdAt', 'desc'), fb.startAfter(community.cursor), fb.limit(POSTS_PAGE)
+    ));
+    ps.forEach((d) => {
+        community.posts.set(d.id, { id: d.id, ...d.data() });
+        if (!community.recent.includes(d.id)) community.recent.push(d.id);
+    });
+    if (ps.docs.length) community.cursor = ps.docs[ps.docs.length - 1];
+    community.done = ps.docs.length < POSTS_PAGE;
+}
+
+// 신고를 게시물별로 묶는다. 서로 다른 신고자가 많은 게시물이 위로 온다.
+function reportGroups(includeHandled) {
+    const m = new Map();
+    for (const r of community.reports) {
+        const state = reportState(r);
+        if (!includeHandled && state !== 'pending') continue;
+        const id = r.targetPostId || '';
+        const g = m.get(id) || { postId: id, reports: [], pending: 0, reasons: new Map(), reporters: new Set(), latest: 0, handled: new Set() };
+        g.reports.push(r);
+        if (state === 'pending') g.pending += 1;
+        else g.handled.add(r.resolution || state);
+        const reason = (r.reason || '기타').trim() || '기타';
+        g.reasons.set(reason, (g.reasons.get(reason) || 0) + 1);
+        if (r.reporterId) g.reporters.add(r.reporterId);
+        const t = toDate(r.createdAt);
+        if (t && t.getTime() > g.latest) g.latest = t.getTime();
+        m.set(id, g);
+    }
+    return [...m.values()].sort((a, b) =>
+        (b.pending > 0) - (a.pending > 0) || b.reporters.size - a.reporters.size || b.latest - a.latest);
+}
+
+function postStateChip(p) {
+    if (!p || p.deleted) return ['삭제된 게시물', 'chip-muted'];
+    if (p.unreadable) return ['읽기 실패', 'chip-muted'];
+    if (p.status === 'hidden') return p.hiddenByAdmin ? ['관리자 숨김', 'chip-bad'] : ['작성자가 숨김', 'chip-muted'];
+    if (p.visibility === 'public') return ['공개 중', 'chip-good'];
+    if (p.visibility === 'unlisted') return ['링크 공유', 'chip-warn'];
+    return ['비공개', 'chip-muted'];
+}
+
+function chipEl(text, cls) {
+    const c = document.createElement('span');
+    c.className = 'chip ' + cls;
+    c.textContent = text;
+    return c;
+}
+
+function modButton(label, cls, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn btn-sm' + (cls ? ' ' + cls : '');
+    b.textContent = label;
+    b.addEventListener('click', onClick);
+    return b;
+}
+
+function setModStatus(msg, isError) {
+    const s = el('mod-status');
+    if (!s) return;
+    s.textContent = msg;
+    s.classList.toggle('is-error', !!isError);
+}
+
+// 게시물 한 건의 카드(신고 큐·최근 게시물 공용).
+function modItemEl(post, postId, metaText, extraChips) {
+    const item = document.createElement('div');
+    item.className = 'mod-item';
+    if (post && post.photoUrl) {
+        const img = document.createElement('img');
+        img.className = 'mod-thumb';
+        img.src = post.photoUrl;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.referrerPolicy = 'no-referrer';
+        item.appendChild(img);
+    }
+    const body = document.createElement('div');
+    body.className = 'mod-body';
+    const title = document.createElement('div');
+    title.className = 'mod-title';
+    title.textContent = (post && !post.deleted && post.title) ? post.title : (post && post.deleted ? '(삭제된 게시물)' : '(제목 없음)');
+    const meta = document.createElement('div');
+    meta.className = 'mod-meta';
+    meta.textContent = metaText;
+    const chips = document.createElement('div');
+    chips.className = 'mod-chips';
+    const [stateText, stateCls] = postStateChip(post);
+    chips.appendChild(chipEl(stateText, stateCls));
+    (extraChips || []).forEach((c) => chips.appendChild(c));
+    const actions = document.createElement('div');
+    actions.className = 'mod-actions';
+
+    const canAct = post && !post.deleted && !post.unreadable;
+    if (canAct) {
+        const view = document.createElement('a');
+        view.className = 'btn btn-sm';
+        view.href = `post.html?id=${encodeURIComponent(postId)}`;
+        view.textContent = '게시물 보기';
+        actions.appendChild(view);
+        if (post.status === 'hidden' && post.hiddenByAdmin) {
+            actions.appendChild(modButton('숨김 해제', '', () => runModeration('unhide', postId, item)));
+        } else if (post.status !== 'hidden') {
+            actions.appendChild(modButton('숨기기', 'btn-danger', () => runModeration('hide', postId, item)));
+        }
+    }
+    const pendingCount = community.reports.filter((r) => r.targetPostId === postId && reportState(r) === 'pending').length;
+    if (pendingCount) {
+        actions.appendChild(modButton(canAct ? `신고 기각 (${pendingCount})` : `신고 정리 (${pendingCount})`, '', () => runModeration('dismiss', postId, item)));
+    }
+
+    body.appendChild(title);
+    body.appendChild(meta);
+    body.appendChild(chips);
+    if (actions.childNodes.length) body.appendChild(actions);
+    item.appendChild(body);
+    return item;
+}
+
+const postTitleOf = (postId) => {
+    const p = community.posts.get(postId);
+    return (p && p.title) ? `“${p.title}”` : '게시물';
+};
+
+async function runModeration(kind, postId, itemEl) {
+    const post = community.posts.get(postId);
+    const pending = community.reports.filter((r) => r.targetPostId === postId && reportState(r) === 'pending');
+    const name = postTitleOf(postId);
+    const question = {
+        hide: `${name}을(를) 숨길까요?\n\n피드·공개 링크·프로필에서 내려가고, 작성자는 스스로 다시 공개할 수 없습니다.`
+            + (pending.length ? `\n이 게시물의 신고 ${pending.length}건은 '처리 완료'로 표시됩니다.` : ''),
+        unhide: `${name}의 숨김을 해제할까요?\n\n작성자가 정한 공개 범위로 다시 보입니다.`,
+        dismiss: `${name}에 대한 신고 ${pending.length}건을 기각할까요?\n\n게시물은 그대로 둡니다.`,
+    }[kind];
+    if (!window.confirm(question)) return;
+
+    if (itemEl) itemEl.classList.add('is-busy');
+    setModStatus('처리 중…');
+    const now = new Date().toISOString();
+    try {
+        if (!isDemo) {
+            const fb = fbRef;
+            if (kind === 'hide' || kind === 'unhide') {
+                await fb.updateDoc(fb.doc(fb.db, 'posts', postId), {
+                    status: kind === 'hide' ? 'hidden' : 'active',
+                    hiddenByAdmin: kind === 'hide',
+                    moderatedAt: now,
+                    updatedAt: fb.serverTimestamp(),
+                });
+            }
+            if (kind === 'hide' || kind === 'dismiss') {
+                const status = kind === 'hide' ? 'resolved' : 'dismissed';
+                const resolution = kind === 'hide' ? 'hidden' : 'dismissed';
+                await Promise.all(pending.map((r) =>
+                    fb.updateDoc(fb.doc(fb.db, 'reports', r.id), { status, resolution, resolvedAt: now })));
+            }
+        }
+        // 화면 상태를 서버에 쓴 값과 맞춘다(다시 읽지 않는다).
+        if (post && (kind === 'hide' || kind === 'unhide')) {
+            const before = { ...post };
+            Object.assign(post, { status: kind === 'hide' ? 'hidden' : 'active', hiddenByAdmin: kind === 'hide', moderatedAt: now });
+            adjustCounts(before, post);
+        }
+        if (kind === 'hide' || kind === 'dismiss') {
+            pending.forEach((r) => Object.assign(r, {
+                status: kind === 'hide' ? 'resolved' : 'dismissed',
+                resolution: kind === 'hide' ? 'hidden' : 'dismissed',
+                resolvedAt: now,
+            }));
+        }
+        const done = { hide: '숨겼습니다', unhide: '숨김을 해제했습니다', dismiss: '신고를 기각했습니다' }[kind];
+        renderCommunity();
+        setModStatus(`${name} — ${done}.` + (isDemo ? ' (데모 모드라 실제 데이터는 바뀌지 않습니다)' : ''));
+    } catch (e) {
+        console.error('[Community] 조치 실패', e);
+        if (itemEl) itemEl.classList.remove('is-busy');
+        setModStatus(`처리하지 못했습니다 (${e.code || e.message}). Firestore 규칙에서 관리자에게 posts·reports 수정 권한이 있어야 합니다.`, true);
+    }
+}
+
+function adjustCounts(before, after) {
+    const c = community.counts;
+    if (!c) return;
+    const isPub = (p) => p.visibility === 'public' && (p.status || 'active') === 'active';
+    const isHid = (p) => p.status === 'hidden';
+    c.public += (isPub(after) ? 1 : 0) - (isPub(before) ? 1 : 0);
+    c.hidden += (isHid(after) ? 1 : 0) - (isHid(before) ? 1 : 0);
+}
+
+function updateCommunityBadge() {
+    const badge = el('tab-count-community');
+    if (!badge) return;
+    const n = community.status === 'ready' ? reportGroups(false).length : 0;
+    badge.textContent = n ? String(n) : '';
+    badge.classList.toggle('hidden', !n);
+    const tab = el('tab-community');
+    if (tab) tab.setAttribute('aria-label', n ? `커뮤니티 — 처리 대기 신고 게시물 ${n}개` : '커뮤니티');
+}
+
+function renderCommunityKpis() {
+    const set = (id, v, sub) => { el(id).textContent = v; el(id + '-sub').textContent = sub; };
+    if (community.status !== 'ready') {
+        const msg = community.status === 'error' ? '불러오지 못했습니다' : '불러오는 중…';
+        ['ck-pending', 'ck-public', 'ck-hidden', 'ck-total'].forEach((id) => set(id, '—', msg));
+        return;
+    }
+    const pendingReports = community.reports.filter((r) => reportState(r) === 'pending').length;
+    const pendingPosts = reportGroups(false).length;
+    set('ck-pending', fmt(pendingReports), pendingReports ? `게시물 ${fmt(pendingPosts)}개에 대한 신고` : '처리할 신고가 없습니다');
+    const c = community.counts;
+    if (c) {
+        set('ck-public', fmt(c.public), '피드에 보이는 게시물');
+        set('ck-hidden', fmt(c.hidden), '관리자·작성자 숨김 포함');
+        set('ck-total', fmt(c.total), '비공개·링크 공유 포함');
+    } else {
+        ['ck-public', 'ck-hidden', 'ck-total'].forEach((id) => set(id, '—', '개수를 세지 못했습니다'));
+    }
+}
+
+function renderReports() {
+    const wrap = el('reports-wrap');
+    clear(wrap);
+    const sub = el('reports-sub');
+    el('reports-filter').textContent = showHandledReports ? '대기 중인 신고만 보기' : '처리한 신고도 보기';
+    if (community.status === 'error') {
+        sub.textContent = `신고·게시물을 읽지 못했습니다 (${community.error}). Firestore 규칙에 posts·reports 관리자 읽기(firestore.rules)가 게시돼 있어야 합니다.`;
+        return;
+    }
+    if (community.status !== 'ready') { sub.textContent = '불러오는 중…'; return; }
+
+    const groups = reportGroups(showHandledReports);
+    const pendingPosts = reportGroups(false).length;
+    sub.textContent = showHandledReports
+        ? `최근 신고 ${fmt(community.reports.length)}건 · 게시물별로 묶음`
+        : pendingPosts
+            ? `처리 대기 게시물 ${fmt(pendingPosts)}개 · 신고한 사람이 많은 순서 · 숨기면 피드·공개 링크에서 내려갑니다`
+            : '처리할 신고가 없습니다.';
+    if (!groups.length) {
+        const p = document.createElement('p');
+        p.className = 'mod-empty';
+        p.textContent = showHandledReports ? '아직 들어온 신고가 없습니다.' : '대기 중인 신고가 없습니다. 처리한 내역은 위 버튼으로 볼 수 있습니다.';
+        wrap.appendChild(p);
+        return;
+    }
+    const list = document.createElement('div');
+    list.className = 'mod-list';
+    groups.forEach((g) => {
+        const post = community.posts.get(g.postId);
+        const owner = post && post.ownerName ? post.ownerName : '작성자 미상';
+        const meta = `${owner} · 신고 ${fmt(g.reports.length)}건(${fmt(g.reporters.size)}명) · 최근 ${agoFrom(g.latest ? new Date(g.latest) : null)}`;
+        const chips = [...g.reasons.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .map(([reason, n]) => {
+                const c = document.createElement('span');
+                c.className = 'mod-reason';
+                c.textContent = n > 1 ? `${reason} ×${n}` : reason;
+                return c;
+            });
+        if (g.pending) chips.unshift(chipEl(`대기 ${g.pending}`, 'chip-bad'));
+        if (g.handled.has('hidden')) chips.push(chipEl('처리: 숨김', 'chip-muted'));
+        if (g.handled.has('dismissed')) chips.push(chipEl('처리: 기각', 'chip-muted'));
+        list.appendChild(modItemEl(post, g.postId, meta, chips));
+    });
+    wrap.appendChild(list);
+}
+
+function renderPosts() {
+    const wrap = el('posts-wrap');
+    clear(wrap);
+    const sub = el('posts-sub');
+    if (community.status === 'error') { sub.textContent = '게시물을 읽지 못했습니다.'; return; }
+    if (community.status !== 'ready') { sub.textContent = '불러오는 중…'; return; }
+    const ids = community.recent;
+    sub.textContent = ids.length
+        ? `최근 ${fmt(ids.length)}개 · 신고가 없어도 먼저 살펴볼 수 있다`
+        : '아직 올라온 게시물이 없습니다.';
+    if (!ids.length) return;
+
+    const list = document.createElement('div');
+    list.className = 'mod-list';
+    ids.forEach((id) => {
+        const p = community.posts.get(id);
+        if (!p) return;
+        const created = toDate(p.createdAt);
+        const parts = [p.ownerName || '작성자 미상', created ? `${dayKey(created).replace(/-/g, '.')} (${agoFrom(created)})` : null,
+            METHOD_KO[p.method] || null, p.bean || null].filter(Boolean);
+        const pending = community.reports.filter((r) => r.targetPostId === id && reportState(r) === 'pending').length;
+        list.appendChild(modItemEl(p, id, parts.join(' · '), pending ? [chipEl(`신고 대기 ${pending}`, 'chip-bad')] : []));
+    });
+    wrap.appendChild(list);
+
+    if (!community.done && !isDemo) {
+        const more = modButton('더 보기', 'more-toggle', async () => {
+            more.disabled = true;
+            more.textContent = '불러오는 중…';
+            try { await loadMorePosts(); } catch (e) { console.warn('[Community] 더 보기 실패', e); }
+            renderPosts();
+        });
+        wrap.appendChild(more);
+    }
+}
+
+function renderCommunity() {
+    renderCommunityKpis();
+    renderReports();
+    renderPosts();
+    updateCommunityBadge();
+}
+
+async function refreshCommunity() {
+    if (isDemo || !fbRef) return;
+    community = { ...community, status: 'loading' };
+    renderCommunity();
+    try {
+        community = await loadCommunity(fbRef);
+    } catch (e) {
+        console.warn('[Community] 신고·게시물을 읽지 못했습니다 (규칙 확인).', e);
+        community = { ...community, status: 'error', error: e.code || e.message };
+    }
+    renderCommunity();
+}
+
+// 데모용 커뮤니티 — 시드 고정. 신고 큐·숨김·작성자 숨김이 모두 보이게 섞는다.
+function makeDemoCommunity() {
+    const rnd = mulberry32(20261128);
+    const titles = [
+        '에티오피아 예가체프 — 꽃향 살리는 92°C', '아침 라떼용 다크 로스트 레시피', '1:16 하리오 V60 기본기',
+        '무료 원두 나눔합니다 (링크 클릭)', '케냐 AA 산미 정리 노트', '에스프레소 25초 → 30초 비교',
+        '콜롬비아 우일라 밸런스 찾기', '시판 원두 그대로 홍보 문구 복붙', '과테말라 안티구아 초콜릿 노트',
+        '브라질 세하도 데일리 커피', '코스타리카 허니 프로세스 첫 도전', '인도네시아 만델링 진하게',
+        '파나마 게이샤 아껴 마시기', '디카페인도 맛있을 수 있다',
+    ];
+    const owners = ['라떼러버', '드립장인', '모카포트', '커피메이트', '산미파', '바디감', '홈카페초보'];
+    const posts = new Map();
+    const recent = [];
+    titles.forEach((title, i) => {
+        const id = 'demo-post-' + i;
+        const createdAt = new Date(Date.now() - Math.floor(i * 1.6 * 864e5 + rnd() * 6e7)).toISOString();
+        const p = {
+            id, title, createdAt,
+            ownerId: 'demo-owner-' + (i % owners.length),
+            ownerName: owners[i % owners.length],
+            method: rnd() < 0.55 ? 'drip' : 'espresso',
+            bean: title.split(' — ')[0].split(' ')[0],
+            visibility: i === 6 ? 'unlisted' : (i === 11 ? 'private' : 'public'),
+            status: 'active',
+            hiddenByAdmin: false,
+            photoUrl: '',
+        };
+        if (i === 7) Object.assign(p, { status: 'hidden', hiddenByAdmin: true });   // 이미 관리자가 숨김
+        if (i === 9) Object.assign(p, { status: 'hidden', hiddenByAdmin: false });  // 작성자가 숨김
+        posts.set(id, p);
+        recent.push(id);
+    });
+    const rep = (n, postIdx, reason, hoursAgo, extra) => ({
+        id: 'demo-report-' + n, targetPostId: 'demo-post-' + postIdx, reporterId: 'demo-reporter-' + n,
+        reason, createdAt: new Date(Date.now() - hoursAgo * 36e5).toISOString(), ...(extra || {}),
+    });
+    const reports = [
+        rep(1, 3, '스팸·광고', 2), rep(2, 3, '스팸·광고', 5), rep(3, 3, '기타', 9),
+        rep(4, 1, '부적절하거나 불쾌한 콘텐츠', 20), rep(5, 1, '부적절하거나 불쾌한 콘텐츠', 26),
+        rep(6, 4, '저작권·명의 도용', 40),
+        rep(7, 7, '스팸·광고', 70, { status: 'resolved', resolution: 'hidden', resolvedAt: new Date(Date.now() - 60 * 36e5).toISOString() }),
+        rep(8, 0, '기타', 90, { status: 'dismissed', resolution: 'dismissed', resolvedAt: new Date(Date.now() - 80 * 36e5).toISOString() }),
+    ];
+    const all = [...posts.values()];
+    return {
+        status: 'ready', error: null, reports, posts, recent, cursor: null, done: true,
+        counts: {
+            total: all.length,
+            public: all.filter((p) => p.visibility === 'public' && p.status === 'active').length,
+            hidden: all.filter((p) => p.status === 'hidden').length,
+        },
+    };
+}
+
+/* ─────────────────── 아침 알림 구독 (pushTokens) ───────────────────
+ *
+ * 문서 하나가 기기 하나다(문서 ID = FCM 토큰). enabled=true인 기기만 매일 아침 발송된다
+ * (functions/index.js dailyPush). 사람 수가 아니라 기기 수라는 점을 화면에도 적는다.
+ */
+
+const LANG_KO = { ko: '한국어', en: '영어', ja: '일본어', zh: '중국어(번체)' };
+const deviceOf = (ua) => {
+    if (/Android/i.test(ua)) return 'Android';
+    if (/iPhone|iPad|iPod/i.test(ua)) return 'iPhone · iPad';
+    return '데스크톱 · 기타';
+};
+
+async function loadPush(fb) {
+    const snap = await fb.getDocs(fb.collection(fb.db, 'pushTokens'));
+    const tokens = [];
+    snap.forEach((d) => tokens.push({ id: d.id, ...d.data() }));
+    return { status: 'ready', error: null, tokens };
+}
+
+function renderPush() {
+    const sub = el('push-sub');
+    const lang = el('push-lang');
+    const device = el('push-device');
+    const tv = el('tv-push');
+    if (push.status === 'error') {
+        sub.textContent = `알림 구독을 읽지 못했습니다 (${push.error}). 규칙에 pushTokens 관리자 읽기가 있어야 합니다.`;
+        [lang, device, tv].forEach(clear);
+        return;
+    }
+    if (push.status !== 'ready') { sub.textContent = '불러오는 중…'; return; }
+
+    const tokens = push.tokens;
+    const on = tokens.filter((t) => t.enabled === true);
+    const off = tokens.filter((t) => t.enabled === false).length;
+    const unknown = tokens.length - on.length - off;
+    const linked = on.filter((t) => t.uid).length;
+    const weekAgo = Date.now() - 7 * 864e5;
+    const fresh = tokens.filter((t) => { const d = toDate(t.updatedAt); return d && d.getTime() >= weekAgo; }).length;
+    sub.textContent = tokens.length
+        ? `켜짐 ${fmt(on.length)}대 · 꺼짐 ${fmt(off)}대` + (unknown ? ` · 상태 미확인 ${fmt(unknown)}대` : '')
+            + ` · 켜진 기기 중 로그인 연결 ${fmt(linked)}대 · 최근 7일 갱신 ${fmt(fresh)}대 (기기 단위라 사람 수와 다를 수 있다)`
+        : '아직 알림을 켠 기기가 없습니다.';
+
+    const tally = (list, keyFn) => {
+        const m = new Map();
+        list.forEach((t) => { const k = keyFn(t); m.set(k, (m.get(k) || 0) + 1); });
+        return [...m.entries()].sort((a, b) => b[1] - a[1]);
+    };
+    const langs = tally(on, (t) => LANG_KO[t.lang] || t.lang || '알 수 없음');
+    const devices = tally(on, (t) => deviceOf(String(t.platform || '')));
+    const bars = (rows) => rows.map(([k, n]) => ({
+        label: k,
+        value: n,
+        valueText: `${fmt(n)}대 · ${on.length ? Math.round((n / on.length) * 100) : 0}%`,
+        tip: `${k} ${fmt(n)}대`,
+    }));
+    renderHBars(lang, bars(langs), { ariaLabel: '언어별 알림 켜짐 기기 수', emptyText: '켜진 기기가 없습니다.', valueW: 92 });
+    renderHBars(device, bars(devices), { ariaLabel: '기기별 알림 켜짐 기기 수', emptyText: '켜진 기기가 없습니다.', valueW: 92 });
+
+    clear(tv);
+    tv.appendChild(buildTable(
+        [{ key: 'g', label: '구분' }, { key: 'k', label: '항목' }, { key: 'n', label: '기기 수', num: true }],
+        [
+            { g: '상태', k: '켜짐', n: fmt(on.length) },
+            { g: '상태', k: '꺼짐', n: fmt(off) },
+            ...(unknown ? [{ g: '상태', k: '미확인', n: fmt(unknown) }] : []),
+            ...langs.map(([k, n]) => ({ g: '언어 (켜짐)', k, n: fmt(n) })),
+            ...devices.map(([k, n]) => ({ g: '기기 (켜짐)', k, n: fmt(n) })),
+        ]
+    ));
+}
+
+// 데모용 알림 구독 — 시드 고정.
+function makeDemoPush() {
+    const rnd = mulberry32(20261129);
+    const uas = [
+        'Mozilla/5.0 (Linux; Android 14; SM-S918N) AppleWebKit/537.36 Chrome/131.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 Version/18.1 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36',
+    ];
+    const langs = ['ko', 'ko', 'ko', 'ko', 'en', 'ja', 'zh'];
+    const tokens = [];
+    for (let i = 0; i < 46; i++) {
+        const r = rnd();
+        tokens.push({
+            id: 'demo-token-' + i,
+            enabled: rnd() < 0.78,
+            uid: rnd() < 0.62 ? 'demo-user-' + i : null,
+            lang: langs[Math.floor(rnd() * langs.length)],
+            platform: uas[r < 0.62 ? 0 : (r < 0.86 ? 1 : 2)],
+            updatedAt: new Date(Date.now() - Math.floor(rnd() * 30) * 864e5).toISOString(),
+        });
+    }
+    return { status: 'ready', error: null, tokens };
+}
+
+async function refreshPush() {
+    if (isDemo || !fbRef) return;
+    push = { ...push, status: 'loading' };
+    renderPush();
+    try {
+        push = await loadPush(fbRef);
+    } catch (e) {
+        console.warn('[Push] 알림 구독을 읽지 못했습니다 (규칙 확인).', e);
+        push = { ...push, status: 'error', error: e.code || e.message };
+    }
+    renderPush();
+}
+
+/* ────────────────────── 섹션 탭 · 목록 접기 ────────────────────── */
+
+function initialSection() {
+    const fromHash = (location.hash || '').replace('#', '');
+    if (SECTIONS.includes(fromHash)) return fromHash;
+    try {
+        const saved = localStorage.getItem('nmcAdminSection');
+        if (SECTIONS.includes(saved)) return saved;
+    } catch (e) { /* 저장소를 못 쓰는 환경 — 기본 탭 */ }
+    return 'overview';
+}
+
+function showSection(name) {
+    if (!SECTIONS.includes(name)) name = 'overview';
+    currentSection = name;
+    document.querySelectorAll('.section-tab').forEach((tab) => {
+        const on = tab.dataset.section === name;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+    });
+    document.querySelectorAll('.dash-section').forEach((sec) => { sec.hidden = sec.dataset.section !== name; });
+    el('filters').hidden = !FILTER_SECTIONS.has(name);
+    try { localStorage.setItem('nmcAdminSection', name); } catch (e) { /* 무시 */ }
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    // 숨겨져 있던 차트는 폭 0에서 그려졌다 — 보이는 지금 실제 폭으로 다시 그린다.
+    render();
+}
+
+// 긴 목록은 앞의 LIST_PREVIEW개만 보이고, 이 버튼으로 펼치고 접는다.
+function appendMoreToggle(wrap, key, total, unit, rerender) {
+    if (total <= LIST_PREVIEW) return;
+    const btn = modButton(expanded[key] ? '접기' : `전체 ${fmt(total)}${unit} 보기`, 'more-toggle', () => {
+        expanded[key] = !expanded[key];
+        rerender();
+    });
+    btn.setAttribute('aria-expanded', String(expanded[key]));
+    wrap.appendChild(btn);
 }
 
 /* ────────────────────────── render ────────────────────────── */
@@ -2229,9 +2846,25 @@ function render() {
         }))
     ));
 
-    // 최근 기록
-    clear(el('recent-wrap'));
-    el('recent-wrap').appendChild(buildTable(
+    // 최근 기록 — 앞의 LIST_PREVIEW건만 보이고 펼칠 수 있다.
+    renderRecent(el('recent-wrap'), a.recent);
+
+    // 기간과 무관한 카드들 — 데이터가 배경에서 도착하면 각자 다시 그린다.
+    renderCommunity();
+    renderPush();
+
+    // 어떤 경로로 읽었는지는 숫자를 해석할 때 중요하다 — 반드시 표기한다.
+    el('foot').textContent = isDemo
+        ? '데모 데이터 · 실제 Firestore를 조회하지 않았습니다.'
+        : useAgg
+            ? `집계 문서(stats_daily ${fmt(agg.daily.size)}일 · users ${fmt(agg.users.length)}명)를 읽었습니다. recipes 전체는 내려받지 않습니다.`
+            : `Firestore recipes 컬렉션 전체 ${fmt(allRecipes.length)}건을 불러와 브라우저에서 집계했습니다. 집계 문서가 준비되면 이 전체 조회는 사라집니다.`;
+}
+
+function renderRecent(wrap, recentRows) {
+    clear(wrap);
+    const rowsShown = expanded.recent ? recentRows : recentRows.slice(0, LIST_PREVIEW);
+    wrap.appendChild(buildTable(
         [
             { key: 'd', label: '날짜' }, { key: 'b', label: '원두' }, { key: 'm', label: '모드' },
             { key: 'do', label: '도징', num: true }, { key: 'tp', label: '온도', num: true },
@@ -2248,7 +2881,7 @@ function render() {
                 },
             },
         ],
-        a.recent.map((r) => {
+        rowsShown.map((r) => {
             const d = new Date(r.date);
             return {
                 d: `${dayKey(d).slice(5)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
@@ -2263,13 +2896,7 @@ function render() {
             };
         })
     ));
-
-    // 어떤 경로로 읽었는지는 숫자를 해석할 때 중요하다 — 반드시 표기한다.
-    el('foot').textContent = isDemo
-        ? '데모 데이터 · 실제 Firestore를 조회하지 않았습니다.'
-        : useAgg
-            ? `집계 문서(stats_daily ${fmt(agg.daily.size)}일 · users ${fmt(agg.users.length)}명)를 읽었습니다. recipes 전체는 내려받지 않습니다.`
-            : `Firestore recipes 컬렉션 전체 ${fmt(allRecipes.length)}건을 불러와 브라우저에서 집계했습니다. 집계 문서가 준비되면 이 전체 조회는 사라집니다.`;
+    appendMoreToggle(wrap, 'recent', recentRows.length, '건', () => renderRecent(wrap, recentRows));
 }
 
 /* ──────────────────── 데이터 로딩 (Phase 1) ────────────────────
@@ -2417,6 +3044,42 @@ async function rebuildAggregates(fb, onProgress) {
 /* ────────────────────────── wiring ────────────────────────── */
 
 function wireUI() {
+    // ── 섹션 탭: 클릭 + 좌우 화살표/Home/End(WAI-ARIA 탭 패턴) ──
+    const tablist = el('section-tabs');
+    tablist.addEventListener('click', (e) => {
+        const tab = e.target.closest('.section-tab');
+        if (tab) showSection(tab.dataset.section);
+    });
+    tablist.addEventListener('keydown', (e) => {
+        const tabs = [...tablist.querySelectorAll('.section-tab')];
+        const i = tabs.indexOf(document.activeElement);
+        if (i < 0) return;
+        let next = null;
+        if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+        else if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+        else if (e.key === 'Home') next = tabs[0];
+        else if (e.key === 'End') next = tabs[tabs.length - 1];
+        if (!next) return;
+        e.preventDefault();
+        next.focus();
+        showSection(next.dataset.section);
+    });
+    window.addEventListener('hashchange', () => {
+        const h = (location.hash || '').replace('#', '');
+        if (SECTIONS.includes(h) && h !== currentSection) showSection(h);
+    });
+
+    // ── 커뮤니티: 처리한 신고 보기 토글 · 새로고침 ──
+    el('reports-filter').addEventListener('click', () => {
+        showHandledReports = !showHandledReports;
+        renderReports();
+    });
+    el('posts-refresh').addEventListener('click', () => {
+        if (isDemo) { setModStatus('데모 모드에서는 새로 불러올 데이터가 없습니다.'); return; }
+        setModStatus('');
+        refreshCommunity();
+    });
+
     el('range-seg').addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-days]');
         if (!btn) return;
@@ -2505,7 +3168,8 @@ function showDash() {
     el('gate').classList.add('hidden');
     el('dash').classList.remove('hidden');
     wireUI();
-    render();
+    // 마지막으로 보던 탭(#해시 → localStorage → 개요)을 열고, 그 안에서 render()한다.
+    showSection(initialSection());
 }
 
 function showGate(title, msg, node) {
@@ -2522,6 +3186,8 @@ if (isDemo) {
     allRecipes = makeDemoRecipes();
     leads = makeDemoLeads();
     visits = makeDemoVisits();
+    community = makeDemoCommunity();
+    push = makeDemoPush();
     secondaryReady = true;
     el('demo-banner').classList.remove('hidden');
     el('who').textContent = '데모 모드';
@@ -2604,6 +3270,12 @@ if (isDemo) {
                         .then(([l, v]) => { leads = l; visits = v; })
                         .catch((e) => console.warn('[Admin] 보조 지표를 불러오지 못했습니다.', e))
                         .finally(() => { secondaryReady = true; render(); });
+
+                    // 커뮤니티(신고·게시물)와 알림 구독도 배경에서 받는다. 탭 배지가
+                    // 처리 대기 신고 수를 바로 보여줄 수 있게 탭을 열기 전에 미리 읽는다.
+                    // 규칙에 없거나 권한이 없으면 해당 카드에만 안내가 뜬다.
+                    refreshCommunity();
+                    refreshPush();
 
                     // 랜딩의 사회적 증거용 공개 집계. recipes 자체는 비공개라
                     // 익명 방문자가 셀 수 없으므로 여기서 숫자만 공개 문서에 남긴다.

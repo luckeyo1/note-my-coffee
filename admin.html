@@ -169,8 +169,9 @@
         .hero-spark { flex: 0 0 auto; }
 
         /* ── KPI row ── */
+        /* 150px — 폰(390px)에서도 2열로 놓여 숫자 카드 네 장이 화면을 다 먹지 않는다 */
         .kpis {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 12px; margin-bottom: 26px;
         }
         .tile {
@@ -339,6 +340,75 @@
         .modal-section-title { font-size: 13px; font-weight: 600; margin: 4px 0 10px; }
         .modal-empty { font-size: 13px; color: var(--muted); padding: 8px 0; }
 
+        /* ── 섹션 탭: 한 번에 한 주제만. 앱(폰) 안에서 열 때 끝없는 스크롤을 막는다. ── */
+        .dash-head {
+            position: sticky; top: 0; z-index: 30;
+            background: var(--page);
+            margin: 0 calc(-1 * clamp(16px, 4vw, 32px)) 20px;
+            padding: 10px clamp(16px, 4vw, 32px) 12px;
+            border-bottom: 1px solid var(--hairline);
+        }
+        .dash-head .filters { margin: 10px 0 0; }
+        .filters[hidden], .dash-section[hidden] { display: none; }
+        .section-tabs {
+            display: flex; gap: 6px; overflow-x: auto;
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        }
+        .section-tabs::-webkit-scrollbar { display: none; }
+        .section-tab {
+            flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+            font-family: inherit; font-size: 13.5px; font-weight: 500;
+            color: var(--ink-2); background: var(--surface);
+            border: 1px solid var(--hairline); border-radius: 999px;
+            padding: 8px 14px; min-height: 36px; cursor: pointer;
+            transition: background 0.18s, color 0.18s, border-color 0.18s;
+        }
+        .section-tab:hover { border-color: var(--series-1); color: var(--ink); }
+        .section-tab[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: var(--page); }
+        .section-tab:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+        /* 좁은 폰에서도 탭 다섯 개가 한 줄에 들어가게 — 넘치면 가로 스크롤로 떨어진다 */
+        @media (max-width: 420px) {
+            .section-tabs { gap: 4px; }
+            .section-tab { padding: 7px 10px; font-size: 13px; }
+        }
+        /* 처리 대기 신고 수 — 숫자와 함께 두어 색만으로 말하지 않는다 */
+        .tab-count {
+            min-width: 20px; padding: 1px 6px; border-radius: 999px;
+            font-size: 11px; font-weight: 600; line-height: 1.5; text-align: center;
+            background: var(--danger); color: #fff;
+        }
+
+        /* 표: 칸 안에서 글자가 세로로 쪼개지지 않게 한 줄로 두고, 넘치면 카드 안에서 가로 스크롤 */
+        .scroll-x th, .scroll-x td { white-space: nowrap; }
+        .more-toggle { margin-top: 12px; }
+
+        /* ── 커뮤니티 관리 ── */
+        .mod-list { display: flex; flex-direction: column; gap: 10px; }
+        .mod-item {
+            display: flex; gap: 12px; align-items: flex-start;
+            border: 1px solid var(--hairline); border-radius: 12px;
+            padding: 14px 16px; background: var(--page);
+        }
+        .mod-item.is-busy { opacity: 0.6; pointer-events: none; }
+        .mod-thumb { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; background: var(--grid); }
+        .mod-body { flex: 1 1 auto; min-width: 0; }
+        .mod-title { font-size: 14.5px; font-weight: 600; word-break: break-word; }
+        .mod-meta { font-size: 12px; color: var(--muted); margin-top: 3px; word-break: break-word; }
+        .mod-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+        .mod-reason { font-size: 12px; background: var(--grid); color: var(--ink-2); border-radius: 999px; padding: 3px 9px; }
+        .mod-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .btn-sm { font-size: 12.5px; padding: 7px 13px; min-height: 34px; }
+        .btn-danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+        .btn-danger:hover { color: var(--danger); border-color: var(--danger); }
+        .btn:disabled { opacity: 0.55; cursor: default; }
+        .chip-warn { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+        .chip-muted { background: var(--grid); color: var(--ink-2); }
+        .mod-empty { font-size: 13px; color: var(--muted); padding: 4px 0; }
+        .mod-status { font-size: 12.5px; color: var(--ink-2); margin-top: 12px; min-height: 1.2em; }
+        .mod-status.is-error { color: var(--danger); }
+        .mini-title { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin: 6px 0 10px; }
+        .mini-title + div { margin-bottom: 14px; }
+
         .hidden { display: none !important; }
 
         .foot { margin-top: 30px; font-size: 12px; color: var(--muted); line-height: 1.9; }
@@ -379,262 +449,341 @@
         <span>실제 데이터가 아니라 레이아웃 확인용으로 생성한 가짜 데이터입니다.</span>
     </div>
 
-    <!-- 필터: 한 줄, 아래 모든 지표를 동일하게 스코프 -->
-    <div class="filters">
-        <span class="filters-label">기간</span>
-        <span class="seg" id="range-seg" role="group" aria-label="기간 선택">
-            <button type="button" data-days="7">최근 7일</button>
-            <button type="button" data-days="30" aria-pressed="true">최근 30일</button>
-            <button type="button" data-days="90">최근 90일</button>
-            <button type="button" data-days="0">전체</button>
-        </span>
+    <!-- 섹션 탭 + 기간 필터. 탭은 한 번에 한 주제만 보여 모바일 스크롤을 줄이고(앱 안에서 연다),
+         기간 필터는 기간이 의미 있는 탭(개요·사용자·원두)에서만 보인다. 선택한 탭은 #해시와
+         localStorage에 남아 새로고침해도 유지된다. -->
+    <div class="dash-head">
+        <nav class="section-tabs" id="section-tabs" role="tablist" aria-label="대시보드 섹션">
+            <button type="button" class="section-tab" role="tab" id="tab-overview" data-section="overview" aria-controls="sec-overview" aria-selected="true">개요</button>
+            <button type="button" class="section-tab" role="tab" id="tab-users" data-section="users" aria-controls="sec-users" aria-selected="false" tabindex="-1">사용자</button>
+            <button type="button" class="section-tab" role="tab" id="tab-community" data-section="community" aria-controls="sec-community" aria-selected="false" tabindex="-1">커뮤니티<span class="tab-count hidden" id="tab-count-community"></span></button>
+            <button type="button" class="section-tab" role="tab" id="tab-beans" data-section="beans" aria-controls="sec-beans" aria-selected="false" tabindex="-1">원두</button>
+            <button type="button" class="section-tab" role="tab" id="tab-ops" data-section="ops" aria-controls="sec-ops" aria-selected="false" tabindex="-1">운영</button>
+        </nav>
+        <!-- 필터: 한 줄, 아래 모든 지표를 동일하게 스코프 -->
+        <div class="filters" id="filters">
+            <span class="filters-label">기간</span>
+            <span class="seg" id="range-seg" role="group" aria-label="기간 선택">
+                <button type="button" data-days="7">최근 7일</button>
+                <button type="button" data-days="30" aria-pressed="true">최근 30일</button>
+                <button type="button" data-days="90">최근 90일</button>
+                <button type="button" data-days="0">전체</button>
+            </span>
+        </div>
     </div>
 
-    <!-- 히어로: 한 화면에 하나 -->
-    <section class="hero">
-        <div>
-            <div class="hero-label" id="hero-label">최근 30일 기록된 레시피</div>
-            <div class="hero-value" id="hero-value">—</div>
-            <div class="hero-note" id="hero-note"></div>
-        </div>
-        <div class="hero-spark" id="hero-spark"></div>
-    </section>
-
-    <!-- KPI -->
-    <section class="kpis">
-        <div class="tile">
-            <div class="tile-label">기록한 사용자</div>
-            <div class="tile-value" id="kpi-users">—</div>
-            <div class="tile-sub" id="kpi-users-sub"></div>
-        </div>
-        <div class="tile">
-            <div class="tile-label">오늘 기록</div>
-            <div class="tile-value" id="kpi-today">—</div>
-            <div class="tile-sub" id="kpi-today-sub"></div>
-        </div>
-        <div class="tile">
-            <div class="tile-label">평균 평점</div>
-            <div class="tile-value" id="kpi-rating">—</div>
-            <div class="tile-sub" id="kpi-rating-sub"></div>
-        </div>
-        <div class="tile">
-            <div class="tile-label">추출 성공률</div>
-            <div class="tile-value" id="kpi-success">—</div>
-            <div class="tile-sub" id="kpi-success-sub"></div>
-        </div>
-    </section>
-
-    <!-- 사이트 방문: stats_visits(익명 카운터). 기록을 남기지 않고 떠난 방문자까지
-         포함하는 유일한 카드라, 기록 추이 앞에 둬서 '유입 → 기록' 순서로 읽힌다. -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">사이트 방문</h2>
-            <button class="card-toggle" type="button" data-tv="tv-visits">표로 보기</button>
-        </div>
-        <p class="card-sub" id="visits-sub">하루에 다녀간 방문자</p>
-        <div class="chart-wrap" id="visits-wrap"></div>
-        <div class="tableview" id="tv-visits"></div>
-    </section>
-
-    <!-- 일별 추이: 단일 시리즈 → 범례 없음 (제목이 무엇인지 말해준다) -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">일별 기록 추이</h2>
-            <button class="card-toggle" type="button" data-tv="tv-trend">표로 보기</button>
-        </div>
-        <p class="card-sub" id="trend-sub">하루에 저장된 레시피 수</p>
-        <div class="chart-wrap" id="trend-wrap"></div>
-        <div class="tableview" id="tv-trend"></div>
-    </section>
-
-    <!-- 활성화·유지 퍼널: Firestore로 그릴 수 있는 부분 퍼널.
-         랜딩·CTA·가입 단계는 GA4에만 있다(docs/funnel.md). 여기서는 기록을 남긴
-         사용자가 얼마나 깊이 정착하는지를 사용자별 기록 수로 본다. -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">활성화 · 유지 퍼널</h2>
-            <button class="card-toggle" type="button" data-tv="tv-funnel">표로 보기</button>
-        </div>
-        <p class="card-sub" id="funnel-sub">기록을 남긴 사용자가 얼마나 정착하는가</p>
-        <div class="chart-wrap" id="funnel-wrap"></div>
-        <div class="tableview" id="tv-funnel"></div>
-    </section>
-
-    <!-- 사용자 목록: 행을 누르면 그 사용자의 상세(개인 지표 + 레시피 이력)를 연다.
-         집계 경로에서는 users 컬렉션을, 폴백/데모에서는 recipes를 묶어 만든다. -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">사용자</h2>
-            <button class="card-toggle" type="button" id="users-sort">기록순</button>
-        </div>
-        <p class="card-sub" id="users-sub">행을 눌러 개별 사용자의 기록을 봅니다</p>
-        <div id="users-wrap"></div>
-    </section>
-
-    <!-- 리드마그넷: 취향 검사 결과에서 이메일을 남긴 방문자. leads 컬렉션(관리자만
-         읽음). CSV로 내보내 나중에 소식·가이드 발송에 쓴다. -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">리드 (이메일 수집)</h2>
-            <button class="card-toggle" type="button" id="leads-export">CSV 내보내기</button>
-        </div>
-        <p class="card-sub" id="leads-sub">취향 검사 결과에서 이메일을 남긴 방문자</p>
-        <div id="leads-wrap"></div>
-    </section>
-
-    <!-- ── 마케팅 지표 ──────────────────────────────────────────────
-         '제품이 어떻게 쓰이나'와 별개로 '마케팅이 되고 있나'에 답하는 카드들.
-         신규 유입·리텐션은 기간 필터와 무관하게 전체 기록으로 계산한다(admin.js 주석 참고). -->
-
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">신규 사용자 유입</h2>
-            <button class="card-toggle" type="button" data-tv="tv-newusers">표로 보기</button>
-        </div>
-        <p class="card-sub" id="newusers-sub">처음 기록을 남긴 사용자</p>
-        <div class="chart-wrap" id="newusers-wrap"></div>
-        <div class="tableview" id="tv-newusers"></div>
-    </section>
-
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">주간 리텐션 코호트</h2>
-            <button class="card-toggle" type="button" data-tv="tv-retention">표로 보기</button>
-        </div>
-        <p class="card-sub">
-            첫 기록 주차로 묶어 이후 몇 주까지 돌아오는지 본다. W0은 유입 당주라 항상 100%다.
-            <strong>기간 필터와 무관하게 전체 기록</strong>으로 계산한다 — 코호트는 시간축 전체가 필요하다.
-        </p>
-        <div class="chart-wrap" id="retention-wrap"></div>
-        <div class="tableview" id="tv-retention"></div>
-    </section>
-
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">요일 · 시간대 활동</h2>
-            <button class="card-toggle" type="button" data-tv="tv-heatmap">표로 보기</button>
-        </div>
-        <p class="card-sub" id="heatmap-sub">기록이 저장된 요일과 시각</p>
-        <div class="chart-wrap" id="heatmap-wrap"></div>
-        <div class="tableview" id="tv-heatmap"></div>
-    </section>
-
-    <!-- ── Phase 2: 행동으로 이어지는 카드 ─────────────────────────
-         앞의 카드들이 '관찰'이라면 여기는 '그래서 뭘 할까'에 답한다. -->
-
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">휴면 위험군</h2>
-            <button class="card-toggle" type="button" data-tv="tv-dormancy">표로 보기</button>
-        </div>
-        <p class="card-sub" id="dormancy-sub">마지막 기록 이후 얼마나 지났는가</p>
-        <div class="chart-wrap" id="dormancy-wrap"></div>
-        <div class="tableview" id="tv-dormancy"></div>
-    </section>
-
-    <div class="grid-2">
-        <section class="card">
-            <div class="card-head">
-                <h2 class="card-title">급상승 원두</h2>
-                <button class="card-toggle" type="button" data-tv="tv-rising">표로 보기</button>
+    <div class="dash-section" id="sec-overview" data-section="overview" role="tabpanel" aria-labelledby="tab-overview">
+        <!-- 히어로: 한 화면에 하나 -->
+        <section class="hero">
+            <div>
+                <div class="hero-label" id="hero-label">최근 30일 기록된 레시피</div>
+                <div class="hero-value" id="hero-value">—</div>
+                <div class="hero-note" id="hero-note"></div>
             </div>
-            <p class="card-sub" id="rising-sub">직전 같은 길이의 기간과 비교</p>
-            <div class="chart-wrap" id="rising-wrap"></div>
-            <div class="tableview" id="tv-rising"></div>
+            <div class="hero-spark" id="hero-spark"></div>
         </section>
 
+        <!-- KPI -->
+        <section class="kpis">
+            <div class="tile">
+                <div class="tile-label">기록한 사용자</div>
+                <div class="tile-value" id="kpi-users">—</div>
+                <div class="tile-sub" id="kpi-users-sub"></div>
+            </div>
+            <div class="tile">
+                <div class="tile-label">오늘 기록</div>
+                <div class="tile-value" id="kpi-today">—</div>
+                <div class="tile-sub" id="kpi-today-sub"></div>
+            </div>
+            <div class="tile">
+                <div class="tile-label">평균 평점</div>
+                <div class="tile-value" id="kpi-rating">—</div>
+                <div class="tile-sub" id="kpi-rating-sub"></div>
+            </div>
+            <div class="tile">
+                <div class="tile-label">추출 성공률</div>
+                <div class="tile-value" id="kpi-success">—</div>
+                <div class="tile-sub" id="kpi-success-sub"></div>
+            </div>
+        </section>
+
+        <!-- 사이트 방문: stats_visits(익명 카운터). 기록을 남기지 않고 떠난 방문자까지
+             포함하는 유일한 카드라, 기록 추이 앞에 둬서 '유입 → 기록' 순서로 읽힌다. -->
         <section class="card">
             <div class="card-head">
-                <h2 class="card-title">실패율이 높은 원두</h2>
-                <button class="card-toggle" type="button" data-tv="tv-failing">표로 보기</button>
+                <h2 class="card-title">사이트 방문</h2>
+                <button class="card-toggle" type="button" data-tv="tv-visits">표로 보기</button>
             </div>
-            <p class="card-sub" id="failing-sub">가이드 콘텐츠 소재가 되는 구간</p>
-            <div class="chart-wrap" id="failing-wrap"></div>
-            <div class="tableview" id="tv-failing"></div>
+            <p class="card-sub" id="visits-sub">하루에 다녀간 방문자</p>
+            <div class="chart-wrap" id="visits-wrap"></div>
+            <div class="tableview" id="tv-visits"></div>
         </section>
+
+        <!-- 일별 추이: 단일 시리즈 → 범례 없음 (제목이 무엇인지 말해준다) -->
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">일별 기록 추이</h2>
+                <button class="card-toggle" type="button" data-tv="tv-trend">표로 보기</button>
+            </div>
+            <p class="card-sub" id="trend-sub">하루에 저장된 레시피 수</p>
+            <div class="chart-wrap" id="trend-wrap"></div>
+            <div class="tableview" id="tv-trend"></div>
+        </section>
+
+        <div class="grid-2">
+            <!-- 모드 분포: 2개 시리즈 → 범례 + 직접 라벨 -->
+            <section class="card">
+                <div class="card-head">
+                    <h2 class="card-title">추출 모드 분포</h2>
+                    <button class="card-toggle" type="button" data-tv="tv-mode">표로 보기</button>
+                </div>
+                <p class="card-sub">에스프레소와 핸드드립의 기록 비중</p>
+                <div class="legend" id="mode-legend"></div>
+                <div class="chart-wrap" id="mode-wrap"></div>
+                <div class="tableview" id="tv-mode"></div>
+            </section>
+
+            <!-- 평점 분포: 순서형 → 한 색상 램프 -->
+            <section class="card">
+                <div class="card-head">
+                    <h2 class="card-title">평점 분포</h2>
+                    <button class="card-toggle" type="button" data-tv="tv-rating">표로 보기</button>
+                </div>
+                <p class="card-sub">사용자가 남긴 별점(1~5)별 레시피 수</p>
+                <div class="chart-wrap" id="rating-wrap"></div>
+                <div class="tableview" id="tv-rating"></div>
+            </section>
+        </div>
     </div>
 
-    <!-- 집계 구조 (docs/admin-roadmap.md Phase 1).
-         집계가 없으면 대시보드는 recipes 전체를 내려받는 예전 경로로 동작한다. -->
-    <section class="card note-card">
-        <div class="card-head">
-            <h2 class="card-title">데이터 출처</h2>
-            <button class="card-toggle" type="button" id="btn-rebuild">집계 재생성</button>
-        </div>
-        <p class="card-sub" id="rebuild-status">
-            아래 푸터에 이번 조회가 어느 경로였는지 표시됩니다.
-        </p>
-        <ul class="note-list">
-            <li><strong>집계 경로</strong> — <code>stats_daily</code>·<code>users</code>만 읽습니다.
-                가볍고 빠릅니다.</li>
-            <li><strong>전체 스캔(폴백)</strong> — 집계가 아직 없거나 권한이 없을 때.
-                <code>recipes</code>를 통째로 받으므로 기록이 쌓이면 매우 무거워집니다.</li>
-            <li><strong>집계 재생성</strong>은 기록 전체를 한 번 읽어 집계를 다시 만듭니다.
-                최초 1회 이관과, 집계가 원본과 어긋났을 때의 복구에 씁니다.</li>
-        </ul>
-    </section>
-
-    <!-- 측정 경계를 화면에도 명시한다. 이게 없으면 '유입이 이것뿐인가?'로 오독된다. -->
-    <section class="card note-card">
-        <h2 class="card-title">이 숫자들이 포함하지 않는 것</h2>
-        <ul class="note-list">
-            <li><strong>방문자의 신원</strong>은 알 수 없다. 위 방문 카드는 익명 카운터라
-                "몇 명이 왔나"만 말하고, 로그인하지 않은 방문자가 <em>누구인지</em>는
-                저장하지 않는다. 순 방문자는 브라우저·하루 기준이라
-                시크릿 모드·다른 기기는 새로 센다.</li>
-            <li><strong>CTA 클릭·취향 검사 단계별 이탈</strong>은 GA4에만 있다.
-                화면 안에서 어디까지 갔는지는 GA4 탐색 보고서에서 본다(<code>docs/funnel.md</code>).</li>
-            <li><strong>게스트 기록</strong>은 localStorage에만 있어 잡히지 않는다.
-                로그인 후 이관된 것만 보인다.</li>
-            <li>가입일 필드가 없어 <strong>첫 기록일을 가입 시점의 프록시</strong>로 쓴다.</li>
-        </ul>
-    </section>
-
-    <div class="grid-2">
-        <!-- 모드 분포: 2개 시리즈 → 범례 + 직접 라벨 -->
+    <div class="dash-section" id="sec-users" data-section="users" role="tabpanel" aria-labelledby="tab-users" hidden>
+        <!-- 활성화·유지 퍼널: Firestore로 그릴 수 있는 부분 퍼널.
+             랜딩·CTA·가입 단계는 GA4에만 있다(docs/funnel.md). 여기서는 기록을 남긴
+             사용자가 얼마나 깊이 정착하는지를 사용자별 기록 수로 본다. -->
         <section class="card">
             <div class="card-head">
-                <h2 class="card-title">추출 모드 분포</h2>
-                <button class="card-toggle" type="button" data-tv="tv-mode">표로 보기</button>
+                <h2 class="card-title">활성화 · 유지 퍼널</h2>
+                <button class="card-toggle" type="button" data-tv="tv-funnel">표로 보기</button>
             </div>
-            <p class="card-sub">에스프레소와 핸드드립의 기록 비중</p>
-            <div class="legend" id="mode-legend"></div>
-            <div class="chart-wrap" id="mode-wrap"></div>
-            <div class="tableview" id="tv-mode"></div>
+            <p class="card-sub" id="funnel-sub">기록을 남긴 사용자가 얼마나 정착하는가</p>
+            <div class="chart-wrap" id="funnel-wrap"></div>
+            <div class="tableview" id="tv-funnel"></div>
         </section>
 
-        <!-- 평점 분포: 순서형 → 한 색상 램프 -->
+        <!-- 사용자 목록: 행을 누르면 그 사용자의 상세(개인 지표 + 레시피 이력)를 연다.
+             집계 경로에서는 users 컬렉션을, 폴백/데모에서는 recipes를 묶어 만든다. -->
         <section class="card">
             <div class="card-head">
-                <h2 class="card-title">평점 분포</h2>
-                <button class="card-toggle" type="button" data-tv="tv-rating">표로 보기</button>
+                <h2 class="card-title">사용자</h2>
+                <button class="card-toggle" type="button" id="users-sort">기록순</button>
             </div>
-            <p class="card-sub">사용자가 남긴 별점(1~5)별 레시피 수</p>
-            <div class="chart-wrap" id="rating-wrap"></div>
-            <div class="tableview" id="tv-rating"></div>
+            <p class="card-sub" id="users-sub">행을 눌러 개별 사용자의 기록을 봅니다</p>
+            <div id="users-wrap"></div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">신규 사용자 유입</h2>
+                <button class="card-toggle" type="button" data-tv="tv-newusers">표로 보기</button>
+            </div>
+            <p class="card-sub" id="newusers-sub">처음 기록을 남긴 사용자</p>
+            <div class="chart-wrap" id="newusers-wrap"></div>
+            <div class="tableview" id="tv-newusers"></div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">주간 리텐션 코호트</h2>
+                <button class="card-toggle" type="button" data-tv="tv-retention">표로 보기</button>
+            </div>
+            <p class="card-sub">
+                첫 기록 주차로 묶어 이후 몇 주까지 돌아오는지 본다. W0은 유입 당주라 항상 100%다.
+                <strong>기간 필터와 무관하게 전체 기록</strong>으로 계산한다 — 코호트는 시간축 전체가 필요하다.
+            </p>
+            <div class="chart-wrap" id="retention-wrap"></div>
+            <div class="tableview" id="tv-retention"></div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">휴면 위험군</h2>
+                <button class="card-toggle" type="button" data-tv="tv-dormancy">표로 보기</button>
+            </div>
+            <p class="card-sub" id="dormancy-sub">마지막 기록 이후 얼마나 지났는가</p>
+            <div class="chart-wrap" id="dormancy-wrap"></div>
+            <div class="tableview" id="tv-dormancy"></div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">요일 · 시간대 활동</h2>
+                <button class="card-toggle" type="button" data-tv="tv-heatmap">표로 보기</button>
+            </div>
+            <p class="card-sub" id="heatmap-sub">기록이 저장된 요일과 시각</p>
+            <div class="chart-wrap" id="heatmap-wrap"></div>
+            <div class="tableview" id="tv-heatmap"></div>
         </section>
     </div>
 
-    <!-- 인기 원두: 명목형 → 전부 같은 색 (길이가 크기를 말한다) -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">많이 기록된 원두 TOP 10</h2>
-            <button class="card-toggle" type="button" data-tv="tv-beans">표로 보기</button>
-        </div>
-        <p class="card-sub">원두 이름이 입력된 레시피만 집계</p>
-        <div class="chart-wrap" id="beans-wrap"></div>
-        <div class="tableview" id="tv-beans"></div>
-    </section>
+    <div class="dash-section" id="sec-community" data-section="community" role="tabpanel" aria-labelledby="tab-community" hidden>
+        <!-- ── 커뮤니티 관리 ─────────────────────────────────────────────
+             Google Play UGC 정책: 신고를 받았으면 검토하고 조치할 수단이 있어야 한다.
+             숨기면 posts.status='hidden' + hiddenByAdmin=true — 피드·공개 링크·프로필에서 내려가고
+             작성자는 스스로 되돌릴 수 없다(firestore.rules posts update 규칙). 신고는 reports 문서에
+             status(resolved|dismissed)를 남긴다. 권한은 규칙의 isAdmin()이 막는다. -->
+        <section class="kpis">
+            <div class="tile">
+                <div class="tile-label">처리 대기 신고</div>
+                <div class="tile-value" id="ck-pending">—</div>
+                <div class="tile-sub" id="ck-pending-sub"></div>
+            </div>
+            <div class="tile">
+                <div class="tile-label">공개 중인 게시물</div>
+                <div class="tile-value" id="ck-public">—</div>
+                <div class="tile-sub" id="ck-public-sub"></div>
+            </div>
+            <div class="tile">
+                <div class="tile-label">숨긴 게시물</div>
+                <div class="tile-value" id="ck-hidden">—</div>
+                <div class="tile-sub" id="ck-hidden-sub"></div>
+            </div>
+            <div class="tile">
+                <div class="tile-label">전체 게시물</div>
+                <div class="tile-value" id="ck-total">—</div>
+                <div class="tile-sub" id="ck-total-sub"></div>
+            </div>
+        </section>
 
-    <!-- 최근 레시피 -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">최근 기록</h2>
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">신고 처리</h2>
+                <button class="card-toggle" type="button" id="reports-filter">처리한 신고도 보기</button>
+            </div>
+            <p class="card-sub" id="reports-sub">사용자가 신고한 게시물</p>
+            <div id="reports-wrap"></div>
+            <p class="mod-status" id="mod-status" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">최근 게시물</h2>
+                <button class="card-toggle" type="button" id="posts-refresh">새로고침</button>
+            </div>
+            <p class="card-sub" id="posts-sub">새로 올라온 게시물 — 신고가 없어도 먼저 살펴볼 수 있다</p>
+            <div id="posts-wrap"></div>
+        </section>
+    </div>
+
+    <div class="dash-section" id="sec-beans" data-section="beans" role="tabpanel" aria-labelledby="tab-beans" hidden>
+        <!-- 인기 원두: 명목형 → 전부 같은 색 (길이가 크기를 말한다) -->
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">많이 기록된 원두 TOP 10</h2>
+                <button class="card-toggle" type="button" data-tv="tv-beans">표로 보기</button>
+            </div>
+            <p class="card-sub">원두 이름이 입력된 레시피만 집계</p>
+            <div class="chart-wrap" id="beans-wrap"></div>
+            <div class="tableview" id="tv-beans"></div>
+        </section>
+
+        <div class="grid-2">
+            <section class="card">
+                <div class="card-head">
+                    <h2 class="card-title">급상승 원두</h2>
+                    <button class="card-toggle" type="button" data-tv="tv-rising">표로 보기</button>
+                </div>
+                <p class="card-sub" id="rising-sub">직전 같은 길이의 기간과 비교</p>
+                <div class="chart-wrap" id="rising-wrap"></div>
+                <div class="tableview" id="tv-rising"></div>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <h2 class="card-title">실패율이 높은 원두</h2>
+                    <button class="card-toggle" type="button" data-tv="tv-failing">표로 보기</button>
+                </div>
+                <p class="card-sub" id="failing-sub">가이드 콘텐츠 소재가 되는 구간</p>
+                <div class="chart-wrap" id="failing-wrap"></div>
+                <div class="tableview" id="tv-failing"></div>
+            </section>
         </div>
-        <p class="card-sub">가장 최근에 저장된 레시피 20건</p>
-        <!-- 가로 스크롤은 buildTable()이 만드는 .scroll-x가 담당 (이중 래핑 금지) -->
-        <div id="recent-wrap"></div>
-    </section>
+
+        <!-- 최근 레시피 -->
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">최근 기록</h2>
+            </div>
+            <p class="card-sub">가장 최근에 저장된 레시피 20건</p>
+            <!-- 가로 스크롤은 buildTable()이 만드는 .scroll-x가 담당 (이중 래핑 금지) -->
+            <div id="recent-wrap"></div>
+        </section>
+    </div>
+
+    <div class="dash-section" id="sec-ops" data-section="ops" role="tabpanel" aria-labelledby="tab-ops" hidden>
+        <!-- 아침 알림 구독: pushTokens(관리자만 읽음). enabled=true인 기기만 매일 아침 발송된다
+             (functions/index.js dailyPush). 토큰 문서는 기기 단위라 사람 수가 아니다. -->
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">아침 알림 구독</h2>
+                <button class="card-toggle" type="button" data-tv="tv-push">표로 보기</button>
+            </div>
+            <p class="card-sub" id="push-sub">알림을 켠 기기와 끈 기기</p>
+            <div class="chart-wrap" id="push-wrap">
+                <h3 class="mini-title">언어별 (켜짐 기준)</h3>
+                <div id="push-lang"></div>
+                <h3 class="mini-title">기기별 (켜짐 기준)</h3>
+                <div id="push-device"></div>
+            </div>
+            <div class="tableview" id="tv-push"></div>
+        </section>
+
+        <!-- 리드마그넷: 취향 검사 결과에서 이메일을 남긴 방문자. leads 컬렉션(관리자만
+             읽음). CSV로 내보내 나중에 소식·가이드 발송에 쓴다. -->
+        <section class="card">
+            <div class="card-head">
+                <h2 class="card-title">리드 (이메일 수집)</h2>
+                <button class="card-toggle" type="button" id="leads-export">CSV 내보내기</button>
+            </div>
+            <p class="card-sub" id="leads-sub">취향 검사 결과에서 이메일을 남긴 방문자</p>
+            <div id="leads-wrap"></div>
+        </section>
+
+        <!-- 집계 구조 (docs/admin-roadmap.md Phase 1).
+             집계가 없으면 대시보드는 recipes 전체를 내려받는 예전 경로로 동작한다. -->
+        <section class="card note-card">
+            <div class="card-head">
+                <h2 class="card-title">데이터 출처</h2>
+                <button class="card-toggle" type="button" id="btn-rebuild">집계 재생성</button>
+            </div>
+            <p class="card-sub" id="rebuild-status">
+                아래 푸터에 이번 조회가 어느 경로였는지 표시됩니다.
+            </p>
+            <ul class="note-list">
+                <li><strong>집계 경로</strong> — <code>stats_daily</code>·<code>users</code>만 읽습니다.
+                    가볍고 빠릅니다.</li>
+                <li><strong>전체 스캔(폴백)</strong> — 집계가 아직 없거나 권한이 없을 때.
+                    <code>recipes</code>를 통째로 받으므로 기록이 쌓이면 매우 무거워집니다.</li>
+                <li><strong>집계 재생성</strong>은 기록 전체를 한 번 읽어 집계를 다시 만듭니다.
+                    최초 1회 이관과, 집계가 원본과 어긋났을 때의 복구에 씁니다.</li>
+            </ul>
+        </section>
+
+        <!-- 측정 경계를 화면에도 명시한다. 이게 없으면 '유입이 이것뿐인가?'로 오독된다. -->
+        <section class="card note-card">
+            <h2 class="card-title">이 숫자들이 포함하지 않는 것</h2>
+            <ul class="note-list">
+                <li><strong>방문자의 신원</strong>은 알 수 없다. 개요 탭의 방문 카드는 익명 카운터라
+                    "몇 명이 왔나"만 말하고, 로그인하지 않은 방문자가 <em>누구인지</em>는
+                    저장하지 않는다. 순 방문자는 브라우저·하루 기준이라
+                    시크릿 모드·다른 기기는 새로 센다.</li>
+                <li><strong>CTA 클릭·취향 검사 단계별 이탈</strong>은 GA4에만 있다.
+                    화면 안에서 어디까지 갔는지는 GA4 탐색 보고서에서 본다(<code>docs/funnel.md</code>).</li>
+                <li><strong>게스트 기록</strong>은 localStorage에만 있어 잡히지 않는다.
+                    로그인 후 이관된 것만 보인다.</li>
+                <li>가입일 필드가 없어 <strong>첫 기록일을 가입 시점의 프록시</strong>로 쓴다.</li>
+            </ul>
+        </section>
+    </div>
 
     <p class="foot" id="foot"></p>
 </div>

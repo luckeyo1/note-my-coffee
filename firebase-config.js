@@ -31,7 +31,9 @@ import {
     orderBy,
     limit,
     startAfter,
-    serverTimestamp
+    serverTimestamp,
+    // 관리자 커뮤니티 카드의 게시물 수 — 문서를 내려받지 않고 서버에서 센다.
+    getCountFromServer
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 // 공개 게시물 사진용 Storage (docs/recipe-community.md: 사진 A안).
 // 개인 기록 사진은 지금처럼 문서 base64로 남고, 공개 게시물 커버만 Storage에 올린다.
@@ -225,6 +227,7 @@ export {
     limit,
     startAfter,
     serverTimestamp,
+    getCountFromServer,
     // Storage (공개 게시물 사진)
     storage,
     storageRef,

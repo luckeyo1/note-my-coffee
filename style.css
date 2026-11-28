@@ -1540,6 +1540,28 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
     cursor: pointer;
 }
 .settings-link:hover { color: var(--gold); }
+/* display:block이 [hidden]을 무력화하므로 되살린다 — 관리자 링크는 평소 숨겨져 있다. */
+.settings-link[hidden] { display: none; }
+/* 관리자 전용 링크: 관리자 계정에만 보인다(admin-entry.js). 일반 항목과 구분되게
+   클레이 글자 + ADMIN 배지. 배지는 장식이라 번역하지 않는다. */
+.settings-admin {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--gold);
+    font-weight: 600;
+}
+.settings-admin-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 2px 8px;
+}
 .settings-sheet-close {
     display: block;
     width: 100%;
